@@ -1,0 +1,104 @@
+<section id="features" class="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+  <div class="mx-auto max-w-2xl text-center">
+    <span class="rounded-full border border-indigo-200 px-3 py-1 text-xs font-semibold text-indigo-600">{{ t().featuresBadge }}</span>
+    <h2 class="mt-4 text-3xl font-bold text-gray-900 sm:text-4xl" [innerHTML]="t().featuresMainTitleHtml"></h2>
+    <p class="mt-4 text-gray-500">{{ t().featuresSubtitle }}</p>
+  </div>
+
+  <div class="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    <!-- Dashboard Pro (wide) -->
+    <div class="rounded-[28px] bg-white p-6 lg:col-span-2">
+      <div class="flex items-center gap-3">
+        <span class="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-50 text-indigo-600">
+          <ion-icon name="bar-chart-outline" class="text-xl"></ion-icon>
+        </span>
+        <h3 class="text-xl font-bold text-gray-900">{{ t().featureDashboardTitle }}</h3>
+      </div>
+      <p class="mt-3 text-sm text-gray-500">{{ t().featureDashboardDescription }}</p>
+      <div class="mt-5 flex items-end gap-1.5 h-16">
+        @for (h of [40, 65, 50, 80, 55, 90, 70, 60]; track $index) {
+          <div class="flex-1 rounded-full bg-[#D6CEF4]" [style.height.%]="h"></div>
+        }
+      </div>
+      <div class="mt-4 flex gap-2">
+        <app-chip variant="success">+24% MoM</app-chip>
+        <app-chip variant="neutral">1,284 clients</app-chip>
+      </div>
+    </div>
+
+    <!-- Client Management -->
+    <div class="rounded-[28px] bg-white p-6">
+      <div class="flex items-center gap-3">
+        <span class="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-50 text-indigo-600">
+          <ion-icon name="people-outline" class="text-xl"></ion-icon>
+        </span>
+        <h3 class="text-xl font-bold text-gray-900">{{ t().featureClientMgmtTitle }}</h3>
+      </div>
+      <p class="mt-6 text-3xl font-bold text-gray-900">10K+</p>
+      <p class="mt-1 text-sm text-gray-500">Active Clients</p>
+    </div>
+
+    <!-- Client Portal -->
+    <div class="rounded-[28px] bg-white p-6">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <span class="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-50 text-indigo-600">
+            <ion-icon name="globe-outline" class="text-xl"></ion-icon>
+          </span>
+          <h3 class="text-xl font-bold text-gray-900">{{ t().featureClientPortalTitle }}</h3>
+        </div>
+        <app-chip variant="success">Secure</app-chip>
+      </div>
+      <p class="mt-3 text-sm text-gray-500">{{ t().featureClientPortalDescription }}</p>
+      <div class="mt-4 flex flex-wrap gap-2">
+        <app-chip variant="neutral">Documents</app-chip>
+        <app-chip variant="neutral">Signatures</app-chip>
+        <app-chip variant="neutral">Messaging</app-chip>
+      </div>
+    </div>
+
+    <!-- Integrated Chat -->
+    <div class="rounded-[28px] bg-white p-6">
+      <div class="flex items-center gap-3">
+        <span class="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-50 text-indigo-600">
+          <ion-icon name="chatbubbles-outline" class="text-xl"></ion-icon>
+        </span>
+        <h3 class="text-xl font-bold text-gray-900">{{ t().featureChatTitle }}</h3>
+      </div>
+      <div class="mt-4 space-y-2">
+        <div class="w-fit rounded-2xl rounded-bl-sm bg-gray-100 px-3 py-2 text-xs text-gray-600">Documents ready ✓</div>
+        <div class="ml-auto w-fit rounded-2xl rounded-br-sm bg-indigo-600 px-3 py-2 text-xs text-white">Sending now...</div>
+      </div>
+    </div>
+
+    <!-- E-Signatures -->
+    <div class="rounded-[28px] bg-white p-6">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <span class="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-50 text-indigo-600">
+            <ion-icon name="create-outline" class="text-xl"></ion-icon>
+          </span>
+          <h3 class="text-xl font-bold text-gray-900">{{ t().featureSignaturesTitle }}</h3>
+        </div>
+        <app-chip variant="brand">Legal</app-chip>
+      </div>
+      <p class="mt-6 text-3xl font-bold text-gray-900">10X</p>
+      <p class="mt-1 text-sm text-gray-500">{{ t().featureSignaturesCaption }}</p>
+    </div>
+
+    <!-- Billing & Payments (wide) -->
+    <div class="rounded-[28px] bg-white p-6 lg:col-span-2">
+      <div class="flex items-center gap-3">
+        <span class="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-50 text-indigo-600">
+          <ion-icon name="card-outline" class="text-xl"></ion-icon>
+        </span>
+        <h3 class="text-xl font-bold text-gray-900">{{ t().featureBillingTitle }}</h3>
+      </div>
+      <p class="mt-3 text-sm text-gray-500">{{ t().featureBillingDescription }}</p>
+      <div class="mt-4 flex flex-wrap gap-2">
+        <span class="rounded-xl border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-500">⌘+I New Invoice</span>
+        <span class="rounded-xl border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-500">⌘+P Record Payment</span>
+      </div>
+    </div>
+  </div>
+</section>

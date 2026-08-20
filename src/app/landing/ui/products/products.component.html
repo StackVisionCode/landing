@@ -1,0 +1,31 @@
+<section id="products" class="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+  <div class="mx-auto max-w-2xl text-center">
+    <h2 class="text-3xl font-bold text-gray-900 sm:text-4xl" [innerHTML]="t().productsTitleHtml"></h2>
+    <p class="mt-4 text-gray-500">{{ t().productsSubtitle }}</p>
+  </div>
+
+  <div class="mx-auto mt-12 max-w-xl">
+    <div class="rounded-[28px] bg-white p-8">
+      <div class="flex items-center gap-4">
+        <span class="flex h-14 w-14 items-center justify-center rounded-full bg-indigo-50 text-indigo-600">
+          <ion-icon name="desktop-outline" class="text-2xl"></ion-icon>
+        </span>
+        <div>
+          <h3 class="text-xl font-bold text-gray-900">{{ t().webPortalTitle }}</h3>
+          <div class="mt-1 flex gap-2">
+            <span class="rounded-full border border-gray-200 px-2.5 py-0.5 text-xs font-medium text-gray-500">Web</span>
+            <span class="rounded-full border border-gray-200 px-2.5 py-0.5 text-xs font-medium text-gray-500">Responsive</span>
+          </div>
+        </div>
+      </div>
+      <p class="mt-5 text-sm text-gray-500">{{ t().webPortalDescription }}</p>
+      <a
+        [href]="siteConfig.clientPortalUrl"
+        class="mt-6 inline-flex rounded-full bg-gray-900 px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-gray-700"
+      >
+        {{ t().webPortalTitle }}
+        <ion-icon name="arrow-forward-outline" class="ml-2 text-lg"></ion-icon>
+      </a>
+    </div>
+  </div>
+</section>

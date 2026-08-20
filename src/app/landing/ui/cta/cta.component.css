@@ -1,0 +1,7 @@
+/* Banner de cierre "Aether": gradiente diagonal oscuro con textura sutil de
+   franjas — mismo motivo que el banner PRO del dashboard de TaxVsion_Front. */
+.cta-banner-bg {
+  background:
+    repeating-linear-gradient(115deg, rgba(255, 255, 255, 0.06) 0 18px, rgba(255, 255, 255, 0) 18px 42px),
+    linear-gradient(120deg, #4e4a63 0%, #3d3a56 35%, #565273 65%, #2f2c44 100%);
+}

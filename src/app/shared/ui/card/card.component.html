@@ -1,0 +1,11 @@
+<div class="rounded-[28px] bg-white p-6">
+  @if (heading) {
+    <div class="mb-4">
+      <h3 class="text-xl font-bold text-gray-900">{{ heading }}</h3>
+      @if (subheading) {
+        <p class="mt-1 text-sm text-gray-500">{{ subheading }}</p>
+      }
+    </div>
+  }
+  <ng-content />
+</div>

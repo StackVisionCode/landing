@@ -1,0 +1,48 @@
+<section id="faq" class="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+  <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+    <div class="lg:col-span-2">
+      <h2 class="text-3xl font-bold text-gray-900" [innerHTML]="t().faqSidebarTitleHtml"></h2>
+
+      <div class="mt-8 space-y-3">
+        @for (item of items(); track item.question; let i = $index) {
+          <div class="rounded-[24px] bg-white p-5">
+            <button
+              type="button"
+              (click)="toggle(i)"
+              class="flex w-full items-center justify-between gap-4 text-left"
+            >
+              <span class="text-sm font-bold text-gray-900">{{ item.question }}</span>
+              <ion-icon
+                name="chevron-down-outline"
+                class="shrink-0 text-lg text-gray-400 transition-transform"
+                [class.rotate-180]="openIndex() === i"
+              ></ion-icon>
+            </button>
+            @if (openIndex() === i) {
+              <p class="mt-3 text-sm text-gray-500">{{ item.answer }}</p>
+            }
+          </div>
+        }
+      </div>
+    </div>
+
+    <div class="rounded-[28px] bg-gray-900 p-6 text-white">
+      <h3 class="text-xl font-bold">{{ t().helpCenterButton }}</h3>
+      <p class="mt-2 text-sm text-gray-300">{{ t().heroDescription }}</p>
+      <button
+        type="button"
+        (click)="showBooking.set(true)"
+        class="mt-6 w-full rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-gray-900 transition-colors hover:bg-gray-100"
+      >
+        {{ t().helpCenterButton }}
+      </button>
+    </div>
+  </div>
+</section>
+
+<app-booking-modal
+  [bookingId]="bookingId"
+  [isOpen]="showBooking()"
+  [heading]="t().helpCenterButton"
+  (closed)="showBooking.set(false)"
+/>

@@ -1,0 +1,28 @@
+@if (isOpen) {
+  <div class="modal-backdrop fixed inset-0 z-50 flex items-center justify-center bg-black/20 p-4" (click)="close()">
+    <div
+      class="modal-panel max-h-[90vh] w-full overflow-y-auto rounded-[28px] bg-white p-6 shadow-xl"
+      [class]="sizeClass"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="flex items-start justify-between">
+        <div>
+          <h2 class="text-xl font-bold text-gray-900">{{ heading }}</h2>
+          @if (subheading) {
+            <p class="mt-1 text-sm text-gray-500">{{ subheading }}</p>
+          }
+        </div>
+        <button
+          type="button"
+          (click)="close()"
+          class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+          aria-label="Cerrar"
+        >
+          <ion-icon name="close-outline" class="text-lg"></ion-icon>
+        </button>
+      </div>
+
+      <ng-content />
+    </div>
+  </div>
+}

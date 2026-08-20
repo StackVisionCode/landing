@@ -1,0 +1,53 @@
+<footer class="border-t border-gray-100 bg-white">
+  <div class="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+    <div class="grid grid-cols-1 gap-10 sm:grid-cols-3">
+      <div>
+        <a href="#" class="flex items-center gap-1.5">
+          <span class="text-2xl font-bold leading-none text-indigo-600">*</span>
+          <span class="text-lg font-bold tracking-tight text-gray-900">TaxPro Office</span>
+        </a>
+        <p class="mt-3 max-w-xs text-sm text-gray-500">{{ t().footerTagline }}</p>
+      </div>
+
+      <div>
+        <h3 class="text-sm font-bold text-gray-900">{{ t().footerNavigation }}</h3>
+        <ul class="mt-4 space-y-2">
+          <li><a href="#features" class="text-sm text-gray-500 hover:text-gray-900">{{ t().navFeatures }}</a></li>
+          <li><a href="#products" class="text-sm text-gray-500 hover:text-gray-900">{{ t().navProducts }}</a></li>
+          <li><a href="#pricing" class="text-sm text-gray-500 hover:text-gray-900">{{ t().navPricing }}</a></li>
+          <li><a href="#faq" class="text-sm text-gray-500 hover:text-gray-900">{{ t().navFaq }}</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h3 class="text-sm font-bold text-gray-900">{{ t().footerStayUpdated }}</h3>
+        <p class="mt-4 text-sm text-gray-500">{{ t().footerNewsletterSubtitle }}</p>
+        @if (subscribed()) {
+          <p class="mt-4 text-sm font-medium text-emerald-600">✓</p>
+        } @else {
+          <form (submit)="$event.preventDefault(); subscribe()" class="mt-4 flex gap-2">
+            <input
+              type="email"
+              [ngModel]="email()"
+              (ngModelChange)="email.set($event)"
+              name="email"
+              [placeholder]="t().footerNewsletterPlaceholder"
+              class="min-w-0 flex-1 rounded-xl border border-gray-200 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+            />
+            <button type="submit" class="shrink-0 rounded-full bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700">
+              {{ t().footerNewsletterButton }}
+            </button>
+          </form>
+        }
+      </div>
+    </div>
+
+    <div class="mt-12 flex flex-col items-center justify-between gap-4 border-t border-gray-100 pt-6 sm:flex-row">
+      <p class="text-xs text-gray-400">© {{ year }} TaxPro Office. {{ t().footerAllRightsReserved }}</p>
+      <div class="flex gap-4">
+        <a href="#" class="text-xs text-gray-400 hover:text-gray-900">{{ t().footerPrivacyPolicy }}</a>
+        <a href="#" class="text-xs text-gray-400 hover:text-gray-900">{{ t().footerTermsOfService }}</a>
+      </div>
+    </div>
+  </div>
+</footer>

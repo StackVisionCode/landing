@@ -1,0 +1,80 @@
+<section id="pricing" class="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+  <div class="mx-auto max-w-2xl text-center">
+    <span class="rounded-full border border-indigo-200 px-3 py-1 text-xs font-semibold text-indigo-600">{{ t().pricingBadge }}</span>
+    <h2 class="mt-4 text-3xl font-bold text-gray-900 sm:text-4xl">{{ t().pricingTitle }}</h2>
+  </div>
+
+  <div class="mt-8 flex items-center justify-center gap-3">
+    <span class="text-sm font-medium" [class.text-gray-900]="!isAnnual()" [class.text-gray-400]="isAnnual()">{{ t().monthlyLabel }}</span>
+    <button
+      type="button"
+      role="switch"
+      [attr.aria-checked]="isAnnual()"
+      (click)="isAnnual.set(!isAnnual())"
+      class="relative h-7 w-12 rounded-full bg-gray-900 transition-colors"
+    >
+      <span
+        class="absolute top-1 h-5 w-5 rounded-full bg-white transition-transform"
+        [class.translate-x-6]="isAnnual()"
+        [class.translate-x-1]="!isAnnual()"
+      ></span>
+    </button>
+    <span class="text-sm font-medium" [class.text-gray-900]="isAnnual()" [class.text-gray-400]="!isAnnual()">{{ t().annualLabel }}</span>
+  </div>
+
+  <div class="mt-12 grid grid-cols-1 gap-6 lg:grid-cols-3">
+    @for (tier of tiers(); track tier.copy.name) {
+      <div
+        class="relative flex flex-col rounded-[28px] p-6"
+        [class.bg-gray-900]="tier.highlighted"
+        [class.text-white]="tier.highlighted"
+        [class.bg-white]="!tier.highlighted"
+      >
+        @if (tier.highlighted) {
+          <span class="absolute -top-3 right-6 rounded-full bg-indigo-600 px-3 py-1 text-xs font-semibold text-white">
+            {{ t().mostPopularLabel }}
+          </span>
+        }
+
+        <h3 class="text-xl font-bold" [class.text-gray-900]="!tier.highlighted">{{ tier.copy.name }}</h3>
+        <p class="mt-2 text-sm" [class.text-gray-500]="!tier.highlighted" [class.text-gray-300]="tier.highlighted">
+          {{ tier.copy.description }}
+        </p>
+
+        <p class="mt-6 text-4xl font-bold" [class.text-gray-900]="!tier.highlighted">
+          ${{ priceFor(tier) }}
+          <span class="text-sm font-medium" [class.text-gray-400]="!tier.highlighted" [class.text-gray-300]="tier.highlighted">
+            / {{ isAnnual() ? t().annualLabel.toLowerCase() : t().monthlyLabel.toLowerCase() }}
+          </span>
+        </p>
+
+        <ul class="mt-6 flex-1 space-y-3">
+          @for (feature of tier.copy.features; track feature) {
+            <li class="flex items-start gap-2 text-sm" [class.text-gray-600]="!tier.highlighted" [class.text-gray-200]="tier.highlighted">
+              <ion-icon
+                name="checkmark-circle-outline"
+                class="mt-0.5 shrink-0 text-lg"
+                [class.text-emerald-500]="!tier.highlighted"
+                [class.text-emerald-400]="tier.highlighted"
+              ></ion-icon>
+              {{ feature }}
+            </li>
+          }
+        </ul>
+
+        <a
+          [href]="siteConfig.appUrl"
+          class="mt-8 block rounded-full px-5 py-2.5 text-center text-sm font-semibold transition-colors"
+          [class.bg-white]="tier.highlighted"
+          [class.text-gray-900]="tier.highlighted"
+          [class.hover:bg-gray-100]="tier.highlighted"
+          [class.bg-gray-900]="!tier.highlighted"
+          [class.text-white]="!tier.highlighted"
+          [class.hover:bg-gray-700]="!tier.highlighted"
+        >
+          {{ tier.ctaKey === 'startForFree' ? t().startForFree : t().reserveNow }}
+        </a>
+      </div>
+    }
+  </div>
+</section>

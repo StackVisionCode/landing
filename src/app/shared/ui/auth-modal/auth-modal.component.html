@@ -1,0 +1,226 @@
+<app-modal
+  [isOpen]="isOpen"
+  [heading]="activeTab() === 'login' ? t().authWelcomeBackTitle : t().authCreateAccountTitle"
+  [subheading]="activeTab() === 'login' ? t().authWelcomeBackSubtitle : t().authCreateAccountSubtitle"
+  size="md"
+  (closed)="close()"
+>
+  <div class="mt-6 flex gap-1 rounded-full bg-gray-100 p-1">
+    <button
+      type="button"
+      (click)="activeTab.set('login')"
+      class="flex-1 rounded-full px-4 py-2 text-sm font-semibold transition-colors"
+      [class.bg-white]="activeTab() === 'login'"
+      [class.text-gray-900]="activeTab() === 'login'"
+      [class.shadow-sm]="activeTab() === 'login'"
+      [class.text-gray-500]="activeTab() !== 'login'"
+    >
+      {{ t().authSignInTab }}
+    </button>
+    <button
+      type="button"
+      (click)="activeTab.set('register')"
+      class="flex-1 rounded-full px-4 py-2 text-sm font-semibold transition-colors"
+      [class.bg-white]="activeTab() === 'register'"
+      [class.text-gray-900]="activeTab() === 'register'"
+      [class.shadow-sm]="activeTab() === 'register'"
+      [class.text-gray-500]="activeTab() !== 'register'"
+    >
+      {{ t().authSignUpTab }}
+    </button>
+  </div>
+
+  @if (activeTab() === 'login') {
+    <form (submit)="$event.preventDefault(); submitLogin()" class="mt-6 space-y-4">
+      @if (loginError()) {
+        <p class="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-600">{{ loginError() }}</p>
+      }
+
+      <div>
+        <label class="mb-1.5 block text-sm font-medium text-gray-700">{{ t().authEmailLabel }}</label>
+        <input
+          type="email"
+          [ngModel]="loginEmail()"
+          (ngModelChange)="loginEmail.set($event)"
+          name="loginEmail"
+          [placeholder]="t().authEmailPlaceholder"
+          class="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+        />
+      </div>
+
+      <div>
+        <label class="mb-1.5 block text-sm font-medium text-gray-700">{{ t().authPasswordLabel }}</label>
+        <div class="relative">
+          <input
+            [type]="showLoginPassword() ? 'text' : 'password'"
+            [ngModel]="loginPassword()"
+            (ngModelChange)="loginPassword.set($event)"
+            name="loginPassword"
+            [placeholder]="t().authPasswordPlaceholder"
+            class="w-full rounded-xl border border-gray-200 px-3 py-2.5 pr-10 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+          />
+          <button
+            type="button"
+            (click)="showLoginPassword.set(!showLoginPassword())"
+            class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
+            aria-label="Toggle password visibility"
+          >
+            <ion-icon [name]="showLoginPassword() ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
+          </button>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between">
+        <label class="flex items-center gap-2 text-sm text-gray-600">
+          <input
+            type="checkbox"
+            [ngModel]="rememberMe()"
+            (ngModelChange)="rememberMe.set($event)"
+            name="rememberMe"
+            class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+          />
+          {{ t().authRememberMe }}
+        </label>
+        <button type="button" (click)="forgotPassword.emit()" class="text-sm font-medium text-indigo-600 hover:underline">
+          {{ t().authForgotPassword }}
+        </button>
+      </div>
+
+      <button type="submit" class="w-full rounded-full bg-gray-900 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-gray-700">
+        {{ t().authSignInButton }}
+      </button>
+    </form>
+  } @else {
+    <form (submit)="$event.preventDefault(); submitRegister()" class="mt-6 space-y-4">
+      @if (registerError()) {
+        <p class="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-600">{{ registerError() }}</p>
+      }
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="mb-1.5 block text-sm font-medium text-gray-700">{{ t().authFirstNameLabel }}</label>
+          <input
+            type="text"
+            [ngModel]="firstName()"
+            (ngModelChange)="firstName.set($event)"
+            name="firstName"
+            [placeholder]="t().authFirstNamePlaceholder"
+            class="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+          />
+        </div>
+        <div>
+          <label class="mb-1.5 block text-sm font-medium text-gray-700">{{ t().authLastNameLabel }}</label>
+          <input
+            type="text"
+            [ngModel]="lastName()"
+            (ngModelChange)="lastName.set($event)"
+            name="lastName"
+            [placeholder]="t().authLastNamePlaceholder"
+            class="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+          />
+        </div>
+      </div>
+
+      <div>
+        <label class="mb-1.5 block text-sm font-medium text-gray-700">{{ t().authEmailLabel }}</label>
+        <input
+          type="email"
+          [ngModel]="registerEmail()"
+          (ngModelChange)="registerEmail.set($event)"
+          name="registerEmail"
+          [placeholder]="t().authEmailPlaceholder"
+          class="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+        />
+      </div>
+
+      <div>
+        <label class="mb-1.5 block text-sm font-medium text-gray-700">{{ t().authCompanyNameLabel }}</label>
+        <input
+          type="text"
+          [ngModel]="companyName()"
+          (ngModelChange)="companyName.set($event)"
+          name="companyName"
+          [placeholder]="t().authCompanyNamePlaceholder"
+          class="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+        />
+      </div>
+
+      <div>
+        <label class="mb-1.5 block text-sm font-medium text-gray-700">{{ t().authPhoneLabel }}</label>
+        <input
+          type="tel"
+          [ngModel]="phoneNumber()"
+          (ngModelChange)="onPhoneChange($event)"
+          name="phoneNumber"
+          placeholder="(555) 123-4567"
+          maxlength="14"
+          class="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+        />
+      </div>
+
+      <div>
+        <label class="mb-1.5 block text-sm font-medium text-gray-700">{{ t().authPasswordLabel }}</label>
+        <div class="relative">
+          <input
+            [type]="showRegisterPassword() ? 'text' : 'password'"
+            [ngModel]="registerPassword()"
+            (ngModelChange)="registerPassword.set($event)"
+            name="registerPassword"
+            [placeholder]="t().authPasswordPlaceholder"
+            class="w-full rounded-xl border border-gray-200 px-3 py-2.5 pr-10 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+          />
+          <button
+            type="button"
+            (click)="showRegisterPassword.set(!showRegisterPassword())"
+            class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
+            aria-label="Toggle password visibility"
+          >
+            <ion-icon [name]="showRegisterPassword() ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <label class="mb-1.5 block text-sm font-medium text-gray-700">{{ t().authConfirmPasswordLabel }}</label>
+        <div class="relative">
+          <input
+            [type]="showConfirmPassword() ? 'text' : 'password'"
+            [ngModel]="confirmPassword()"
+            (ngModelChange)="confirmPassword.set($event)"
+            name="confirmPassword"
+            [placeholder]="t().authConfirmPasswordPlaceholder"
+            class="w-full rounded-xl border border-gray-200 px-3 py-2.5 pr-10 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+          />
+          <button
+            type="button"
+            (click)="showConfirmPassword.set(!showConfirmPassword())"
+            class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
+            aria-label="Toggle password visibility"
+          >
+            <ion-icon [name]="showConfirmPassword() ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
+          </button>
+        </div>
+      </div>
+
+      <label class="flex items-start gap-2 text-sm text-gray-600">
+        <input
+          type="checkbox"
+          [ngModel]="agreeToTerms()"
+          (ngModelChange)="agreeToTerms.set($event)"
+          name="agreeToTerms"
+          class="mt-0.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+        />
+        <span>
+          {{ t().authAgreeTermsPrefix }}
+          <a href="#" class="text-indigo-600 hover:underline">{{ t().authTermsLink }}</a>
+          {{ t().authAgreeTermsAnd }}
+          <a href="#" class="text-indigo-600 hover:underline">{{ t().authPrivacyLink }}</a>
+        </span>
+      </label>
+
+      <button type="submit" class="w-full rounded-full bg-gray-900 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-gray-700">
+        {{ t().authCreateAccountButton }}
+      </button>
+    </form>
+  }
+</app-modal>

@@ -1,0 +1,12 @@
+<app-modal [isOpen]="isOpen" [heading]="heading" size="lg" (closed)="onClosed()">
+  <div class="relative mt-4 h-[550px]">
+    @if (calendarUrl) {
+      <iframe
+        [src]="calendarUrl"
+        class="h-full w-full border-0"
+        allow="camera; microphone; autoplay; encryption; blurred-background"
+        loading="lazy"
+      ></iframe>
+    }
+  </div>
+</app-modal>
