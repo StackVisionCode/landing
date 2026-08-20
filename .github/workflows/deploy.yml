@@ -24,7 +24,7 @@ jobs:
       - name: (Re)start landing
         run: |
           docker rm -f taxvision-landing 2>/dev/null || true
-          docker run -d --name taxvision-landing --restart unless-stopped -p 127.0.0.1:80:80 taxvision-landing:latest
+          docker run -d --name taxvision-landing --restart unless-stopped -p ${{ secrets.FRONTEND_BIND_IP }}:80:80 taxvision-landing:latest
 
       - name: Prune old images
         run: docker image prune -f
