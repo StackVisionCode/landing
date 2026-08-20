@@ -1,0 +1,13 @@
+node_modules
+dist
+.angular
+.git
+.github
+.vscode
+.idea
+out-tsc
+coverage
+*.log
+.DS_Store
+Thumbs.db
+README.md

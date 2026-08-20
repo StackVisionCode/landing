@@ -1,0 +1,30 @@
+name: Deploy landing
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Un deploy a la vez; si llega otro push, se encola (no choca con el CRM: es otro workflow).
+concurrency:
+  group: deploy-landing
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build image
+        run: docker build -t taxvision-landing:latest .
+
+      # Nombre y puerto propios (8083) -> no choca con taxvision-crm (8081) en el mismo server.
+      # Bind a 127.0.0.1: solo el cloudflared local (el tunnel) lo alcanza, nada desde afuera.
+      - name: (Re)start container on :8083
+        run: |
+          docker rm -f taxvision-landing 2>/dev/null || true
+          docker run -d --name taxvision-landing --restart unless-stopped -p 127.0.0.1:8083:80 taxvision-landing:latest
+
+      - name: Prune old images
+        run: docker image prune -f
