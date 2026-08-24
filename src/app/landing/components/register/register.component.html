@@ -1,0 +1,220 @@
+<div class="flex min-h-screen flex-col bg-gray-50">
+  <header class="border-b border-gray-100 bg-white/90 backdrop-blur-sm">
+    <div class="mx-auto flex h-16 max-w-7xl items-center px-4 sm:px-6 lg:px-8">
+      <a routerLink="/" class="flex items-center gap-1.5">
+        <span class="text-2xl font-bold leading-none text-brand-800">*</span>
+        <span class="text-lg font-bold tracking-tight text-gray-900">TaxPro Office</span>
+      </a>
+    </div>
+  </header>
+
+  <main class="flex flex-1 items-center justify-center p-4 sm:p-6">
+    <div class="w-full max-w-md">
+      @switch (step()) {
+        @case ('loading') {
+          <div class="flex flex-col items-center gap-3 py-10 text-center">
+            <div class="h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-brand-800"></div>
+            <p class="text-sm text-gray-500">{{ t().pricingLoading }}</p>
+          </div>
+        }
+
+        @case ('invalid-plan') {
+          <div class="rounded-[28px] bg-white p-8 text-center shadow-xl">
+            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-50">
+              <ion-icon name="alert-circle-outline" class="text-2xl text-red-600"></ion-icon>
+            </div>
+            <h1 class="mt-6 text-xl font-bold text-gray-900">{{ t().regInvalidPlanTitle }}</h1>
+            <p class="mt-2 text-sm text-gray-600">{{ t().regInvalidPlanBody }}</p>
+            <a
+              routerLink="/"
+              fragment="pricing"
+              class="mt-6 block w-full rounded-full bg-gray-900 py-2.5 text-center text-sm font-semibold text-white transition-colors hover:bg-gray-700"
+            >
+              {{ t().regBackToPricing }}
+            </a>
+          </div>
+        }
+
+        @case ('contact') {
+          <div class="rounded-[28px] bg-white p-8 shadow-xl">
+            @if (plan(); as p) {
+              <div class="mx-auto flex max-w-fit items-center gap-2 rounded-full border border-brand-200 bg-brand-50 px-3 py-1">
+                <span class="text-xs font-semibold text-brand-800">{{ t().regPlanBadge }}:</span>
+                <span class="text-xs font-semibold text-gray-900">{{ p.name }} — ${{ planPrice }}</span>
+              </div>
+            }
+
+            <h1 class="mt-4 text-center text-2xl font-bold text-gray-900">{{ t().regStep1Title }}</h1>
+            <p class="mt-2 text-center text-sm text-gray-600">{{ t().regStep1Subtitle }}</p>
+
+            @if (showCancelledNotice()) {
+              <p class="mt-4 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-700">{{ t().regCancelledNotice }}</p>
+            }
+
+            <form (submit)="$event.preventDefault(); submitContact()" class="mt-6 space-y-4">
+              @if (contactError()) {
+                <p class="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-600">{{ contactError() }}</p>
+              }
+
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="mb-1.5 block text-sm font-medium text-gray-700">{{ t().authFirstNameLabel }}</label>
+                  <input
+                    type="text"
+                    [ngModel]="firstName()"
+                    (ngModelChange)="firstName.set($event)"
+                    name="firstName"
+                    [placeholder]="t().authFirstNamePlaceholder"
+                    [disabled]="isSendingCode()"
+                    class="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/30 disabled:opacity-50"
+                  />
+                </div>
+                <div>
+                  <label class="mb-1.5 block text-sm font-medium text-gray-700">{{ t().authLastNameLabel }}</label>
+                  <input
+                    type="text"
+                    [ngModel]="lastName()"
+                    (ngModelChange)="lastName.set($event)"
+                    name="lastName"
+                    [placeholder]="t().authLastNamePlaceholder"
+                    [disabled]="isSendingCode()"
+                    class="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/30 disabled:opacity-50"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label class="mb-1.5 block text-sm font-medium text-gray-700">{{ t().authEmailLabel }}</label>
+                <input
+                  type="email"
+                  [ngModel]="email()"
+                  (ngModelChange)="email.set($event)"
+                  name="email"
+                  [placeholder]="t().authEmailPlaceholder"
+                  [disabled]="isSendingCode()"
+                  class="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/30 disabled:opacity-50"
+                />
+              </div>
+
+              <div>
+                <label class="mb-1.5 block text-sm font-medium text-gray-700">{{ t().authPhoneLabel }}</label>
+                <input
+                  type="tel"
+                  [ngModel]="phone()"
+                  (ngModelChange)="phone.set($event)"
+                  name="phone"
+                  [disabled]="isSendingCode()"
+                  class="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/30 disabled:opacity-50"
+                />
+              </div>
+
+              <button
+                type="submit"
+                [disabled]="isSendingCode()"
+                class="w-full rounded-full bg-gray-900 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {{ isSendingCode() ? t().regSendingCode : t().regContinueButton }}
+              </button>
+            </form>
+          </div>
+        }
+
+        @case ('otp') {
+          <div class="rounded-[28px] bg-white p-8 shadow-xl">
+            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-brand-50">
+              <ion-icon name="mail-outline" class="text-2xl text-brand-800"></ion-icon>
+            </div>
+
+            <h1 class="mt-6 text-center text-2xl font-bold text-gray-900">{{ t().regOtpTitle }}</h1>
+            <p class="mt-2 text-center text-sm text-gray-600">{{ t().regOtpSubtitle }} <strong>{{ email() }}</strong></p>
+
+            <form (submit)="$event.preventDefault(); verifyOtp()" class="mt-6 space-y-4">
+              @if (otpError()) {
+                <p class="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-600">{{ otpError() }}</p>
+              }
+
+              <div>
+                <label class="mb-1.5 block text-sm font-medium text-gray-700">{{ t().regOtpLabel }}</label>
+                <input
+                  type="text"
+                  inputmode="numeric"
+                  [ngModel]="otp()"
+                  (ngModelChange)="onOtpInput($event)"
+                  name="otp"
+                  maxlength="6"
+                  [disabled]="isVerifying()"
+                  placeholder="000000"
+                  class="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-center text-lg font-semibold tracking-[0.3em] focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/30 disabled:opacity-50"
+                />
+                <p class="mt-1.5 text-xs text-gray-500">
+                  @if (otpSecondsLeft() > 0) {
+                    {{ t().regOtpExpires }} {{ otpTimerDisplay }}
+                  } @else {
+                    {{ t().regOtpExpired }}
+                  }
+                </p>
+              </div>
+
+              <button
+                type="submit"
+                [disabled]="isVerifying() || isResending()"
+                class="w-full rounded-full bg-gray-900 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {{ isVerifying() ? t().regVerifying : t().regVerifyButton }}
+              </button>
+
+              <button
+                type="button"
+                (click)="resendOtp()"
+                [disabled]="isResending() || isVerifying()"
+                class="w-full rounded-full border border-gray-200 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {{ isResending() ? t().regSendingOtp : t().regResendCode }}
+              </button>
+            </form>
+          </div>
+        }
+
+        @case ('processing') {
+          <div class="flex flex-col items-center gap-4 rounded-[28px] bg-white p-10 text-center shadow-xl">
+            <div class="h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-brand-800"></div>
+            <p class="text-sm font-medium text-gray-700">{{ processingMessage() }}</p>
+          </div>
+        }
+
+        @case ('no-payment') {
+          <div class="rounded-[28px] bg-white p-8 text-center shadow-xl">
+            <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-50">
+              <ion-icon name="checkmark-circle-outline" class="text-3xl text-green-600"></ion-icon>
+            </div>
+            <h1 class="mt-6 text-2xl font-bold text-gray-900">{{ t().regNoPaymentTitle }}</h1>
+            <p class="mt-2 text-sm text-gray-600">{{ t().regNoPaymentBody }}</p>
+            <a
+              routerLink="/"
+              class="mt-6 block w-full rounded-full bg-gray-900 py-2.5 text-center text-sm font-semibold text-white transition-colors hover:bg-gray-700"
+            >
+              {{ t().fpBackHome }}
+            </a>
+          </div>
+        }
+
+        @case ('error') {
+          <div class="rounded-[28px] bg-white p-8 text-center shadow-xl">
+            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-50">
+              <ion-icon name="alert-circle-outline" class="text-2xl text-red-600"></ion-icon>
+            </div>
+            <h1 class="mt-6 text-xl font-bold text-gray-900">{{ t().regErrorTitle }}</h1>
+            <p class="mt-2 text-sm text-gray-600">{{ errorMessage() }}</p>
+            <button
+              type="button"
+              (click)="backToContact()"
+              class="mt-6 w-full rounded-full bg-gray-900 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-gray-700"
+            >
+              {{ t().regTryAgainButton }}
+            </button>
+          </div>
+        }
+      }
+    </div>
+  </main>
+</div>

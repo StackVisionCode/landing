@@ -9,6 +9,17 @@ export const serverRoutes: ServerRoute[] = [
     renderMode: RenderMode.Client
   },
   {
+    // Lee ?plan=&cycle= reales de la navegación desde /precios — mismo motivo
+    // que reset-password, el estado inicial depende de query params en runtime.
+    path: 'register',
+    renderMode: RenderMode.Client
+  },
+  {
+    // Lee ?token=RegistrationToken real del link del correo de registro.
+    path: 'register/complete',
+    renderMode: RenderMode.Client
+  },
+  {
     path: '**',
     renderMode: RenderMode.Prerender
   }

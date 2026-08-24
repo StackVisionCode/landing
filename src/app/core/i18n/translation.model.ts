@@ -1,11 +1,5 @@
 export type Lang = 'es' | 'en';
 
-export interface PricingTierCopy {
-  name: string;
-  description: string;
-  features: string[];
-}
-
 export interface TranslationKeys {
   // Navbar
   navFeatures: string;
@@ -59,11 +53,10 @@ export interface TranslationKeys {
   monthlyLabel: string;
   annualLabel: string;
   mostPopularLabel: string;
-  startForFree: string;
   reserveNow: string;
-  planFree: PricingTierCopy;
-  planStandard: PricingTierCopy;
-  planPro: PricingTierCopy;
+  pricingLoading: string;
+  pricingError: string;
+  pricingRetry: string;
 
   // FAQ
   faqSidebarTitleHtml: string;
@@ -173,4 +166,77 @@ export interface TranslationKeys {
   rpGoToLogin: string;
   rpRedirectNotice: string;
   rpInvalidLink: string;
+
+  // Registro / onboarding (pago primero) — página /register
+  regInvalidPlanTitle: string;
+  regInvalidPlanBody: string;
+  regBackToPricing: string;
+  regPlanBadge: string;
+  regStep1Title: string;
+  regStep1Subtitle: string;
+  regContinueButton: string;
+  regSendingCode: string;
+  regCancelledNotice: string;
+  regOtpTitle: string;
+  regOtpSubtitle: string;
+  regOtpLabel: string;
+  regOtpExpires: string;
+  regOtpExpired: string;
+  regOtpErrorLength: string;
+  regOtpMismatch: string;
+  regOtpLocked: string;
+  regOtpRateLimited: string;
+  regResendCooldown: string;
+  regResendLimitExceeded: string;
+  regVerifyButton: string;
+  regVerifying: string;
+  regResendCode: string;
+  regSendingOtp: string;
+  regCreatingAccount: string;
+  regPreparingPayment: string;
+  regRedirectingPayment: string;
+  regNoPaymentTitle: string;
+  regNoPaymentBody: string;
+  regErrorGeneric: string;
+  regErrorTitle: string;
+  regTryAgainButton: string;
+  payReceivedTitle: string;
+  payReceivedBody: string;
+
+  // Registro / onboarding — página /register/complete
+  compLoadingTitle: string;
+  compInvalidTitle: string;
+  compInvalidBody: string;
+  compWelcomeSubtitlePrefix: string;
+  compOfficeNameLabel: string;
+  compOfficeNamePlaceholder: string;
+  compSubdomainLabel: string;
+  compSubdomainSuffix: string;
+  compSubdomainChecking: string;
+  compSubdomainAvailable: string;
+  compSubdomainTaken: string;
+  compSubdomainInvalid: string;
+  compSubdomainReserved: string;
+  compPasswordHint: string;
+  compTermsPrefix: string;
+  compTermsLinkLabel: string;
+  compTermsModalTitle: string;
+  compTermsLoading: string;
+  compSubmitButton: string;
+  compSubmitting: string;
+  compProvisioningTitle: string;
+  compProvisioningBody: string;
+  compCompletedTitle: string;
+  compCompletedBody: string;
+  compGoToOffice: string;
+  compFailedTitle: string;
+  compFailedBody: string;
+  compManualReviewTitle: string;
+  compManualReviewBody: string;
+  compErrorRequiredFields: string;
+  compErrorPasswordMismatch: string;
+  compErrorPasswordLength: string;
+  compErrorTermsRequired: string;
+  compErrorSubdomainRequired: string;
+  compErrorSubdomainNotAvailable: string;
 }
