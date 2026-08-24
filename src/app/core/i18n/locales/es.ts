@@ -9,9 +9,9 @@ export const es: TranslationKeys = {
   navGoToApp: 'Ir a la App',
 
   heroBadge: 'Gestión de oficina, simplificada',
-  heroTitle: 'Cada Cliente. Toda tu Oficina, Bajo Control.',
+  heroTitle: 'Cada Cliente. Cada Plazo. Bajo Control.',
   heroDescription:
-    'Software todo-en-uno que simplifica tu trabajo, protege tus datos y escala tu negocio. Gestiona clientes, automatiza procesos y aumenta tu productividad.',
+    'Centraliza clientes, documentos y cobros de tu oficina fiscal, protegidos y listos para crecer.',
   heroCtaPrimary: 'Comenzar Ahora',
   heroCtaSecondary: 'Programar Demo',
 

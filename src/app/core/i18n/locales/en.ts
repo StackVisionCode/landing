@@ -9,9 +9,9 @@ export const en: TranslationKeys = {
   navGoToApp: 'Go to App',
 
   heroBadge: 'Office management, simplified',
-  heroTitle: 'Every Client. Your Whole Office, Under Control.',
+  heroTitle: 'Every Client. Every Deadline. Under Control.',
   heroDescription:
-    'All-in-one software that simplifies your work, protects your data, and scales your business. Manage clients, automate processes, and boost your productivity.',
+    'Centralize clients, documents, and payments for your tax office — secure, organized, and ready to grow.',
   heroCtaPrimary: 'Start Now',
   heroCtaSecondary: 'Schedule Demo',
 
