@@ -202,6 +202,11 @@ export interface TranslationKeys {
   regTryAgainButton: string;
   payReceivedTitle: string;
   payReceivedBody: string;
+  regHaveCodeToggle: string;
+  regReferralCodeLabel: string;
+  regPromoCodeLabel: string;
+  regGiftCodeLabel: string;
+  regDiscountApplied: string;
 
   // Registro / onboarding — página /register/complete
   compLoadingTitle: string;

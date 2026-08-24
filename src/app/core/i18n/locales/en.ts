@@ -195,6 +195,11 @@ export const en: TranslationKeys = {
   regTryAgainButton: 'Try again',
   payReceivedTitle: 'Payment received!',
   payReceivedBody: "We've sent you an email with the link to finish setting up your office. Check your inbox (and spam folder).",
+  regHaveCodeToggle: 'Have a referral, promo, or gift code?',
+  regReferralCodeLabel: 'Referral code (optional)',
+  regPromoCodeLabel: 'Promo code (optional)',
+  regGiftCodeLabel: 'Gift code (optional)',
+  regDiscountApplied: 'Your code covered the full cost.',
 
   compLoadingTitle: 'Loading your invitation...',
   compInvalidTitle: 'This link is no longer valid',

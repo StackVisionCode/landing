@@ -44,6 +44,19 @@ export class RegisterComponent implements OnInit, OnDestroy {
   protected readonly isSendingCode = signal(false);
   protected readonly contactError = signal('');
 
+  // Códigos opcionales de Gift/Referral (StartOnboardingCheckoutCommand) — se
+  // guardan acá porque se piden en el mismo paso que el resto de los datos de
+  // contacto, pero solo se usan más tarde en startCheckout(), tras el OTP.
+  protected readonly showCodeFields = signal(false);
+  protected readonly referralCode = signal('');
+  protected readonly promoCode = signal('');
+  protected readonly giftCode = signal('');
+
+  // No-null cuando el checkout resultó fullyCovered — solo se usa para mostrar
+  // el aviso de "tu código cubrió el costo completo" (netAmountCents es 0 por
+  // definición en ese caso, no hace falta guardarlo aparte).
+  protected readonly discountAmountCents = signal<number | null>(null);
+
   protected readonly otp = signal('');
   private challengeId = '';
   protected readonly isVerifying = signal(false);
@@ -219,10 +232,14 @@ export class RegisterComponent implements OnInit, OnDestroy {
         payerEmail: this.email(),
         successUrl: `${origin}/register/payment-received`,
         cancelUrl: `${origin}/register?plan=${plan?.id ?? ''}&cycle=${this.cycle()}&cancelled=1`,
+        referralCode: this.referralCode().trim() || undefined,
+        promoCode: this.promoCode().trim() || undefined,
+        giftCode: this.giftCode().trim() || undefined,
       })
       .subscribe({
         next: (res) => {
           if (res.fullyCovered) {
+            this.discountAmountCents.set(res.discountAmountCents ?? null);
             this.step.set('no-payment');
             return;
           }

@@ -124,6 +124,55 @@
                 />
               </div>
 
+              <div>
+                <button
+                  type="button"
+                  (click)="showCodeFields.set(!showCodeFields())"
+                  class="flex items-center gap-1.5 text-sm font-medium text-brand-800 hover:text-brand-600"
+                >
+                  <ion-icon [name]="showCodeFields() ? 'chevron-up-outline' : 'pricetag-outline'" class="text-base"></ion-icon>
+                  {{ t().regHaveCodeToggle }}
+                </button>
+
+                @if (showCodeFields()) {
+                  <div class="mt-3 space-y-3 rounded-xl bg-gray-50 p-3">
+                    <div>
+                      <label class="mb-1 block text-xs font-medium text-gray-600">{{ t().regReferralCodeLabel }}</label>
+                      <input
+                        type="text"
+                        [ngModel]="referralCode()"
+                        (ngModelChange)="referralCode.set($event)"
+                        name="referralCode"
+                        [disabled]="isSendingCode()"
+                        class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/30 disabled:opacity-50"
+                      />
+                    </div>
+                    <div>
+                      <label class="mb-1 block text-xs font-medium text-gray-600">{{ t().regPromoCodeLabel }}</label>
+                      <input
+                        type="text"
+                        [ngModel]="promoCode()"
+                        (ngModelChange)="promoCode.set($event)"
+                        name="promoCode"
+                        [disabled]="isSendingCode()"
+                        class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/30 disabled:opacity-50"
+                      />
+                    </div>
+                    <div>
+                      <label class="mb-1 block text-xs font-medium text-gray-600">{{ t().regGiftCodeLabel }}</label>
+                      <input
+                        type="text"
+                        [ngModel]="giftCode()"
+                        (ngModelChange)="giftCode.set($event)"
+                        name="giftCode"
+                        [disabled]="isSendingCode()"
+                        class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/30 disabled:opacity-50"
+                      />
+                    </div>
+                  </div>
+                }
+              </div>
+
               <button
                 type="submit"
                 [disabled]="isSendingCode()"
@@ -205,6 +254,11 @@
             </div>
             <h1 class="mt-6 text-2xl font-bold text-gray-900">{{ t().regNoPaymentTitle }}</h1>
             <p class="mt-2 text-sm text-gray-600">{{ t().regNoPaymentBody }}</p>
+            @if (discountAmountCents(); as discount) {
+              <p class="mt-3 rounded-xl bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700">
+                {{ t().regDiscountApplied }}
+              </p>
+            }
             <a
               routerLink="/"
               class="mt-6 block w-full rounded-full bg-gray-900 py-2.5 text-center text-sm font-semibold text-white transition-colors hover:bg-gray-700"

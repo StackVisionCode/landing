@@ -196,6 +196,11 @@ export const es: TranslationKeys = {
   regTryAgainButton: 'Intentar de nuevo',
   payReceivedTitle: '¡Pago recibido!',
   payReceivedBody: 'Te enviamos un correo con el enlace para completar el registro de tu oficina. Revisa tu bandeja de entrada (y spam).',
+  regHaveCodeToggle: '¿Tienes un código de referido, promoción o regalo?',
+  regReferralCodeLabel: 'Código de referido (opcional)',
+  regPromoCodeLabel: 'Código de promoción (opcional)',
+  regGiftCodeLabel: 'Código de regalo (opcional)',
+  regDiscountApplied: 'Tu código cubrió el costo completo.',
 
   compLoadingTitle: 'Cargando tu invitación...',
   compInvalidTitle: 'Este enlace ya no es válido',
