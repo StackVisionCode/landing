@@ -199,7 +199,13 @@ export const es: TranslationKeys = {
 
   compLoadingTitle: 'Cargando tu invitación...',
   compInvalidTitle: 'Este enlace ya no es válido',
-  compInvalidBody: 'El enlace expiró o ya fue usado. Solicita uno nuevo desde la página de precios.',
+  compInvalidBody: 'No pudimos verificar este enlace. Elige tu plan de nuevo para recibir uno nuevo.',
+  compInvalidUsedTitle: 'Ya completaste tu registro',
+  compInvalidUsedBody: 'Este enlace ya fue usado para activar tu oficina. Inicia sesión en tu cuenta.',
+  compGoToLogin: 'Ir a iniciar sesión',
+  compInvalidExpiredTitle: 'Tu enlace expiró',
+  compInvalidExpiredBody:
+    'Tu pago ya se procesó — no necesitas pagar de nuevo. El enlace para completar el registro venció; escríbenos y te enviamos uno nuevo.',
   compWelcomeSubtitlePrefix: 'Estás a un paso de activar tu plan',
   compOfficeNameLabel: 'Nombre de tu oficina',
   compOfficeNamePlaceholder: 'Mi Oficina de Impuestos',
@@ -232,4 +238,5 @@ export const es: TranslationKeys = {
   compErrorTermsRequired: 'Debes aceptar los Términos de Servicio',
   compErrorSubdomainRequired: 'Elige un subdominio disponible antes de continuar',
   compErrorSubdomainNotAvailable: 'Ese subdominio no está disponible — elige otro',
+  compErrorPasswordPolicy: 'Esa contraseña no cumple los requisitos — evita contraseñas comunes o usar tu correo.',
 };

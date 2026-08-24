@@ -207,6 +207,11 @@ export interface TranslationKeys {
   compLoadingTitle: string;
   compInvalidTitle: string;
   compInvalidBody: string;
+  compInvalidUsedTitle: string;
+  compInvalidUsedBody: string;
+  compGoToLogin: string;
+  compInvalidExpiredTitle: string;
+  compInvalidExpiredBody: string;
   compWelcomeSubtitlePrefix: string;
   compOfficeNameLabel: string;
   compOfficeNamePlaceholder: string;
@@ -239,4 +244,5 @@ export interface TranslationKeys {
   compErrorTermsRequired: string;
   compErrorSubdomainRequired: string;
   compErrorSubdomainNotAvailable: string;
+  compErrorPasswordPolicy: string;
 }

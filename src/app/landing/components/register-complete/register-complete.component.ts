@@ -3,11 +3,20 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslationStore } from '@core/i18n/translation.store';
 import { OnboardingService } from '@core/onboarding/onboarding.service';
+import { SITE_CONFIG } from '@core/config/site-config';
 import { apiErrorCode } from '@core/onboarding/onboarding-error.util';
 import type { OnboardingStatusValue } from '@core/onboarding/onboarding.models';
 
 type CompleteStep = 'loading' | 'invalid' | 'form' | 'provisioning' | 'completed' | 'failed' | 'manual-review';
 type SubdomainStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid' | 'reserved';
+// El backend distingue 3 motivos bajo el mismo "token inválido" (API_Contract.md
+// §2.7/§2.8) — colapsarlos en un solo mensaje genérico es engañoso: a alguien con
+// TokenUsed ya se le cobró y terminó el registro (necesita loguearse, no pagar de
+// nuevo); a alguien con TokenExpired también se le cobró pero el link venció antes
+// de completar el form (no hay endpoint de reenvío todavía — no hay que insinuar
+// que pague otra vez); solo InvalidToken (o falta de token) es un link genuinamente
+// nunca válido, donde sí tiene sentido mandar de vuelta a elegir plan.
+type InvalidReason = 'no-token' | 'used' | 'expired' | 'generic';
 
 const SUBDOMAIN_DEBOUNCE_MS = 500;
 const POLL_INTERVAL_MS = 2500;
@@ -42,6 +51,8 @@ export class RegisterCompleteComponent implements OnInit, OnDestroy {
   protected readonly t = this.translation.t;
 
   protected readonly step = signal<CompleteStep>('loading');
+  protected readonly invalidReason = signal<InvalidReason>('generic');
+  protected readonly appUrl = SITE_CONFIG.appUrl;
   protected readonly firstName = signal('');
   protected readonly planName = signal<string | null>(null);
   protected readonly maskedEmail = signal('');
@@ -78,6 +89,7 @@ export class RegisterCompleteComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.token = this.route.snapshot.queryParamMap.get('token') || '';
     if (!this.token) {
+      this.invalidReason.set('no-token');
       this.step.set('invalid');
       return;
     }
@@ -190,8 +202,17 @@ export class RegisterCompleteComponent implements OnInit, OnDestroy {
         this.maskedEmail.set(preview.maskedEmail);
         this.loadTerms();
       },
-      error: () => this.step.set('invalid'),
+      error: (err) => {
+        this.invalidReason.set(this.mapInvalidReason(apiErrorCode(err)));
+        this.step.set('invalid');
+      },
     });
+  }
+
+  private mapInvalidReason(code: string | null): InvalidReason {
+    if (code === 'Onboarding.TokenUsed') return 'used';
+    if (code === 'Onboarding.TokenExpired') return 'expired';
+    return 'generic';
   }
 
   private loadTerms(): void {
@@ -236,7 +257,12 @@ export class RegisterCompleteComponent implements OnInit, OnDestroy {
       return;
     }
     if (code === 'Onboarding.InvalidToken' || code === 'Onboarding.TokenUsed' || code === 'Onboarding.TokenExpired') {
+      this.invalidReason.set(this.mapInvalidReason(code));
       this.step.set('invalid');
+      return;
+    }
+    if (code === 'User.Password') {
+      this.formError.set(this.t().compErrorPasswordPolicy);
       return;
     }
     this.formError.set(this.t().compFailedBody);

@@ -198,7 +198,13 @@ export const en: TranslationKeys = {
 
   compLoadingTitle: 'Loading your invitation...',
   compInvalidTitle: 'This link is no longer valid',
-  compInvalidBody: 'The link expired or was already used. Request a new one from the pricing page.',
+  compInvalidBody: "We couldn't verify this link. Pick your plan again to get a new one.",
+  compInvalidUsedTitle: "You've already completed your signup",
+  compInvalidUsedBody: 'This link was already used to activate your office. Sign in to your account instead.',
+  compGoToLogin: 'Go to sign in',
+  compInvalidExpiredTitle: 'Your link expired',
+  compInvalidExpiredBody:
+    "Your payment already went through — you don't need to pay again. The link to finish setting up your office expired; reach out and we'll send you a new one.",
   compWelcomeSubtitlePrefix: "You're one step away from activating your",
   compOfficeNameLabel: 'Your office name',
   compOfficeNamePlaceholder: 'My Tax Office',
@@ -231,4 +237,5 @@ export const en: TranslationKeys = {
   compErrorTermsRequired: 'You must accept the Terms of Service',
   compErrorSubdomainRequired: 'Choose an available subdomain before continuing',
   compErrorSubdomainNotAvailable: 'That subdomain is not available — pick another one',
+  compErrorPasswordPolicy: "That password doesn't meet our requirements — avoid common passwords or using your email.",
 };

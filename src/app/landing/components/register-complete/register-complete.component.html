@@ -20,18 +20,42 @@
 
         @case ('invalid') {
           <div class="rounded-[28px] bg-white p-8 text-center shadow-xl">
-            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-50">
-              <ion-icon name="alert-circle-outline" class="text-2xl text-red-600"></ion-icon>
-            </div>
-            <h1 class="mt-6 text-xl font-bold text-gray-900">{{ t().compInvalidTitle }}</h1>
-            <p class="mt-2 text-sm text-gray-600">{{ t().compInvalidBody }}</p>
-            <a
-              routerLink="/"
-              fragment="pricing"
-              class="mt-6 block w-full rounded-full bg-gray-900 py-2.5 text-center text-sm font-semibold text-white transition-colors hover:bg-gray-700"
-            >
-              {{ t().regBackToPricing }}
-            </a>
+            @switch (invalidReason()) {
+              @case ('used') {
+                <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-brand-50">
+                  <ion-icon name="checkmark-circle-outline" class="text-2xl text-brand-800"></ion-icon>
+                </div>
+                <h1 class="mt-6 text-xl font-bold text-gray-900">{{ t().compInvalidUsedTitle }}</h1>
+                <p class="mt-2 text-sm text-gray-600">{{ t().compInvalidUsedBody }}</p>
+                <a
+                  [href]="appUrl"
+                  class="mt-6 block w-full rounded-full bg-gray-900 py-2.5 text-center text-sm font-semibold text-white transition-colors hover:bg-gray-700"
+                >
+                  {{ t().compGoToLogin }}
+                </a>
+              }
+              @case ('expired') {
+                <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-amber-50">
+                  <ion-icon name="time-outline" class="text-2xl text-amber-600"></ion-icon>
+                </div>
+                <h1 class="mt-6 text-xl font-bold text-gray-900">{{ t().compInvalidExpiredTitle }}</h1>
+                <p class="mt-2 text-sm text-gray-600">{{ t().compInvalidExpiredBody }}</p>
+              }
+              @default {
+                <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-50">
+                  <ion-icon name="alert-circle-outline" class="text-2xl text-red-600"></ion-icon>
+                </div>
+                <h1 class="mt-6 text-xl font-bold text-gray-900">{{ t().compInvalidTitle }}</h1>
+                <p class="mt-2 text-sm text-gray-600">{{ t().compInvalidBody }}</p>
+                <a
+                  routerLink="/"
+                  fragment="pricing"
+                  class="mt-6 block w-full rounded-full bg-gray-900 py-2.5 text-center text-sm font-semibold text-white transition-colors hover:bg-gray-700"
+                >
+                  {{ t().regBackToPricing }}
+                </a>
+              }
+            }
           </div>
         }
 
