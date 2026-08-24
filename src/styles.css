@@ -6,3 +6,94 @@
 .highlight {
   color: #1e466b;
 }
+
+/* El CTA de cierre (cta.component.css) tiene fondo oscuro — el mismo Bold
+   Blue de arriba queda invisible ahí (azul oscuro sobre fondo oscuro).
+   Se sobreescribe solo dentro de .cta-banner-bg con el Light Blue de marca,
+   que sí contrasta. El resto de los usos de .highlight (features/productos/
+   cómo-funciona/FAQ) son sobre fondo claro y no se tocan. */
+.cta-banner-bg .highlight {
+  color: #67baf4;
+}
+
+/* ============================================
+   Fondo "fluido" del panel de marca (register/register-complete) — blobs
+   de gradiente que cambian de forma y posición sin parar. Adaptado de
+   TaxVsion_Front (login-page.component), mismo diseño de marca — ahí el
+   movimiento se pausa/reanuda con isTyping() del formulario de login; acá
+   el panel es un fondo persistente a través de varios pasos (no solo un
+   formulario con foco), así que corre siempre, sin gate, y a un ritmo más
+   lento (6-8s en vez de 3.5-5s) para que no canse en pantallas donde el
+   usuario se queda más tiempo (ej. llenando el form completo).
+   ============================================ */
+.fluid-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  pointer-events: none;
+  will-change: transform, border-radius;
+}
+
+.fluid-blob-1 {
+  animation: fluid-morph-1 7s ease-in-out infinite;
+}
+
+.fluid-blob-2 {
+  animation: fluid-morph-2 8.5s ease-in-out infinite;
+}
+
+.fluid-blob-3 {
+  animation: fluid-morph-3 6s ease-in-out infinite;
+}
+
+@keyframes fluid-morph-1 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+    border-radius: 60% 40% 55% 45% / 55% 60% 40% 45%;
+  }
+  33% {
+    transform: translate(40px, 30px) scale(1.15);
+    border-radius: 45% 55% 40% 60% / 60% 45% 55% 40%;
+  }
+  66% {
+    transform: translate(-20px, 50px) scale(0.95);
+    border-radius: 55% 45% 60% 40% / 40% 55% 45% 60%;
+  }
+}
+
+@keyframes fluid-morph-2 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+    border-radius: 50% 50% 45% 55% / 55% 45% 55% 45%;
+  }
+  33% {
+    transform: translate(-50px, -30px) scale(1.2);
+    border-radius: 40% 60% 55% 45% / 45% 55% 40% 60%;
+  }
+  66% {
+    transform: translate(25px, -45px) scale(1.05);
+    border-radius: 60% 40% 45% 55% / 55% 60% 45% 40%;
+  }
+}
+
+@keyframes fluid-morph-3 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+    border-radius: 55% 45% 50% 50% / 50% 55% 45% 50%;
+  }
+  50% {
+    transform: translate(60px, -35px) scale(1.3);
+    border-radius: 45% 55% 60% 40% / 60% 40% 55% 45%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fluid-blob-1,
+  .fluid-blob-2,
+  .fluid-blob-3 {
+    animation: none;
+  }
+}

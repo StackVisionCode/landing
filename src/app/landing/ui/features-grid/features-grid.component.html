@@ -5,100 +5,29 @@
     <p class="mt-4 text-gray-500">{{ t().featuresSubtitle }}</p>
   </div>
 
-  <div class="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-    <!-- Dashboard Pro (wide) -->
-    <div class="rounded-[28px] bg-white p-6 lg:col-span-2">
-      <div class="flex items-center gap-3">
+  <div class="mt-12 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+    @for (module of modules; track module.key) {
+      <button
+        type="button"
+        (click)="open(module)"
+        class="flex flex-col items-start gap-3 rounded-xl border border-gray-200 bg-white p-5 text-left transition-all hover:-translate-y-1 hover:border-brand-300 hover:shadow-lg"
+      >
         <span class="flex h-10 w-10 items-center justify-center rounded-full bg-brand-50 text-brand-800">
-          <ion-icon name="bar-chart-outline" class="text-xl"></ion-icon>
+          <ion-icon [name]="module.icon" class="text-xl"></ion-icon>
         </span>
-        <h3 class="text-xl font-bold text-gray-900">{{ t().featureDashboardTitle }}</h3>
-      </div>
-      <p class="mt-3 text-sm text-gray-500">{{ t().featureDashboardDescription }}</p>
-      <div class="mt-5 flex items-end gap-1.5 h-16">
-        @for (h of [40, 65, 50, 80, 55, 90, 70, 60]; track $index) {
-          <div class="flex-1 rounded-full bg-brand-300" [style.height.%]="h"></div>
-        }
-      </div>
-      <div class="mt-4 flex gap-2">
-        <app-chip variant="success">+24% MoM</app-chip>
-        <app-chip variant="neutral">1,284 clients</app-chip>
-      </div>
-    </div>
-
-    <!-- Client Management -->
-    <div class="rounded-[28px] bg-white p-6">
-      <div class="flex items-center gap-3">
-        <span class="flex h-10 w-10 items-center justify-center rounded-full bg-brand-50 text-brand-800">
-          <ion-icon name="people-outline" class="text-xl"></ion-icon>
-        </span>
-        <h3 class="text-xl font-bold text-gray-900">{{ t().featureClientMgmtTitle }}</h3>
-      </div>
-      <p class="mt-6 text-3xl font-bold text-gray-900">10K+</p>
-      <p class="mt-1 text-sm text-gray-500">Active Clients</p>
-    </div>
-
-    <!-- Client Portal -->
-    <div class="rounded-[28px] bg-white p-6">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <span class="flex h-10 w-10 items-center justify-center rounded-full bg-brand-50 text-brand-800">
-            <ion-icon name="globe-outline" class="text-xl"></ion-icon>
-          </span>
-          <h3 class="text-xl font-bold text-gray-900">{{ t().featureClientPortalTitle }}</h3>
-        </div>
-        <app-chip variant="success">Secure</app-chip>
-      </div>
-      <p class="mt-3 text-sm text-gray-500">{{ t().featureClientPortalDescription }}</p>
-      <div class="mt-4 flex flex-wrap gap-2">
-        <app-chip variant="neutral">Documents</app-chip>
-        <app-chip variant="neutral">Signatures</app-chip>
-        <app-chip variant="neutral">Messaging</app-chip>
-      </div>
-    </div>
-
-    <!-- Integrated Chat -->
-    <div class="rounded-[28px] bg-white p-6">
-      <div class="flex items-center gap-3">
-        <span class="flex h-10 w-10 items-center justify-center rounded-full bg-brand-50 text-brand-800">
-          <ion-icon name="chatbubbles-outline" class="text-xl"></ion-icon>
-        </span>
-        <h3 class="text-xl font-bold text-gray-900">{{ t().featureChatTitle }}</h3>
-      </div>
-      <div class="mt-4 space-y-2">
-        <div class="w-fit rounded-2xl rounded-bl-sm bg-gray-100 px-3 py-2 text-xs text-gray-600">Documents ready ✓</div>
-        <div class="ml-auto w-fit rounded-2xl rounded-br-sm bg-brand-800 px-3 py-2 text-xs text-white">Sending now...</div>
-      </div>
-    </div>
-
-    <!-- E-Signatures -->
-    <div class="rounded-[28px] bg-white p-6">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <span class="flex h-10 w-10 items-center justify-center rounded-full bg-brand-50 text-brand-800">
-            <ion-icon name="create-outline" class="text-xl"></ion-icon>
-          </span>
-          <h3 class="text-xl font-bold text-gray-900">{{ t().featureSignaturesTitle }}</h3>
-        </div>
-        <app-chip variant="brand">Legal</app-chip>
-      </div>
-      <p class="mt-6 text-3xl font-bold text-gray-900">10X</p>
-      <p class="mt-1 text-sm text-gray-500">{{ t().featureSignaturesCaption }}</p>
-    </div>
-
-    <!-- Billing & Payments (wide) -->
-    <div class="rounded-[28px] bg-white p-6 lg:col-span-2">
-      <div class="flex items-center gap-3">
-        <span class="flex h-10 w-10 items-center justify-center rounded-full bg-brand-50 text-brand-800">
-          <ion-icon name="card-outline" class="text-xl"></ion-icon>
-        </span>
-        <h3 class="text-xl font-bold text-gray-900">{{ t().featureBillingTitle }}</h3>
-      </div>
-      <p class="mt-3 text-sm text-gray-500">{{ t().featureBillingDescription }}</p>
-      <div class="mt-4 flex flex-wrap gap-2">
-        <span class="rounded-xl border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-500">⌘+I New Invoice</span>
-        <span class="rounded-xl border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-500">⌘+P Record Payment</span>
-      </div>
-    </div>
+        <h3 class="text-sm font-bold text-gray-900">{{ module.label }}</h3>
+      </button>
+    }
   </div>
 </section>
+
+<app-modal [isOpen]="selected() !== null" [heading]="selected()?.label ?? ''" size="md" (closed)="close()">
+  @if (selected(); as module) {
+    <div class="mt-4 flex items-center gap-3">
+      <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-800">
+        <ion-icon [name]="module.icon" class="text-2xl"></ion-icon>
+      </span>
+      <p class="text-sm text-gray-600">{{ module.description }}</p>
+    </div>
+  }
+</app-modal>

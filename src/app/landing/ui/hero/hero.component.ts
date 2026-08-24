@@ -2,6 +2,7 @@ import { Component, CUSTOM_ELEMENTS_SCHEMA, inject, signal } from '@angular/core
 import { TranslationStore } from '@core/i18n/translation.store';
 import { SITE_CONFIG } from '@core/config/site-config';
 import { BookingModalComponent } from '@shared/ui/booking-modal/booking-modal.component';
+import { FeatureMarqueeComponent } from '@landing/ui/feature-marquee/feature-marquee.component';
 
 /**
  * Hero con fondo "amanecer" (índigo → morado de marca → el crema del resto
@@ -14,7 +15,7 @@ import { BookingModalComponent } from '@shared/ui/booking-modal/booking-modal.co
 @Component({
   selector: 'app-hero',
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
-  imports: [BookingModalComponent],
+  imports: [BookingModalComponent, FeatureMarqueeComponent],
   templateUrl: './hero.component.html',
   styleUrl: './hero.component.css',
 })

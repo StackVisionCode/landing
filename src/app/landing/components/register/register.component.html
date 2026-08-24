@@ -5,9 +5,9 @@
   <aside
     class="relative hidden w-full max-w-md shrink-0 flex-col justify-between overflow-hidden bg-[linear-gradient(160deg,#0D0D0D_0%,#16334D_22%,#1E466B_46%,#3679AE_72%,#67BAF4_100%)] p-10 text-white lg:flex"
   >
-    <div class="pointer-events-none absolute -left-20 -top-20 h-64 w-64 rounded-full bg-white/[0.06]"></div>
-    <div class="pointer-events-none absolute -bottom-28 -right-14 h-80 w-80 rounded-full bg-white/[0.05]"></div>
-    <div class="pointer-events-none absolute right-10 top-1/3 h-24 w-24 rounded-full bg-brand-300/10"></div>
+    <div class="fluid-blob fluid-blob-1 -left-16 -top-16 h-72 w-72 bg-brand-300/30"></div>
+    <div class="fluid-blob fluid-blob-2 -bottom-24 -right-10 h-80 w-80 bg-brand-800/40"></div>
+    <div class="fluid-blob fluid-blob-3 right-10 top-1/3 h-56 w-56 bg-brand-300/20"></div>
 
     <a routerLink="/" class="relative z-10 flex items-center gap-1.5">
       <span class="text-2xl font-bold leading-none text-brand-300">*</span>
@@ -42,7 +42,7 @@
   </aside>
 
   <!-- Panel de contenido -->
-  <div class="flex flex-1 flex-col">
+  <div class="relative flex flex-1 flex-col">
     <header class="border-b border-gray-100 bg-white/90 backdrop-blur-sm lg:hidden">
       <div class="mx-auto flex h-16 max-w-7xl items-center px-4 sm:px-6 lg:px-8">
         <a routerLink="/" class="flex items-center gap-1.5">
@@ -51,6 +51,28 @@
         </a>
       </div>
     </header>
+
+    <!-- Volver — del paso de correo va a precios (nada se envió todavía); del
+         OTP vuelve a corregir el correo sin perder el challenge en curso. -->
+    @if (step() === 'email') {
+      <a
+        routerLink="/"
+        fragment="pricing"
+        class="absolute right-4 top-20 z-10 flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 lg:right-8 lg:top-8"
+      >
+        <ion-icon name="arrow-back-outline"></ion-icon>
+        {{ t().regBackButton }}
+      </a>
+    } @else if (step() === 'otp') {
+      <button
+        type="button"
+        (click)="backToEmail()"
+        class="absolute right-4 top-20 z-10 flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 lg:right-8 lg:top-8"
+      >
+        <ion-icon name="arrow-back-outline"></ion-icon>
+        {{ t().regBackButton }}
+      </button>
+    }
 
     <main class="flex flex-1 items-center justify-center p-4 sm:p-6 lg:p-10">
       <div class="w-full max-w-md">
@@ -63,7 +85,7 @@
           }
 
           @case ('load-error') {
-            <div class="rounded-[28px] bg-white p-8 text-center shadow-xl">
+            <div class="text-center">
               <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-50">
                 <ion-icon name="alert-circle-outline" class="text-2xl text-red-600"></ion-icon>
               </div>
@@ -79,7 +101,7 @@
           }
 
           @case ('invalid-plan') {
-            <div class="rounded-[28px] bg-white p-8 text-center shadow-xl">
+            <div class="text-center">
               <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-50">
                 <ion-icon name="alert-circle-outline" class="text-2xl text-red-600"></ion-icon>
               </div>
@@ -95,8 +117,8 @@
             </div>
           }
 
-          @case ('contact') {
-            <div class="rounded-[28px] bg-white p-8 shadow-xl">
+          @case ('email') {
+            <div>
               @if (plan(); as p) {
                 <div class="flex max-w-fit items-center gap-2 rounded-full border border-brand-200 bg-brand-50 px-3 py-1 lg:hidden">
                   <span class="text-xs font-semibold text-brand-800">{{ t().regPlanBadge }}:</span>
@@ -105,51 +127,18 @@
               }
 
               <h2 class="mt-4 border-b border-gray-100 pb-4 text-lg font-bold uppercase tracking-wide text-gray-800 lg:mt-0">
-                {{ t().regStep1Title }}
+                {{ t().regEmailStepTitle }}
               </h2>
-              <p class="mt-3 text-sm text-gray-600">{{ t().regStep1Subtitle }}</p>
+              <p class="mt-3 text-sm text-gray-600">{{ t().regEmailStepSubtitle }}</p>
 
               @if (showCancelledNotice()) {
                 <p class="mt-4 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-700">{{ t().regCancelledNotice }}</p>
               }
 
-              <form (submit)="$event.preventDefault(); submitContact()" class="mt-6 space-y-3">
-                @if (contactError()) {
-                  <p class="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-600">{{ contactError() }}</p>
+              <form (submit)="$event.preventDefault(); submitEmail()" class="mt-6 space-y-3">
+                @if (emailError()) {
+                  <p class="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-600">{{ emailError() }}</p>
                 }
-
-                <div class="grid grid-cols-2 gap-3">
-                  <div>
-                    <label class="mb-1 block text-xs font-medium text-gray-700">{{ t().authFirstNameLabel }}</label>
-                    <div class="relative">
-                      <ion-icon
-                        name="person-outline"
-                        class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-base text-gray-400"
-                      ></ion-icon>
-                      <input
-                        type="text"
-                        [ngModel]="firstName()"
-                        (ngModelChange)="firstName.set($event)"
-                        name="firstName"
-                        [placeholder]="t().authFirstNamePlaceholder"
-                        [disabled]="isSendingCode()"
-                        class="w-full rounded-lg border border-gray-200 py-2 pl-9 pr-3 text-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/30 disabled:opacity-50"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label class="mb-1 block text-xs font-medium text-gray-700">{{ t().authLastNameLabel }}</label>
-                    <input
-                      type="text"
-                      [ngModel]="lastName()"
-                      (ngModelChange)="lastName.set($event)"
-                      name="lastName"
-                      [placeholder]="t().authLastNamePlaceholder"
-                      [disabled]="isSendingCode()"
-                      class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/30 disabled:opacity-50"
-                    />
-                  </div>
-                </div>
 
                 <div>
                   <label class="mb-1 block text-xs font-medium text-gray-700">{{ t().authEmailLabel }}</label>
@@ -165,76 +154,10 @@
                       name="email"
                       [placeholder]="t().authEmailPlaceholder"
                       [disabled]="isSendingCode()"
+                      autofocus
                       class="w-full rounded-lg border border-gray-200 py-2 pl-9 pr-3 text-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/30 disabled:opacity-50"
                     />
                   </div>
-                </div>
-
-                <div>
-                  <label class="mb-1 block text-xs font-medium text-gray-700">{{ t().authPhoneLabel }}</label>
-                  <div class="relative">
-                    <ion-icon
-                      name="call-outline"
-                      class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-base text-gray-400"
-                    ></ion-icon>
-                    <input
-                      type="tel"
-                      [ngModel]="phone()"
-                      (ngModelChange)="phone.set($event)"
-                      name="phone"
-                      [disabled]="isSendingCode()"
-                      class="w-full rounded-lg border border-gray-200 py-2 pl-9 pr-3 text-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/30 disabled:opacity-50"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <button
-                    type="button"
-                    (click)="showCodeFields.set(!showCodeFields())"
-                    class="flex items-center gap-1.5 text-sm font-medium text-brand-800 hover:text-brand-600"
-                  >
-                    <ion-icon [name]="showCodeFields() ? 'chevron-up-outline' : 'pricetag-outline'" class="text-base"></ion-icon>
-                    {{ t().regHaveCodeToggle }}
-                  </button>
-
-                  @if (showCodeFields()) {
-                    <div class="mt-3 space-y-3 rounded-lg bg-gray-50 p-3">
-                      <div>
-                        <label class="mb-1 block text-xs font-medium text-gray-600">{{ t().regReferralCodeLabel }}</label>
-                        <input
-                          type="text"
-                          [ngModel]="referralCode()"
-                          (ngModelChange)="referralCode.set($event)"
-                          name="referralCode"
-                          [disabled]="isSendingCode()"
-                          class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/30 disabled:opacity-50"
-                        />
-                      </div>
-                      <div>
-                        <label class="mb-1 block text-xs font-medium text-gray-600">{{ t().regPromoCodeLabel }}</label>
-                        <input
-                          type="text"
-                          [ngModel]="promoCode()"
-                          (ngModelChange)="promoCode.set($event)"
-                          name="promoCode"
-                          [disabled]="isSendingCode()"
-                          class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/30 disabled:opacity-50"
-                        />
-                      </div>
-                      <div>
-                        <label class="mb-1 block text-xs font-medium text-gray-600">{{ t().regGiftCodeLabel }}</label>
-                        <input
-                          type="text"
-                          [ngModel]="giftCode()"
-                          (ngModelChange)="giftCode.set($event)"
-                          name="giftCode"
-                          [disabled]="isSendingCode()"
-                          class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/30 disabled:opacity-50"
-                        />
-                      </div>
-                    </div>
-                  }
                 </div>
 
                 <button
@@ -249,7 +172,7 @@
           }
 
           @case ('otp') {
-            <div class="rounded-[28px] bg-white p-8 shadow-xl">
+            <div>
               <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-brand-50">
                 <ion-icon name="mail-outline" class="text-2xl text-brand-800"></ion-icon>
               </div>
@@ -304,15 +227,153 @@
             </div>
           }
 
+          @case ('details') {
+            <div>
+              @if (plan(); as p) {
+                <div class="flex max-w-fit items-center gap-2 rounded-full border border-brand-200 bg-brand-50 px-3 py-1 lg:hidden">
+                  <span class="text-xs font-semibold text-brand-800">{{ t().regPlanBadge }}:</span>
+                  <span class="text-xs font-semibold text-gray-900">{{ p.name }} — ${{ planPrice }}</span>
+                </div>
+              }
+
+              <h2 class="mt-4 border-b border-gray-100 pb-4 text-lg font-bold uppercase tracking-wide text-gray-800 lg:mt-0">
+                {{ t().regStep1Title }}
+              </h2>
+              <p class="mt-3 text-sm text-gray-600">{{ t().regStep1Subtitle }}</p>
+
+              <form (submit)="$event.preventDefault(); submitDetails()" class="mt-6 space-y-3">
+                @if (detailsError()) {
+                  <p class="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-600">{{ detailsError() }}</p>
+                }
+
+                <!-- El correo ya quedó verificado en el paso anterior — se muestra
+                     de referencia, sin volver a pedirlo. -->
+                <div class="flex items-center gap-2 rounded-lg bg-gray-50 px-3 py-2 text-sm text-gray-600">
+                  <ion-icon name="checkmark-circle" class="shrink-0 text-base text-emerald-500"></ion-icon>
+                  {{ email() }}
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="mb-1 block text-xs font-medium text-gray-700">{{ t().authFirstNameLabel }}</label>
+                    <div class="relative">
+                      <ion-icon
+                        name="person-outline"
+                        class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-base text-gray-400"
+                      ></ion-icon>
+                      <input
+                        type="text"
+                        [ngModel]="firstName()"
+                        (ngModelChange)="firstName.set($event)"
+                        name="firstName"
+                        [placeholder]="t().authFirstNamePlaceholder"
+                        [disabled]="isSubmittingDetails()"
+                        autofocus
+                        class="w-full rounded-lg border border-gray-200 py-2 pl-9 pr-3 text-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/30 disabled:opacity-50"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label class="mb-1 block text-xs font-medium text-gray-700">{{ t().authLastNameLabel }}</label>
+                    <input
+                      type="text"
+                      [ngModel]="lastName()"
+                      (ngModelChange)="lastName.set($event)"
+                      name="lastName"
+                      [placeholder]="t().authLastNamePlaceholder"
+                      [disabled]="isSubmittingDetails()"
+                      class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/30 disabled:opacity-50"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label class="mb-1 block text-xs font-medium text-gray-700">{{ t().authPhoneLabel }}</label>
+                  <div class="relative">
+                    <ion-icon
+                      name="call-outline"
+                      class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-base text-gray-400"
+                    ></ion-icon>
+                    <input
+                      type="tel"
+                      [ngModel]="phone()"
+                      (ngModelChange)="phone.set($event)"
+                      name="phone"
+                      [disabled]="isSubmittingDetails()"
+                      class="w-full rounded-lg border border-gray-200 py-2 pl-9 pr-3 text-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/30 disabled:opacity-50"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <button
+                    type="button"
+                    (click)="showCodeFields.set(!showCodeFields())"
+                    class="flex items-center gap-1.5 text-sm font-medium text-brand-800 hover:text-brand-600"
+                  >
+                    <ion-icon [name]="showCodeFields() ? 'chevron-up-outline' : 'pricetag-outline'" class="text-base"></ion-icon>
+                    {{ t().regHaveCodeToggle }}
+                  </button>
+
+                  @if (showCodeFields()) {
+                    <div class="mt-3 space-y-3 rounded-lg bg-gray-50 p-3">
+                      <div>
+                        <label class="mb-1 block text-xs font-medium text-gray-600">{{ t().regReferralCodeLabel }}</label>
+                        <input
+                          type="text"
+                          [ngModel]="referralCode()"
+                          (ngModelChange)="referralCode.set($event)"
+                          name="referralCode"
+                          [disabled]="isSubmittingDetails()"
+                          class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/30 disabled:opacity-50"
+                        />
+                      </div>
+                      <div>
+                        <label class="mb-1 block text-xs font-medium text-gray-600">{{ t().regPromoCodeLabel }}</label>
+                        <input
+                          type="text"
+                          [ngModel]="promoCode()"
+                          (ngModelChange)="promoCode.set($event)"
+                          name="promoCode"
+                          [disabled]="isSubmittingDetails()"
+                          class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/30 disabled:opacity-50"
+                        />
+                      </div>
+                      <div>
+                        <label class="mb-1 block text-xs font-medium text-gray-600">{{ t().regGiftCodeLabel }}</label>
+                        <input
+                          type="text"
+                          [ngModel]="giftCode()"
+                          (ngModelChange)="giftCode.set($event)"
+                          name="giftCode"
+                          [disabled]="isSubmittingDetails()"
+                          class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/30 disabled:opacity-50"
+                        />
+                      </div>
+                    </div>
+                  }
+                </div>
+
+                <button
+                  type="submit"
+                  [disabled]="isSubmittingDetails()"
+                  class="w-full rounded-lg bg-[linear-gradient(90deg,#1E466B_0%,#67BAF4_100%)] py-2.5 text-sm font-bold uppercase tracking-wide text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {{ isSubmittingDetails() ? t().regSendingCode : t().regContinueButton }}
+                </button>
+              </form>
+            </div>
+          }
+
           @case ('processing') {
-            <div class="flex flex-col items-center gap-4 rounded-[28px] bg-white p-10 text-center shadow-xl">
+            <div class="flex flex-col items-center gap-4 text-center">
               <div class="h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-brand-800"></div>
               <p class="text-sm font-medium text-gray-700">{{ processingMessage() }}</p>
             </div>
           }
 
           @case ('no-payment') {
-            <div class="rounded-[28px] bg-white p-8 text-center shadow-xl">
+            <div class="text-center">
               <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-50">
                 <ion-icon name="checkmark-circle-outline" class="text-3xl text-green-600"></ion-icon>
               </div>
@@ -333,7 +394,7 @@
           }
 
           @case ('error') {
-            <div class="rounded-[28px] bg-white p-8 text-center shadow-xl">
+            <div class="text-center">
               <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-50">
                 <ion-icon name="alert-circle-outline" class="text-2xl text-red-600"></ion-icon>
               </div>
@@ -341,7 +402,7 @@
               <p class="mt-2 text-sm text-gray-600">{{ errorMessage() }}</p>
               <button
                 type="button"
-                (click)="backToContact()"
+                (click)="backToDetails()"
                 class="mt-6 w-full rounded-lg bg-[linear-gradient(90deg,#1E466B_0%,#67BAF4_100%)] py-2.5 text-sm font-bold uppercase tracking-wide text-white transition-opacity hover:opacity-90"
               >
                 {{ t().regTryAgainButton }}

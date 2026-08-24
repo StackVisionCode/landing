@@ -24,3 +24,24 @@ export function moduleLabel(key: string, lang: Lang): string {
   if (!entry) return key;
   return lang === 'en' ? entry.en : entry.es;
 }
+
+/** Ícono por módulo, mismo `key` que arriba — compartido entre el marquee del
+ *  hero y la grilla de "Características" para no duplicarlo ni desincronizarlo. */
+export const MODULE_ICONS: Record<string, string> = {
+  signatures: 'create-outline',
+  documents: 'document-text-outline',
+  planner: 'checkbox-outline',
+  customers: 'people-outline',
+  email: 'mail-outline',
+  reports: 'stats-chart-outline',
+  campaigns: 'megaphone-outline',
+  comms: 'chatbubbles-outline',
+  marketing: 'trending-up-outline',
+  miles: 'car-outline',
+  builder: 'construct-outline',
+  irs: 'shield-checkmark-outline',
+};
+
+export function moduleIcon(key: string): string {
+  return MODULE_ICONS[key] ?? 'apps-outline';
+}

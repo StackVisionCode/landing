@@ -9,16 +9,35 @@ import { apiErrorCode } from '@core/onboarding/onboarding-error.util';
 import type { PlanResponse } from '@core/plans/plans.models';
 import type { BillingCycle } from '@core/onboarding/onboarding.models';
 
-type RegisterStep = 'loading' | 'invalid-plan' | 'load-error' | 'contact' | 'otp' | 'processing' | 'no-payment' | 'error';
+type RegisterStep =
+  | 'loading'
+  | 'invalid-plan'
+  | 'load-error'
+  | 'email'
+  | 'otp'
+  | 'details'
+  | 'processing'
+  | 'no-payment'
+  | 'error';
 
 const OTP_LENGTH = 6;
-const OTP_DURATION_SECONDS = 600; // TTL real del challenge: 10 min (API_Contract.md §2.2)
+const OTP_DURATION_SECONDS = 600; // TTL real del challenge: 10 min (Onboarding_PayFirst_PasoAPaso.md §1.1)
 
 /**
  * Página /register (PayFlow "pago primero"): selecciona plan por query param
  * (?plan=&cycle=), verifica el email por OTP, crea el TenantOnboarding y
  * arranca el checkout de Stripe. El onboardingId solo vive en memoria de esta
- * sesión — nunca en localStorage/URL (invariante §5 de API_Contract.md).
+ * sesión — nunca en localStorage/URL (invariante de seguridad del contrato).
+ *
+ * Orden de pasos verificado contra el código real (Onboarding_PayFirst_PasoAPaso.md
+ * §1.1/§1.3): "verificar email" es un paso propio y AUTÓNOMO — POST
+ * onboarding/email-challenges solo pide `email` (+firstNameHint opcional, ni
+ * siquiera se usa acá). El resto de los datos de contacto (nombre/apellido/
+ * teléfono) recién se piden DESPUÉS de verificar el OTP, porque
+ * `POST onboarding` (CreateOnboardingCommand) exige el challenge YA
+ * verificado — no tiene sentido pedirlos antes. Antes este componente pedía
+ * todo junto en un solo paso antes del OTP; se separó en email → otp →
+ * detalles para reflejar el orden real.
  */
 @Component({
   selector: 'app-register',
@@ -38,16 +57,28 @@ export class RegisterComponent implements OnInit, OnDestroy {
   protected readonly cycle = signal<BillingCycle>('Monthly');
   protected readonly showCancelledNotice = signal(false);
 
+  // Paso 1: solo el correo — es lo único que exige POST onboarding/email-challenges.
   protected readonly email = signal('');
+  protected readonly isSendingCode = signal(false);
+  protected readonly emailError = signal('');
+
+  // Paso 2: OTP.
+  protected readonly otp = signal('');
+  private challengeId = '';
+  protected readonly isVerifying = signal(false);
+  protected readonly isResending = signal(false);
+  protected readonly otpError = signal('');
+  protected readonly otpSecondsLeft = signal(OTP_DURATION_SECONDS);
+  private otpTimerId: ReturnType<typeof setInterval> | null = null;
+
+  // Paso 3 (post-OTP): datos de contacto + códigos opcionales — recién acá
+  // tiene sentido pedirlos, ya con el challenge verificado.
   protected readonly firstName = signal('');
   protected readonly lastName = signal('');
   protected readonly phone = signal('');
-  protected readonly isSendingCode = signal(false);
-  protected readonly contactError = signal('');
+  protected readonly isSubmittingDetails = signal(false);
+  protected readonly detailsError = signal('');
 
-  // Códigos opcionales de Gift/Referral (StartOnboardingCheckoutCommand) — se
-  // guardan acá porque se piden en el mismo paso que el resto de los datos de
-  // contacto, pero solo se usan más tarde en startCheckout(), tras el OTP.
   protected readonly showCodeFields = signal(false);
   protected readonly referralCode = signal('');
   protected readonly promoCode = signal('');
@@ -57,14 +88,6 @@ export class RegisterComponent implements OnInit, OnDestroy {
   // el aviso de "tu código cubrió el costo completo" (netAmountCents es 0 por
   // definición en ese caso, no hace falta guardarlo aparte).
   protected readonly discountAmountCents = signal<number | null>(null);
-
-  protected readonly otp = signal('');
-  private challengeId = '';
-  protected readonly isVerifying = signal(false);
-  protected readonly isResending = signal(false);
-  protected readonly otpError = signal('');
-  protected readonly otpSecondsLeft = signal(OTP_DURATION_SECONDS);
-  private otpTimerId: ReturnType<typeof setInterval> | null = null;
 
   protected readonly processingMessage = signal('');
   protected readonly errorMessage = signal('');
@@ -118,7 +141,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
           return;
         }
         this.plan.set(found);
-        this.step.set('contact');
+        this.step.set('email');
       },
       error: () => this.step.set('load-error'),
     });
@@ -128,21 +151,21 @@ export class RegisterComponent implements OnInit, OnDestroy {
     this.stopOtpTimer();
   }
 
-  submitContact(): void {
+  submitEmail(): void {
     if (this.isSendingCode()) return;
-    this.contactError.set('');
+    this.emailError.set('');
 
-    if (!this.email() || !this.firstName() || !this.lastName()) {
-      this.contactError.set(this.t().authErrorRequiredFields);
+    if (!this.email()) {
+      this.emailError.set(this.t().authErrorRequiredFields);
       return;
     }
     if (!this.isValidEmail(this.email())) {
-      this.contactError.set(this.t().authErrorInvalidEmail);
+      this.emailError.set(this.t().authErrorInvalidEmail);
       return;
     }
 
     this.isSendingCode.set(true);
-    this.onboarding.createEmailChallenge({ email: this.email(), firstNameHint: this.firstName() }).subscribe({
+    this.onboarding.createEmailChallenge({ email: this.email() }).subscribe({
       next: (res) => {
         this.isSendingCode.set(false);
         this.challengeId = res.challengeId;
@@ -153,7 +176,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         this.isSendingCode.set(false);
-        this.contactError.set(this.mapError(apiErrorCode(err)) || this.t().regErrorGeneric);
+        this.emailError.set(this.mapError(apiErrorCode(err)) || this.t().regErrorGeneric);
       },
     });
   }
@@ -190,7 +213,11 @@ export class RegisterComponent implements OnInit, OnDestroy {
 
     this.isVerifying.set(true);
     this.onboarding.verifyEmailChallenge(this.challengeId, { code: this.otp() }).subscribe({
-      next: () => this.createOnboardingAndCheckout(),
+      next: () => {
+        this.isVerifying.set(false);
+        this.stopOtpTimer();
+        this.step.set('details');
+      },
       error: (err) => {
         this.isVerifying.set(false);
         this.otpError.set(this.mapError(apiErrorCode(err)) || this.t().regErrorGeneric);
@@ -198,22 +225,37 @@ export class RegisterComponent implements OnInit, OnDestroy {
     });
   }
 
-  backToContact(): void {
-    this.step.set('contact');
-    this.errorMessage.set('');
+  /** Volver del paso OTP al de correo — por si se equivocó al escribirlo.
+   *  El challenge en curso se deja morir solo (nunca se cancela server-side). */
+  backToEmail(): void {
+    this.stopOtpTimer();
+    this.step.set('email');
+    this.otpError.set('');
   }
 
-  private createOnboardingAndCheckout(): void {
+  /** Volver de la pantalla de error al paso de detalles, para reintentar sin
+   *  perder el email ya verificado (no tiene sentido pedir un OTP nuevo). */
+  backToDetails(): void {
+    this.errorMessage.set('');
+    this.step.set('details');
+  }
+
+  submitDetails(): void {
+    if (this.isSubmittingDetails()) return;
+    this.detailsError.set('');
+
+    if (!this.firstName() || !this.lastName()) {
+      this.detailsError.set(this.t().authErrorRequiredFields);
+      return;
+    }
+
     const plan = this.plan();
     if (!plan) {
       this.step.set('invalid-plan');
       return;
     }
 
-    this.stopOtpTimer();
-    this.step.set('processing');
-    this.processingMessage.set(this.t().regCreatingAccount);
-
+    this.isSubmittingDetails.set(true);
     this.onboarding
       .createOnboarding({
         email: this.email(),
@@ -226,11 +268,16 @@ export class RegisterComponent implements OnInit, OnDestroy {
       })
       .subscribe({
         next: (created) => this.startCheckout(created.onboardingId),
-        error: (err) => this.showError(err),
+        error: (err) => {
+          this.isSubmittingDetails.set(false);
+          this.detailsError.set(this.mapError(apiErrorCode(err)) || this.t().regErrorGeneric);
+        },
       });
   }
 
   private startCheckout(onboardingId: string): void {
+    this.isSubmittingDetails.set(false);
+    this.step.set('processing');
     this.processingMessage.set(this.t().regPreparingPayment);
     const origin = typeof window !== 'undefined' ? window.location.origin : 'https://taxproffice.com';
     const plan = this.plan();

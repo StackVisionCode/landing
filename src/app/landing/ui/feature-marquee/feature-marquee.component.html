@@ -1,0 +1,16 @@
+<div class="marquee-viewport">
+  <div class="marquee-track">
+    @for (item of loopFeatures; track $index) {
+      <div
+        class="wave-card"
+        [class.wave-card--alt]="$index % 2 === 1"
+        [style.animation-delay.ms]="-(($index % 12) * 180)"
+      >
+        <span class="wave-card-icon">
+          <ion-icon [name]="item.icon"></ion-icon>
+        </span>
+        <p class="wave-card-label">{{ item.label }}</p>
+      </div>
+    }
+  </div>
+</div>

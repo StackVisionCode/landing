@@ -22,14 +22,35 @@ export interface TranslationKeys {
   featuresSubtitle: string;
   featureDashboardTitle: string;
   featureDashboardDescription: string;
+  featureDashboardBullet1: string;
+  featureDashboardBullet2: string;
+  featureDashboardBullet3: string;
   featureClientMgmtTitle: string;
+  featureClientMgmtModalBody: string;
+  featureClientMgmtBullet1: string;
+  featureClientMgmtBullet2: string;
+  featureClientMgmtBullet3: string;
   featureClientPortalTitle: string;
   featureClientPortalDescription: string;
+  featureClientPortalBullet1: string;
+  featureClientPortalBullet2: string;
+  featureClientPortalBullet3: string;
   featureChatTitle: string;
+  featureChatModalBody: string;
+  featureChatBullet1: string;
+  featureChatBullet2: string;
+  featureChatBullet3: string;
   featureSignaturesTitle: string;
   featureSignaturesCaption: string;
+  featureSignaturesModalBody: string;
+  featureSignaturesBullet1: string;
+  featureSignaturesBullet2: string;
+  featureSignaturesBullet3: string;
   featureBillingTitle: string;
   featureBillingDescription: string;
+  featureBillingBullet1: string;
+  featureBillingBullet2: string;
+  featureBillingBullet3: string;
 
   // Products
   productsTitleHtml: string;
@@ -172,6 +193,8 @@ export interface TranslationKeys {
   regInvalidPlanBody: string;
   regBackToPricing: string;
   regPlanBadge: string;
+  regEmailStepTitle: string;
+  regEmailStepSubtitle: string;
   regStep1Title: string;
   regStep1Subtitle: string;
   regContinueButton: string;
@@ -211,6 +234,7 @@ export interface TranslationKeys {
   regPanelHeadline: string;
   regPanelBodyPrefix: string;
   regPanelFootnote: string;
+  regBackButton: string;
 
   // Registro / onboarding — página /register/complete
   compLoadingTitle: string;
