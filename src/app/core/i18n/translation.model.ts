@@ -225,6 +225,8 @@ export interface TranslationKeys {
   regTryAgainButton: string;
   payReceivedTitle: string;
   payReceivedBody: string;
+  payReceivedWelcomeEyebrow: string;
+  payReceivedWelcomeHeadline: string;
   regHaveCodeToggle: string;
   regReferralCodeLabel: string;
   regPromoCodeLabel: string;

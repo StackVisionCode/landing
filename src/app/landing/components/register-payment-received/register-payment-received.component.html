@@ -1,26 +1,67 @@
-<div class="flex min-h-screen flex-col bg-gray-50">
-  <header class="border-b border-gray-100 bg-white/90 backdrop-blur-sm">
-    <div class="mx-auto flex h-16 max-w-7xl items-center px-4 sm:px-6 lg:px-8">
-      <a routerLink="/" class="flex items-center gap-1.5">
-        <span class="text-2xl font-bold leading-none text-brand-800">*</span>
-        <span class="text-lg font-bold tracking-tight text-gray-900">TaxPro Office</span>
-      </a>
-    </div>
-  </header>
+<div class="confetti-container" aria-hidden="true">
+  @for (piece of confetti; track $index) {
+    <span
+      class="confetti-piece"
+      [style.left.%]="piece.left"
+      [style.animation-delay.s]="piece.delay"
+      [style.animation-duration.s]="piece.duration"
+      [style.background]="piece.color"
+      [style.width.px]="piece.size"
+      [style.height.px]="piece.size * 0.4"
+      [style.transform]="'rotate(' + piece.rotation + 'deg)'"
+    ></span>
+  }
+</div>
 
-  <main class="flex flex-1 items-center justify-center p-4 sm:p-6">
-    <div class="w-full max-w-md rounded-[28px] bg-white p-8 text-center shadow-xl">
-      <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-50">
-        <ion-icon name="checkmark-circle-outline" class="text-3xl text-green-600"></ion-icon>
-      </div>
-      <h1 class="mt-6 text-2xl font-bold text-gray-900">{{ t().payReceivedTitle }}</h1>
-      <p class="mt-2 text-sm text-gray-600">{{ t().payReceivedBody }}</p>
-      <a
-        routerLink="/"
-        class="mt-6 block w-full rounded-full bg-gray-900 py-2.5 text-center text-sm font-semibold text-white transition-colors hover:bg-gray-700"
-      >
-        {{ t().fpBackHome }}
-      </a>
+<div class="flex min-h-screen bg-gray-50">
+  <!-- Panel de marca — mismo gradiente + blobs fluidos que /register y
+       /register/complete, acá con el mensaje de bienvenida. -->
+  <aside
+    class="relative hidden w-full max-w-md shrink-0 flex-col justify-between overflow-hidden bg-[linear-gradient(160deg,#0D0D0D_0%,#16334D_22%,#1E466B_46%,#3679AE_72%,#67BAF4_100%)] p-10 text-white lg:flex"
+  >
+    <div class="fluid-blob fluid-blob-1 -left-16 -top-16 h-72 w-72 bg-brand-300/30"></div>
+    <div class="fluid-blob fluid-blob-2 -bottom-24 -right-10 h-80 w-80 bg-brand-800/40"></div>
+    <div class="fluid-blob fluid-blob-3 right-10 top-1/3 h-56 w-56 bg-brand-300/20"></div>
+
+    <a routerLink="/" class="relative z-10 flex items-center gap-1.5">
+      <span class="text-2xl font-bold leading-none text-brand-300">*</span>
+      <span class="text-lg font-bold tracking-tight text-white">TaxPro Office</span>
+    </a>
+
+    <div class="relative z-10">
+      <span class="text-xs font-semibold uppercase tracking-[0.2em] text-brand-200">{{ t().payReceivedWelcomeEyebrow }}</span>
+      <h1 class="mt-4 text-4xl font-bold leading-tight">{{ t().payReceivedWelcomeHeadline }}</h1>
     </div>
-  </main>
+
+    <p class="relative z-10 text-xs text-brand-200">{{ t().payReceivedBody }}</p>
+  </aside>
+
+  <!-- Panel de contenido -->
+  <div class="flex flex-1 flex-col">
+    <header class="border-b border-gray-100 bg-white/90 backdrop-blur-sm lg:hidden">
+      <div class="mx-auto flex h-16 max-w-7xl items-center px-4 sm:px-6 lg:px-8">
+        <a routerLink="/" class="flex items-center gap-1.5">
+          <span class="text-2xl font-bold leading-none text-brand-800">*</span>
+          <span class="text-lg font-bold tracking-tight text-gray-900">TaxPro Office</span>
+        </a>
+      </div>
+    </header>
+
+    <main class="flex flex-1 items-center justify-center p-4 sm:p-6 lg:p-10">
+      <div class="w-full max-w-md text-center">
+        <span class="text-xs font-semibold uppercase tracking-[0.2em] text-brand-800 lg:hidden">{{ t().payReceivedWelcomeEyebrow }}</span>
+        <div class="mx-auto mt-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-50 lg:mt-0">
+          <ion-icon name="checkmark-circle-outline" class="text-3xl text-green-600"></ion-icon>
+        </div>
+        <h2 class="mt-6 text-2xl font-bold text-gray-900">{{ t().payReceivedTitle }}</h2>
+        <p class="mt-2 text-sm text-gray-600">{{ t().payReceivedBody }}</p>
+        <a
+          routerLink="/"
+          class="mt-6 block w-full rounded-lg bg-[linear-gradient(90deg,#1E466B_0%,#67BAF4_100%)] py-2.5 text-center text-sm font-bold uppercase tracking-wide text-white transition-opacity hover:opacity-90"
+        >
+          {{ t().fpBackHome }}
+        </a>
+      </div>
+    </main>
+  </div>
 </div>

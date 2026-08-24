@@ -222,6 +222,8 @@ export const es: TranslationKeys = {
   regTryAgainButton: 'Intentar de nuevo',
   payReceivedTitle: '¡Pago recibido!',
   payReceivedBody: 'Te enviamos un correo con el enlace para completar el registro de tu oficina. Revisa tu bandeja de entrada (y spam).',
+  payReceivedWelcomeEyebrow: '¡Bienvenido!',
+  payReceivedWelcomeHeadline: 'Gracias por unirte a TaxPro Office',
   regHaveCodeToggle: '¿Tienes un código de referido, promoción o regalo?',
   regReferralCodeLabel: 'Código de referido (opcional)',
   regPromoCodeLabel: 'Código de promoción (opcional)',

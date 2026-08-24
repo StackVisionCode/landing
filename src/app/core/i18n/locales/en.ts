@@ -221,6 +221,8 @@ export const en: TranslationKeys = {
   regTryAgainButton: 'Try again',
   payReceivedTitle: 'Payment received!',
   payReceivedBody: "We've sent you an email with the link to finish setting up your office. Check your inbox (and spam folder).",
+  payReceivedWelcomeEyebrow: 'Welcome!',
+  payReceivedWelcomeHeadline: 'Thanks for joining TaxPro Office',
   regHaveCodeToggle: 'Have a referral, promo, or gift code?',
   regReferralCodeLabel: 'Referral code (optional)',
   regPromoCodeLabel: 'Promo code (optional)',

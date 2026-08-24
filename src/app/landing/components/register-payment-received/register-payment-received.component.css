@@ -1,0 +1,45 @@
+:host {
+  display: block;
+}
+
+/* Confetti de bienvenida — una sola pasada (no loop), cae desde arriba del
+   viewport con un giro leve. Cada pieza trae su propio color/tamaño/retraso
+   generado en el componente (ver confetti signal). */
+.confetti-container {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.confetti-piece {
+  position: absolute;
+  top: -5%;
+  border-radius: 2px;
+  opacity: 0;
+  animation-name: confetti-fall;
+  animation-timing-function: cubic-bezier(0.35, 0, 0.65, 1);
+  animation-fill-mode: forwards;
+  will-change: transform, opacity;
+}
+
+@keyframes confetti-fall {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(0, 105vh, 0) rotate(540deg);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .confetti-container {
+    display: none;
+  }
+}
