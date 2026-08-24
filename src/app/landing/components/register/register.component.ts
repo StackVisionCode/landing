@@ -8,7 +8,7 @@ import { apiErrorCode } from '@core/onboarding/onboarding-error.util';
 import type { PlanResponse } from '@core/plans/plans.models';
 import type { BillingCycle } from '@core/onboarding/onboarding.models';
 
-type RegisterStep = 'loading' | 'invalid-plan' | 'contact' | 'otp' | 'processing' | 'no-payment' | 'error';
+type RegisterStep = 'loading' | 'invalid-plan' | 'load-error' | 'contact' | 'otp' | 'processing' | 'no-payment' | 'error';
 
 const OTP_LENGTH = 6;
 const OTP_DURATION_SECONDS = 600; // TTL real del challenge: 10 min (API_Contract.md §2.2)
@@ -69,15 +69,25 @@ export class RegisterComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     const params = this.route.snapshot.queryParamMap;
-    const planId = params.get('plan');
     this.cycle.set(params.get('cycle') === 'Yearly' ? 'Yearly' : 'Monthly');
     this.showCancelledNotice.set(params.get('cancelled') === '1');
+    this.loadPlan();
+  }
 
+  retryLoadPlan(): void {
+    this.loadPlan();
+  }
+
+  /** Separado de "plan inexistente": un fallo de red/API acá es transitorio y
+   *  recuperable con reintento, no lo mismo que un plan que nunca existió. */
+  private loadPlan(): void {
+    const planId = this.route.snapshot.queryParamMap.get('plan');
     if (!planId) {
       this.step.set('invalid-plan');
       return;
     }
 
+    this.step.set('loading');
     this.plansService.getPlans().subscribe({
       next: (plans) => {
         const found = plans.find((p) => p.id === planId);
@@ -88,7 +98,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
         this.plan.set(found);
         this.step.set('contact');
       },
-      error: () => this.step.set('invalid-plan'),
+      error: () => this.step.set('load-error'),
     });
   }
 
