@@ -200,6 +200,10 @@ export const en: TranslationKeys = {
   regPromoCodeLabel: 'Promo code (optional)',
   regGiftCodeLabel: 'Gift code (optional)',
   regDiscountApplied: 'Your code covered the full cost.',
+  regPanelEyebrow: 'Registration',
+  regPanelHeadline: "Let's Get Started",
+  regPanelBodyPrefix: 'Your',
+  regPanelFootnote: 'Secure payment processed by Stripe. Cancel anytime.',
 
   compLoadingTitle: 'Loading your invitation...',
   compInvalidTitle: 'This link is no longer valid',
@@ -243,4 +247,6 @@ export const en: TranslationKeys = {
   compErrorSubdomainRequired: 'Choose an available subdomain before continuing',
   compErrorSubdomainNotAvailable: 'That subdomain is not available — pick another one',
   compErrorPasswordPolicy: "That password doesn't meet our requirements — avoid common passwords or using your email.",
+  compPanelEyebrow: 'Last step',
+  compPanelFootnotePrefix: 'Your office will live at',
 };

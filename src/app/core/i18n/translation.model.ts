@@ -207,6 +207,10 @@ export interface TranslationKeys {
   regPromoCodeLabel: string;
   regGiftCodeLabel: string;
   regDiscountApplied: string;
+  regPanelEyebrow: string;
+  regPanelHeadline: string;
+  regPanelBodyPrefix: string;
+  regPanelFootnote: string;
 
   // Registro / onboarding — página /register/complete
   compLoadingTitle: string;
@@ -250,4 +254,6 @@ export interface TranslationKeys {
   compErrorSubdomainRequired: string;
   compErrorSubdomainNotAvailable: string;
   compErrorPasswordPolicy: string;
+  compPanelEyebrow: string;
+  compPanelFootnotePrefix: string;
 }

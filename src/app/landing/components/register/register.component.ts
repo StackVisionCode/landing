@@ -4,6 +4,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslationStore } from '@core/i18n/translation.store';
 import { OnboardingService } from '@core/onboarding/onboarding.service';
 import { PlansService } from '@core/plans/plans.service';
+import { moduleLabel } from '@core/plans/module-labels';
 import { apiErrorCode } from '@core/onboarding/onboarding-error.util';
 import type { PlanResponse } from '@core/plans/plans.models';
 import type { BillingCycle } from '@core/onboarding/onboarding.models';
@@ -78,6 +79,14 @@ export class RegisterComponent implements OnInit, OnDestroy {
     const plan = this.plan();
     if (!plan) return 0;
     return plan.pricesUsdByCycle[this.cycle()] ?? plan.monthlyPriceUsd;
+  }
+
+  /** Top 4 módulos del plan, para el panel lateral — contenido real (no
+   *  copy inventado), mismo diccionario que usa Pricing para la lista completa. */
+  get planHighlights(): string[] {
+    const plan = this.plan();
+    if (!plan) return [];
+    return plan.enabledModules.slice(0, 4).map((key) => moduleLabel(key, this.translation.lang()));
   }
 
   ngOnInit(): void {

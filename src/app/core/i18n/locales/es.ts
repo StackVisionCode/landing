@@ -201,6 +201,10 @@ export const es: TranslationKeys = {
   regPromoCodeLabel: 'Código de promoción (opcional)',
   regGiftCodeLabel: 'Código de regalo (opcional)',
   regDiscountApplied: 'Tu código cubrió el costo completo.',
+  regPanelEyebrow: 'Registro',
+  regPanelHeadline: 'Empecemos',
+  regPanelBodyPrefix: 'Tu plan',
+  regPanelFootnote: 'Pago seguro procesado por Stripe. Cancela cuando quieras.',
 
   compLoadingTitle: 'Cargando tu invitación...',
   compInvalidTitle: 'Este enlace ya no es válido',
@@ -244,4 +248,6 @@ export const es: TranslationKeys = {
   compErrorSubdomainRequired: 'Elige un subdominio disponible antes de continuar',
   compErrorSubdomainNotAvailable: 'Ese subdominio no está disponible — elige otro',
   compErrorPasswordPolicy: 'Esa contraseña no cumple los requisitos — evita contraseñas comunes o usar tu correo.',
+  compPanelEyebrow: 'Último paso',
+  compPanelFootnotePrefix: 'Tu oficina vivirá en',
 };

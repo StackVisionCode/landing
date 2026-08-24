@@ -1,252 +1,309 @@
-<div class="flex min-h-screen flex-col bg-gray-50">
-  <header class="border-b border-gray-100 bg-white/90 backdrop-blur-sm">
-    <div class="mx-auto flex h-16 max-w-7xl items-center px-4 sm:px-6 lg:px-8">
-      <a routerLink="/" class="flex items-center gap-1.5">
-        <span class="text-2xl font-bold leading-none text-brand-800">*</span>
-        <span class="text-lg font-bold tracking-tight text-gray-900">TaxPro Office</span>
-      </a>
+<div class="flex min-h-screen bg-gray-50">
+  <!-- Panel de marca — misma convención que /register, persiste en todos los
+       pasos, oculto en mobile. -->
+  <aside
+    class="relative hidden w-full max-w-md shrink-0 flex-col justify-between overflow-hidden bg-[linear-gradient(160deg,#0D0D0D_0%,#16334D_22%,#1E466B_46%,#3679AE_72%,#67BAF4_100%)] p-10 text-white lg:flex"
+  >
+    <div class="pointer-events-none absolute -left-20 -top-20 h-64 w-64 rounded-full bg-white/[0.06]"></div>
+    <div class="pointer-events-none absolute -bottom-28 -right-14 h-80 w-80 rounded-full bg-white/[0.05]"></div>
+    <div class="pointer-events-none absolute right-10 top-1/3 h-24 w-24 rounded-full bg-brand-300/10"></div>
+
+    <a routerLink="/" class="relative z-10 flex items-center gap-1.5">
+      <span class="text-2xl font-bold leading-none text-brand-300">*</span>
+      <span class="text-lg font-bold tracking-tight text-white">TaxPro Office</span>
+    </a>
+
+    <div class="relative z-10">
+      <span class="text-xs font-semibold uppercase tracking-[0.2em] text-brand-200">{{ t().compPanelEyebrow }}</span>
+      <h1 class="mt-4 text-3xl font-bold leading-tight">
+        @if (firstName()) {
+          {{ t().compWelcomeSubtitlePrefix }}{{ planName() ? ' ' + planName() : '' }}, {{ firstName() }}
+        } @else {
+          TaxPro Office
+        }
+      </h1>
+      @if (maskedEmail()) {
+        <p class="mt-3 text-sm text-brand-100">{{ maskedEmail() }}</p>
+      }
     </div>
-  </header>
 
-  <main class="flex flex-1 items-center justify-center p-4 sm:p-6">
-    <div class="w-full max-w-lg">
-      @switch (step()) {
-        @case ('loading') {
-          <div class="flex flex-col items-center gap-3 py-10 text-center">
-            <div class="h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-brand-800"></div>
-            <p class="text-sm text-gray-500">{{ t().compLoadingTitle }}</p>
-          </div>
-        }
+    <p class="relative z-10 text-xs text-brand-200">
+      @if (subdomain()) {
+        {{ t().compPanelFootnotePrefix }} <strong class="text-white">{{ subdomain() }}{{ t().compSubdomainSuffix }}</strong>
+      } @else {
+        {{ t().compPanelFootnotePrefix }} {{ t().compSubdomainSuffix }}
+      }
+    </p>
+  </aside>
 
-        @case ('invalid') {
-          <div class="rounded-[28px] bg-white p-8 text-center shadow-xl">
-            @switch (invalidReason()) {
-              @case ('used') {
-                <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-brand-50">
-                  <ion-icon name="checkmark-circle-outline" class="text-2xl text-brand-800"></ion-icon>
+  <!-- Panel de contenido -->
+  <div class="flex flex-1 flex-col">
+    <header class="border-b border-gray-100 bg-white/90 backdrop-blur-sm lg:hidden">
+      <div class="mx-auto flex h-16 max-w-7xl items-center px-4 sm:px-6 lg:px-8">
+        <a routerLink="/" class="flex items-center gap-1.5">
+          <span class="text-2xl font-bold leading-none text-brand-800">*</span>
+          <span class="text-lg font-bold tracking-tight text-gray-900">TaxPro Office</span>
+        </a>
+      </div>
+    </header>
+
+    <main class="flex flex-1 items-center justify-center p-4 sm:p-6 lg:p-10">
+      <div class="w-full max-w-lg">
+        @switch (step()) {
+          @case ('loading') {
+            <div class="flex flex-col items-center gap-3 py-10 text-center">
+              <div class="h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-brand-800"></div>
+              <p class="text-sm text-gray-500">{{ t().compLoadingTitle }}</p>
+            </div>
+          }
+
+          @case ('invalid') {
+            <div class="rounded-[28px] bg-white p-8 text-center shadow-xl">
+              @switch (invalidReason()) {
+                @case ('used') {
+                  <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-brand-50">
+                    <ion-icon name="checkmark-circle-outline" class="text-2xl text-brand-800"></ion-icon>
+                  </div>
+                  <h1 class="mt-6 text-xl font-bold text-gray-900">{{ t().compInvalidUsedTitle }}</h1>
+                  <p class="mt-2 text-sm text-gray-600">{{ t().compInvalidUsedBody }}</p>
+                  <a
+                    [href]="appUrl"
+                    class="mt-6 block w-full rounded-full bg-[linear-gradient(90deg,#1E466B_0%,#67BAF4_100%)] py-2.5 text-center text-sm font-semibold text-white transition-opacity hover:opacity-90"
+                  >
+                    {{ t().compGoToLogin }}
+                  </a>
+                }
+                @case ('expired') {
+                  <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-amber-50">
+                    <ion-icon name="time-outline" class="text-2xl text-amber-600"></ion-icon>
+                  </div>
+                  <h1 class="mt-6 text-xl font-bold text-gray-900">{{ t().compInvalidExpiredTitle }}</h1>
+                  <p class="mt-2 text-sm text-gray-600">{{ t().compInvalidExpiredBody }}</p>
+                }
+                @default {
+                  <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-50">
+                    <ion-icon name="alert-circle-outline" class="text-2xl text-red-600"></ion-icon>
+                  </div>
+                  <h1 class="mt-6 text-xl font-bold text-gray-900">{{ t().compInvalidTitle }}</h1>
+                  <p class="mt-2 text-sm text-gray-600">{{ t().compInvalidBody }}</p>
+                  <a
+                    routerLink="/"
+                    fragment="pricing"
+                    class="mt-6 block w-full rounded-full bg-[linear-gradient(90deg,#1E466B_0%,#67BAF4_100%)] py-2.5 text-center text-sm font-semibold text-white transition-opacity hover:opacity-90"
+                  >
+                    {{ t().regBackToPricing }}
+                  </a>
+                }
+              }
+            </div>
+          }
+
+          @case ('form') {
+            <div class="rounded-[28px] bg-white p-8 shadow-xl">
+              <h2 class="border-b border-gray-100 pb-4 text-lg font-bold uppercase tracking-wide text-gray-800 lg:hidden">
+                {{ t().compSubmitButton }}
+              </h2>
+              <p class="mt-3 text-sm text-gray-600 lg:hidden">{{ maskedEmail() }}</p>
+
+              <form (submit)="$event.preventDefault(); submit()" class="mt-4 space-y-4 lg:mt-0">
+                @if (formError()) {
+                  <p class="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-600">{{ formError() }}</p>
+                }
+
+                <div>
+                  <label class="mb-1.5 block text-sm font-medium text-gray-700">{{ t().compOfficeNameLabel }}</label>
+                  <div class="relative">
+                    <ion-icon
+                      name="business-outline"
+                      class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-base text-gray-400"
+                    ></ion-icon>
+                    <input
+                      type="text"
+                      [ngModel]="officeName()"
+                      (ngModelChange)="officeName.set($event)"
+                      name="officeName"
+                      [placeholder]="t().compOfficeNamePlaceholder"
+                      [disabled]="isSubmitting()"
+                      class="w-full rounded-xl border border-gray-200 py-2.5 pl-9 pr-3 text-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/30 disabled:opacity-50"
+                    />
+                  </div>
                 </div>
-                <h1 class="mt-6 text-xl font-bold text-gray-900">{{ t().compInvalidUsedTitle }}</h1>
-                <p class="mt-2 text-sm text-gray-600">{{ t().compInvalidUsedBody }}</p>
-                <a
-                  [href]="appUrl"
-                  class="mt-6 block w-full rounded-full bg-gray-900 py-2.5 text-center text-sm font-semibold text-white transition-colors hover:bg-gray-700"
+
+                <div>
+                  <label class="mb-1.5 block text-sm font-medium text-gray-700">{{ t().compSubdomainLabel }}</label>
+                  <div class="flex items-stretch overflow-hidden rounded-xl border border-gray-200 focus-within:border-brand-600 focus-within:ring-2 focus-within:ring-brand-600/30">
+                    <span class="flex items-center pl-3 text-gray-400">
+                      <ion-icon name="globe-outline" class="text-base"></ion-icon>
+                    </span>
+                    <input
+                      type="text"
+                      [ngModel]="subdomain()"
+                      (ngModelChange)="onSubdomainInput($event)"
+                      name="subdomain"
+                      [disabled]="isSubmitting()"
+                      class="min-w-0 flex-1 px-2 py-2.5 text-sm focus:outline-none disabled:opacity-50"
+                    />
+                    <span class="flex items-center bg-gray-50 px-3 text-sm text-gray-500">{{ t().compSubdomainSuffix }}</span>
+                  </div>
+                  <p class="mt-1.5 text-xs" [class.text-gray-500]="subdomainStatus() === 'idle' || subdomainStatus() === 'checking'"
+                     [class.text-emerald-600]="subdomainStatus() === 'available'"
+                     [class.text-red-600]="subdomainStatus() === 'taken' || subdomainStatus() === 'invalid' || subdomainStatus() === 'reserved'">
+                    @switch (subdomainStatus()) {
+                      @case ('checking') { {{ t().compSubdomainChecking }} }
+                      @case ('available') { {{ t().compSubdomainAvailable }} }
+                      @case ('taken') { {{ t().compSubdomainTaken }} }
+                      @case ('invalid') { {{ t().compSubdomainInvalid }} }
+                      @case ('reserved') { {{ t().compSubdomainReserved }} }
+                    }
+                  </p>
+                </div>
+
+                <div>
+                  <label class="mb-1.5 block text-sm font-medium text-gray-700">{{ t().rpNewPasswordLabel }}</label>
+                  <div class="relative">
+                    <ion-icon
+                      name="lock-closed-outline"
+                      class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-base text-gray-400"
+                    ></ion-icon>
+                    <input
+                      [type]="showPassword() ? 'text' : 'password'"
+                      [ngModel]="password()"
+                      (ngModelChange)="password.set($event)"
+                      name="password"
+                      [disabled]="isSubmitting()"
+                      class="w-full rounded-xl border border-gray-200 py-2.5 pl-9 pr-10 text-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/30 disabled:opacity-50"
+                    />
+                    <button
+                      type="button"
+                      (click)="showPassword.set(!showPassword())"
+                      class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
+                      aria-label="Toggle password visibility"
+                    >
+                      <ion-icon [name]="showPassword() ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
+                    </button>
+                  </div>
+                  <p class="mt-1.5 text-xs text-gray-500">{{ t().compPasswordHint }}</p>
+                </div>
+
+                <div>
+                  <label class="mb-1.5 block text-sm font-medium text-gray-700">{{ t().authConfirmPasswordLabel }}</label>
+                  <div class="relative">
+                    <ion-icon
+                      name="lock-closed-outline"
+                      class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-base text-gray-400"
+                    ></ion-icon>
+                    <input
+                      [type]="showConfirmPassword() ? 'text' : 'password'"
+                      [ngModel]="confirmPassword()"
+                      (ngModelChange)="confirmPassword.set($event)"
+                      name="confirmPassword"
+                      [disabled]="isSubmitting()"
+                      class="w-full rounded-xl border border-gray-200 py-2.5 pl-9 pr-10 text-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/30 disabled:opacity-50"
+                    />
+                    <button
+                      type="button"
+                      (click)="showConfirmPassword.set(!showConfirmPassword())"
+                      class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
+                      aria-label="Toggle password visibility"
+                    >
+                      <ion-icon [name]="showConfirmPassword() ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
+                    </button>
+                  </div>
+                </div>
+
+                <label class="flex cursor-pointer items-start gap-2 text-sm text-gray-600">
+                  <input
+                    type="checkbox"
+                    [ngModel]="termsAccepted()"
+                    (ngModelChange)="termsAccepted.set($event)"
+                    name="termsAccepted"
+                    [disabled]="isSubmitting()"
+                    class="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 text-brand-800 focus:ring-brand-600/30"
+                  />
+                  <span>
+                    {{ t().compTermsPrefix }}
+                    <button type="button" (click)="openTerms()" class="font-semibold text-brand-800 underline hover:text-brand-600">{{ t().compTermsLinkLabel }}</button>
+                  </span>
+                </label>
+
+                <button
+                  type="submit"
+                  [disabled]="isSubmitting()"
+                  class="w-full rounded-full bg-[linear-gradient(90deg,#1E466B_0%,#67BAF4_100%)] py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {{ t().compGoToLogin }}
-                </a>
-              }
-              @case ('expired') {
-                <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-amber-50">
-                  <ion-icon name="time-outline" class="text-2xl text-amber-600"></ion-icon>
+                  {{ isSubmitting() ? t().compSubmitting : t().compSubmitButton }}
+                </button>
+              </form>
+            </div>
+
+            @if (showTermsModal()) {
+              <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" (click)="closeTerms()">
+                <div class="flex max-h-[80vh] w-full max-w-lg flex-col rounded-[28px] bg-white p-6 shadow-xl" (click)="$event.stopPropagation()">
+                  <div class="flex items-center justify-between">
+                    <h2 class="text-lg font-bold text-gray-900">{{ t().compTermsModalTitle }}</h2>
+                    <button type="button" (click)="closeTerms()" class="text-gray-400 hover:text-gray-600" aria-label="Close">
+                      <ion-icon name="close-outline" class="text-2xl"></ion-icon>
+                    </button>
+                  </div>
+                  <div class="mt-4 flex-1 overflow-y-auto text-sm text-gray-600">
+                    @if (isLoadingTerms()) {
+                      <p class="text-gray-400">{{ t().compTermsLoading }}</p>
+                    } @else {
+                      <div [innerHTML]="termsContent()"></div>
+                    }
+                  </div>
                 </div>
-                <h1 class="mt-6 text-xl font-bold text-gray-900">{{ t().compInvalidExpiredTitle }}</h1>
-                <p class="mt-2 text-sm text-gray-600">{{ t().compInvalidExpiredBody }}</p>
-              }
-              @default {
-                <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-50">
-                  <ion-icon name="alert-circle-outline" class="text-2xl text-red-600"></ion-icon>
-                </div>
-                <h1 class="mt-6 text-xl font-bold text-gray-900">{{ t().compInvalidTitle }}</h1>
-                <p class="mt-2 text-sm text-gray-600">{{ t().compInvalidBody }}</p>
-                <a
-                  routerLink="/"
-                  fragment="pricing"
-                  class="mt-6 block w-full rounded-full bg-gray-900 py-2.5 text-center text-sm font-semibold text-white transition-colors hover:bg-gray-700"
-                >
-                  {{ t().regBackToPricing }}
-                </a>
-              }
+              </div>
             }
-          </div>
-        }
+          }
 
-        @case ('form') {
-          <div class="rounded-[28px] bg-white p-8 shadow-xl">
-            <h1 class="text-2xl font-bold text-gray-900">
-              {{ t().compWelcomeSubtitlePrefix }}{{ planName() ? ' ' + planName() : '' }}, {{ firstName() }}
-            </h1>
-            <p class="mt-2 text-sm text-gray-600">{{ maskedEmail() }}</p>
+          @case ('provisioning') {
+            <div class="flex flex-col items-center gap-4 rounded-[28px] bg-white p-10 text-center shadow-xl">
+              <div class="h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-brand-800"></div>
+              <h1 class="text-xl font-bold text-gray-900">{{ t().compProvisioningTitle }}</h1>
+              <p class="text-sm text-gray-600">{{ t().compProvisioningBody }}</p>
+            </div>
+          }
 
-            <form (submit)="$event.preventDefault(); submit()" class="mt-6 space-y-4">
-              @if (formError()) {
-                <p class="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-600">{{ formError() }}</p>
-              }
-
-              <div>
-                <label class="mb-1.5 block text-sm font-medium text-gray-700">{{ t().compOfficeNameLabel }}</label>
-                <input
-                  type="text"
-                  [ngModel]="officeName()"
-                  (ngModelChange)="officeName.set($event)"
-                  name="officeName"
-                  [placeholder]="t().compOfficeNamePlaceholder"
-                  [disabled]="isSubmitting()"
-                  class="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/30 disabled:opacity-50"
-                />
+          @case ('completed') {
+            <div class="rounded-[28px] bg-white p-8 text-center shadow-xl">
+              <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-50">
+                <ion-icon name="checkmark-circle-outline" class="text-3xl text-green-600"></ion-icon>
               </div>
-
-              <div>
-                <label class="mb-1.5 block text-sm font-medium text-gray-700">{{ t().compSubdomainLabel }}</label>
-                <div class="flex items-stretch overflow-hidden rounded-xl border border-gray-200 focus-within:border-brand-600 focus-within:ring-2 focus-within:ring-brand-600/30">
-                  <input
-                    type="text"
-                    [ngModel]="subdomain()"
-                    (ngModelChange)="onSubdomainInput($event)"
-                    name="subdomain"
-                    [disabled]="isSubmitting()"
-                    class="min-w-0 flex-1 px-3 py-2.5 text-sm focus:outline-none disabled:opacity-50"
-                  />
-                  <span class="flex items-center bg-gray-50 px-3 text-sm text-gray-500">{{ t().compSubdomainSuffix }}</span>
-                </div>
-                <p class="mt-1.5 text-xs" [class.text-gray-500]="subdomainStatus() === 'idle' || subdomainStatus() === 'checking'"
-                   [class.text-emerald-600]="subdomainStatus() === 'available'"
-                   [class.text-red-600]="subdomainStatus() === 'taken' || subdomainStatus() === 'invalid' || subdomainStatus() === 'reserved'">
-                  @switch (subdomainStatus()) {
-                    @case ('checking') { {{ t().compSubdomainChecking }} }
-                    @case ('available') { {{ t().compSubdomainAvailable }} }
-                    @case ('taken') { {{ t().compSubdomainTaken }} }
-                    @case ('invalid') { {{ t().compSubdomainInvalid }} }
-                    @case ('reserved') { {{ t().compSubdomainReserved }} }
-                  }
-                </p>
-              </div>
-
-              <div>
-                <label class="mb-1.5 block text-sm font-medium text-gray-700">{{ t().rpNewPasswordLabel }}</label>
-                <div class="relative">
-                  <input
-                    [type]="showPassword() ? 'text' : 'password'"
-                    [ngModel]="password()"
-                    (ngModelChange)="password.set($event)"
-                    name="password"
-                    [disabled]="isSubmitting()"
-                    class="w-full rounded-xl border border-gray-200 px-3 py-2.5 pr-10 text-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/30 disabled:opacity-50"
-                  />
-                  <button
-                    type="button"
-                    (click)="showPassword.set(!showPassword())"
-                    class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
-                    aria-label="Toggle password visibility"
-                  >
-                    <ion-icon [name]="showPassword() ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
-                  </button>
-                </div>
-                <p class="mt-1.5 text-xs text-gray-500">{{ t().compPasswordHint }}</p>
-              </div>
-
-              <div>
-                <label class="mb-1.5 block text-sm font-medium text-gray-700">{{ t().authConfirmPasswordLabel }}</label>
-                <div class="relative">
-                  <input
-                    [type]="showConfirmPassword() ? 'text' : 'password'"
-                    [ngModel]="confirmPassword()"
-                    (ngModelChange)="confirmPassword.set($event)"
-                    name="confirmPassword"
-                    [disabled]="isSubmitting()"
-                    class="w-full rounded-xl border border-gray-200 px-3 py-2.5 pr-10 text-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/30 disabled:opacity-50"
-                  />
-                  <button
-                    type="button"
-                    (click)="showConfirmPassword.set(!showConfirmPassword())"
-                    class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
-                    aria-label="Toggle password visibility"
-                  >
-                    <ion-icon [name]="showConfirmPassword() ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
-                  </button>
-                </div>
-              </div>
-
-              <label class="flex cursor-pointer items-start gap-2 text-sm text-gray-600">
-                <input
-                  type="checkbox"
-                  [ngModel]="termsAccepted()"
-                  (ngModelChange)="termsAccepted.set($event)"
-                  name="termsAccepted"
-                  [disabled]="isSubmitting()"
-                  class="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 text-brand-800 focus:ring-brand-600/30"
-                />
-                <span>
-                  {{ t().compTermsPrefix }}
-                  <button type="button" (click)="openTerms()" class="font-semibold text-brand-800 underline hover:text-brand-600">{{ t().compTermsLinkLabel }}</button>
-                </span>
-              </label>
-
+              <h1 class="mt-6 text-2xl font-bold text-gray-900">{{ t().compCompletedTitle }}</h1>
+              <p class="mt-2 text-sm text-gray-600">{{ t().compCompletedBody }}</p>
               <button
-                type="submit"
-                [disabled]="isSubmitting()"
-                class="w-full rounded-full bg-gray-900 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-60"
+                type="button"
+                (click)="goToOffice()"
+                class="mt-6 w-full rounded-full bg-[linear-gradient(90deg,#1E466B_0%,#67BAF4_100%)] py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
               >
-                {{ isSubmitting() ? t().compSubmitting : t().compSubmitButton }}
+                {{ t().compGoToOffice }}
               </button>
-            </form>
-          </div>
+              <p class="mt-4 text-xs text-gray-400">{{ t().rpRedirectNotice }} {{ redirectSecondsLeft() }}s</p>
+            </div>
+          }
 
-          @if (showTermsModal()) {
-            <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" (click)="closeTerms()">
-              <div class="flex max-h-[80vh] w-full max-w-lg flex-col rounded-[28px] bg-white p-6 shadow-xl" (click)="$event.stopPropagation()">
-                <div class="flex items-center justify-between">
-                  <h2 class="text-lg font-bold text-gray-900">{{ t().compTermsModalTitle }}</h2>
-                  <button type="button" (click)="closeTerms()" class="text-gray-400 hover:text-gray-600" aria-label="Close">
-                    <ion-icon name="close-outline" class="text-2xl"></ion-icon>
-                  </button>
-                </div>
-                <div class="mt-4 flex-1 overflow-y-auto text-sm text-gray-600">
-                  @if (isLoadingTerms()) {
-                    <p class="text-gray-400">{{ t().compTermsLoading }}</p>
-                  } @else {
-                    <div [innerHTML]="termsContent()"></div>
-                  }
-                </div>
+          @case ('manual-review') {
+            <div class="rounded-[28px] bg-white p-8 text-center shadow-xl">
+              <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-amber-50">
+                <ion-icon name="time-outline" class="text-2xl text-amber-600"></ion-icon>
               </div>
+              <h1 class="mt-6 text-xl font-bold text-gray-900">{{ t().compManualReviewTitle }}</h1>
+              <p class="mt-2 text-sm text-gray-600">{{ t().compManualReviewBody }}</p>
+            </div>
+          }
+
+          @case ('failed') {
+            <div class="rounded-[28px] bg-white p-8 text-center shadow-xl">
+              <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-50">
+                <ion-icon name="alert-circle-outline" class="text-2xl text-red-600"></ion-icon>
+              </div>
+              <h1 class="mt-6 text-xl font-bold text-gray-900">{{ t().compFailedTitle }}</h1>
+              <p class="mt-2 text-sm text-gray-600">{{ t().compFailedBody }}</p>
             </div>
           }
         }
-
-        @case ('provisioning') {
-          <div class="flex flex-col items-center gap-4 rounded-[28px] bg-white p-10 text-center shadow-xl">
-            <div class="h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-brand-800"></div>
-            <h1 class="text-xl font-bold text-gray-900">{{ t().compProvisioningTitle }}</h1>
-            <p class="text-sm text-gray-600">{{ t().compProvisioningBody }}</p>
-          </div>
-        }
-
-        @case ('completed') {
-          <div class="rounded-[28px] bg-white p-8 text-center shadow-xl">
-            <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-50">
-              <ion-icon name="checkmark-circle-outline" class="text-3xl text-green-600"></ion-icon>
-            </div>
-            <h1 class="mt-6 text-2xl font-bold text-gray-900">{{ t().compCompletedTitle }}</h1>
-            <p class="mt-2 text-sm text-gray-600">{{ t().compCompletedBody }}</p>
-            <button
-              type="button"
-              (click)="goToOffice()"
-              class="mt-6 w-full rounded-full bg-gray-900 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-gray-700"
-            >
-              {{ t().compGoToOffice }}
-            </button>
-            <p class="mt-4 text-xs text-gray-400">{{ t().rpRedirectNotice }} {{ redirectSecondsLeft() }}s</p>
-          </div>
-        }
-
-        @case ('manual-review') {
-          <div class="rounded-[28px] bg-white p-8 text-center shadow-xl">
-            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-amber-50">
-              <ion-icon name="time-outline" class="text-2xl text-amber-600"></ion-icon>
-            </div>
-            <h1 class="mt-6 text-xl font-bold text-gray-900">{{ t().compManualReviewTitle }}</h1>
-            <p class="mt-2 text-sm text-gray-600">{{ t().compManualReviewBody }}</p>
-          </div>
-        }
-
-        @case ('failed') {
-          <div class="rounded-[28px] bg-white p-8 text-center shadow-xl">
-            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-50">
-              <ion-icon name="alert-circle-outline" class="text-2xl text-red-600"></ion-icon>
-            </div>
-            <h1 class="mt-6 text-xl font-bold text-gray-900">{{ t().compFailedTitle }}</h1>
-            <p class="mt-2 text-sm text-gray-600">{{ t().compFailedBody }}</p>
-          </div>
-        }
-      }
-    </div>
-  </main>
+      </div>
+    </main>
+  </div>
 </div>
