@@ -16,6 +16,7 @@ export interface TranslationKeys {
   navGoToApp: string;
 
   // Hero
+  heroBadge: string;
   heroTitle: string;
   heroDescription: string;
   heroCtaPrimary: string;
@@ -69,8 +70,6 @@ export interface TranslationKeys {
   helpCenterButton: string;
   faqQuestion1: string;
   faqAnswer1: string;
-  faqQuestion2: string;
-  faqAnswer2: string;
   faqQuestion3: string;
   faqAnswer3: string;
   faqQuestion4: string;
@@ -127,4 +126,51 @@ export interface TranslationKeys {
   authErrorPasswordLength: string;
   authErrorPhoneDigits: string;
   authErrorTermsRequired: string;
+  authErrorConnection: string;
+  authSigningIn: string;
+  authCreatingAccount: string;
+  authRegisterSuccess: string;
+  authLoginCancelled: string;
+  authSessionTitle: string;
+  authSessionBody: string;
+  authSessionQuestion: string;
+  authSessionSecurityTitle: string;
+  authSessionSecurityBody: string;
+  authSessionCancel: string;
+  authSessionConfirm: string;
+  authSessionProcessing: string;
+  authSessionHelp: string;
+  navSignOut: string;
+  fpTitle: string;
+  fpSubtitle: string;
+  fpSendButton: string;
+  fpSending: string;
+  fpSentTitle: string;
+  fpSentBody: string;
+  fpNextSteps: string;
+  fpStep1: string;
+  fpStep2: string;
+  fpStep3: string;
+  fpResend: string;
+  fpBackHome: string;
+  rpOtpTitle: string;
+  rpOtpSubtitle: string;
+  rpOtpLabel: string;
+  rpOtpExpires: string;
+  rpOtpExpired: string;
+  rpOtpErrorLength: string;
+  rpValidateButton: string;
+  rpValidating: string;
+  rpResendOtp: string;
+  rpSendingOtp: string;
+  rpPasswordTitle: string;
+  rpPasswordSubtitle: string;
+  rpNewPasswordLabel: string;
+  rpResetButton: string;
+  rpResetting: string;
+  rpSuccessTitle: string;
+  rpSuccessBody: string;
+  rpGoToLogin: string;
+  rpRedirectNotice: string;
+  rpInvalidLink: string;
 }

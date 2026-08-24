@@ -1,0 +1,50 @@
+@if (isOpen) {
+  <div class="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm" (click)="onOverlayClick()">
+    <div
+      class="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-[28px] bg-white p-6 shadow-xl"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="flex justify-center">
+        <div class="flex h-14 w-14 items-center justify-center rounded-full bg-amber-100">
+          <ion-icon name="warning-outline" class="text-3xl text-amber-600"></ion-icon>
+        </div>
+      </div>
+
+      <h2 class="mt-4 text-center text-xl font-bold text-gray-900">{{ t().authSessionTitle }}</h2>
+
+      <p class="mt-3 text-center text-sm text-gray-600">{{ t().authSessionBody }}</p>
+      <p class="mt-2 text-center text-sm font-medium text-gray-700">{{ t().authSessionQuestion }}</p>
+
+      <div class="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-3">
+        <div class="flex items-start gap-2">
+          <ion-icon name="information-circle-outline" class="mt-0.5 shrink-0 text-lg text-brand-600"></ion-icon>
+          <p class="text-sm text-gray-600">
+            <span class="font-medium">{{ t().authSessionSecurityTitle }}</span>
+            {{ t().authSessionSecurityBody }}
+          </p>
+        </div>
+      </div>
+
+      <div class="mt-6 flex flex-col gap-3 sm:flex-row">
+        <button
+          type="button"
+          (click)="cancelled.emit()"
+          [disabled]="isLoading"
+          class="flex-1 rounded-full border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {{ t().authSessionCancel }}
+        </button>
+        <button
+          type="button"
+          (click)="confirmed.emit()"
+          [disabled]="isLoading"
+          class="flex-1 rounded-full bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {{ isLoading ? t().authSessionProcessing : t().authSessionConfirm }}
+        </button>
+      </div>
+
+      <p class="mt-4 text-center text-xs text-gray-400">{{ t().authSessionHelp }}</p>
+    </div>
+  </div>
+}

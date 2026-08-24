@@ -1,77 +1,51 @@
 import { Component, CUSTOM_ELEMENTS_SCHEMA, EventEmitter, Input, Output, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { TranslationStore } from '@core/i18n/translation.store';
 import { ModalComponent } from '@shared/ui/modal/modal.component';
-
-export interface LoginSubmitPayload {
-  email: string;
-  password: string;
-  rememberMe: boolean;
-}
-
-export interface RegisterSubmitPayload {
-  firstName: string;
-  lastName: string;
-  email: string;
-  companyName: string;
-  phoneNumber: string;
-  password: string;
-}
-
-type AuthTab = 'login' | 'register';
+import { AuthService } from '@core/auth/auth.service';
+import { LoginCredentials, UserProfile } from '@core/auth/auth.models';
+import { ExistingSessionModalComponent } from './existing-session-modal.component';
 
 /**
- * Modal de login/registro (portado de LandingPageTaxProSuite) — presentacional:
- * valida en cliente y emite los datos por output. Sin llamadas a backend todavía;
- * `loginSubmit`/`registerSubmit` quedan listos para conectarse a un AuthService real.
+ * Modal de inicio de sesión conectado al backend del landing (flujo portado
+ * de LandingPageTaxProSuite): login con detección de sesión existente (409 →
+ * pantalla de force-login). Tras un login exitoso emite `loginSuccess`.
+ * Sin registro — las cuentas se crean desde la app.
  */
 @Component({
   selector: 'app-auth-modal',
-  imports: [FormsModule, ModalComponent],
+  imports: [FormsModule, ModalComponent, ExistingSessionModalComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: './auth-modal.component.html',
 })
 export class AuthModalComponent {
   @Input() isOpen = false;
   @Output() closed = new EventEmitter<void>();
-  @Output() loginSubmit = new EventEmitter<LoginSubmitPayload>();
-  @Output() registerSubmit = new EventEmitter<RegisterSubmitPayload>();
+  @Output() loginSuccess = new EventEmitter<UserProfile>();
   @Output() forgotPassword = new EventEmitter<void>();
 
+  private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
   protected readonly t = inject(TranslationStore).t;
 
-  protected readonly activeTab = signal<AuthTab>('login');
   protected readonly showLoginPassword = signal(false);
-  protected readonly showRegisterPassword = signal(false);
-  protected readonly showConfirmPassword = signal(false);
   protected readonly loginError = signal('');
-  protected readonly registerError = signal('');
+  protected readonly isLoggingIn = signal(false);
 
   protected readonly loginEmail = signal('');
   protected readonly loginPassword = signal('');
   protected readonly rememberMe = signal(false);
 
-  protected readonly firstName = signal('');
-  protected readonly lastName = signal('');
-  protected readonly registerEmail = signal('');
-  protected readonly companyName = signal('');
-  protected readonly phoneNumber = signal('');
-  protected readonly registerPassword = signal('');
-  protected readonly confirmPassword = signal('');
-  protected readonly agreeToTerms = signal(false);
-
-  onPhoneChange(value: string): void {
-    const digits = value.replace(/\D/g, '').slice(0, 10);
-    let formatted = digits;
-    if (digits.length >= 6) {
-      formatted = `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
-    } else if (digits.length >= 3) {
-      formatted = `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
-    }
-    this.phoneNumber.set(formatted);
-  }
+  // Estado del flujo de sesión existente (409 en el login)
+  protected readonly showExistingSessionModal = signal(false);
+  protected readonly isForceLoggingIn = signal(false);
+  private pendingCredentials: LoginCredentials | null = null;
 
   submitLogin(): void {
+    if (this.isLoggingIn()) {
+      return;
+    }
     this.loginError.set('');
 
     if (!this.loginEmail().trim() || !this.loginPassword()) {
@@ -83,59 +57,64 @@ export class AuthModalComponent {
       return;
     }
 
-    this.loginSubmit.emit({
+    const credentials: LoginCredentials = {
       email: this.loginEmail(),
       password: this.loginPassword(),
-      rememberMe: this.rememberMe(),
+      remember: this.rememberMe(),
+    };
+
+    this.isLoggingIn.set(true);
+    this.authService.login(credentials).subscribe({
+      next: (result) => {
+        this.isLoggingIn.set(false);
+        if (result.success && result.user) {
+          this.loginSuccess.emit(result.user);
+          this.close();
+        } else if (result.existingSession) {
+          this.pendingCredentials = credentials;
+          this.showExistingSessionModal.set(true);
+        } else {
+          this.loginError.set(result.error || this.t().authErrorConnection);
+        }
+      },
+      error: () => {
+        this.isLoggingIn.set(false);
+        this.loginError.set(this.t().authErrorConnection);
+      },
     });
-    this.close();
   }
 
-  submitRegister(): void {
-    this.registerError.set('');
+  onForceLogin(): void {
+    if (!this.pendingCredentials) {
+      return;
+    }
+    this.isForceLoggingIn.set(true);
 
-    if (
-      !this.firstName().trim() ||
-      !this.lastName().trim() ||
-      !this.registerEmail().trim() ||
-      !this.registerPassword() ||
-      !this.confirmPassword()
-    ) {
-      this.registerError.set(this.t().authErrorRequiredFields);
-      return;
-    }
-    if (!this.isValidEmail(this.registerEmail())) {
-      this.registerError.set(this.t().authErrorInvalidEmail);
-      return;
-    }
-    if (this.registerPassword() !== this.confirmPassword()) {
-      this.registerError.set(this.t().authErrorPasswordMismatch);
-      return;
-    }
-    if (this.registerPassword().length < 6) {
-      this.registerError.set(this.t().authErrorPasswordLength);
-      return;
-    }
-
-    const phoneDigits = this.phoneNumber().replace(/\D/g, '');
-    if (phoneDigits && phoneDigits.length !== 10) {
-      this.registerError.set(this.t().authErrorPhoneDigits);
-      return;
-    }
-    if (!this.agreeToTerms()) {
-      this.registerError.set(this.t().authErrorTermsRequired);
-      return;
-    }
-
-    this.registerSubmit.emit({
-      firstName: this.firstName(),
-      lastName: this.lastName(),
-      email: this.registerEmail(),
-      companyName: this.companyName(),
-      phoneNumber: phoneDigits,
-      password: this.registerPassword(),
+    this.authService.forceLogin(this.pendingCredentials).subscribe({
+      next: (result) => {
+        this.isForceLoggingIn.set(false);
+        this.showExistingSessionModal.set(false);
+        this.pendingCredentials = null;
+        if (result.success && result.user) {
+          this.loginSuccess.emit(result.user);
+          this.close();
+        } else {
+          this.loginError.set(result.error || this.t().authErrorConnection);
+        }
+      },
+      error: () => {
+        this.isForceLoggingIn.set(false);
+        this.showExistingSessionModal.set(false);
+        this.pendingCredentials = null;
+        this.loginError.set(this.t().authErrorConnection);
+      },
     });
-    this.close();
+  }
+
+  onCancelForceLogin(): void {
+    this.showExistingSessionModal.set(false);
+    this.pendingCredentials = null;
+    this.loginError.set(this.t().authLoginCancelled);
   }
 
   close(): void {
@@ -143,27 +122,25 @@ export class AuthModalComponent {
     this.resetState();
   }
 
+  goToForgotPassword(): void {
+    this.forgotPassword.emit();
+    this.close();
+    this.router.navigateByUrl('/forgot-password');
+  }
+
   private isValidEmail(email: string): boolean {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   }
 
   private resetState(): void {
-    this.activeTab.set('login');
     this.loginError.set('');
-    this.registerError.set('');
     this.loginEmail.set('');
     this.loginPassword.set('');
     this.rememberMe.set(false);
-    this.firstName.set('');
-    this.lastName.set('');
-    this.registerEmail.set('');
-    this.companyName.set('');
-    this.phoneNumber.set('');
-    this.registerPassword.set('');
-    this.confirmPassword.set('');
-    this.agreeToTerms.set(false);
     this.showLoginPassword.set(false);
-    this.showRegisterPassword.set(false);
-    this.showConfirmPassword.set(false);
+    this.isLoggingIn.set(false);
+    this.showExistingSessionModal.set(false);
+    this.isForceLoggingIn.set(false);
+    this.pendingCredentials = null;
   }
 }

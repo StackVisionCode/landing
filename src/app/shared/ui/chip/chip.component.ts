@@ -4,7 +4,7 @@ export type ChipVariant = 'brand' | 'success' | 'warning' | 'danger' | 'neutral'
 
 /** Pill de estado/metadata: `rounded-full border`, nunca relleno (patrón "Aether"). */
 const VARIANT_CLASSES: Record<ChipVariant, string> = {
-  brand: 'border-indigo-200 text-indigo-600',
+  brand: 'border-brand-200 text-brand-800',
   success: 'border-emerald-200 text-emerald-600',
   warning: 'border-orange-200 text-orange-500',
   danger: 'border-red-200 text-red-500',

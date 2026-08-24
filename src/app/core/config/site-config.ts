@@ -4,6 +4,7 @@
  * — reemplazar por los reales de la cuenta de LeadConnector antes de publicar.
  */
 export const SITE_CONFIG = {
+  apiUrl: 'https://api.stacktaxvision.com/api',
   appUrl: 'https://app.stacktaxvision.com',
   clientPortalUrl: 'https://client.stacktaxvision.com',
   booking: {

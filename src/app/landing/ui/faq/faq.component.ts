@@ -17,7 +17,6 @@ export class FaqComponent {
 
   protected readonly items = computed(() => [
     { question: this.t().faqQuestion1, answer: this.t().faqAnswer1 },
-    { question: this.t().faqQuestion2, answer: this.t().faqAnswer2 },
     { question: this.t().faqQuestion3, answer: this.t().faqAnswer3 },
     { question: this.t().faqQuestion4, answer: this.t().faqAnswer4 },
   ]);

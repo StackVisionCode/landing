@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Resalte de titulares (marca "Aether"): morado de marca, sin gradiente. */
+/* Resalte de titulares: Bold Blue de marca, sin gradiente. */
 .highlight {
-  color: #7c6ae0;
+  color: #1e466b;
 }
