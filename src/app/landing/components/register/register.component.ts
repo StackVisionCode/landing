@@ -1,6 +1,6 @@
 import { Component, CUSTOM_ELEMENTS_SCHEMA, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslationStore } from '@core/i18n/translation.store';
 import { OnboardingService } from '@core/onboarding/onboarding.service';
 import { PlansService } from '@core/plans/plans.service';
@@ -47,6 +47,7 @@ const OTP_DURATION_SECONDS = 600; // TTL real del challenge: 10 min (Onboarding_
 })
 export class RegisterComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly onboarding = inject(OnboardingService);
   private readonly plansService = inject(PlansService);
   protected readonly translation = inject(TranslationStore);
@@ -114,6 +115,19 @@ export class RegisterComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     const params = this.route.snapshot.queryParamMap;
+
+    // El link real del correo de registro apunta a "{RegistrationUrlBase}/register?token=..."
+    // (ResolveRegistrationTokenReferenceQuery.cs:41 en el backend — NO a /register/complete).
+    // Sin este redirect, /register solo mira `plan` y cae directo al estado
+    // "no encontramos ese plan" sin siquiera llamar a la API, aunque el token
+    // y el plan resuelvan perfecto del lado del backend (bug real reportado:
+    // el usuario ve "plan no encontrado" pese a que preview/plan responden 200).
+    const token = params.get('token');
+    if (token) {
+      this.router.navigate(['/register/complete'], { queryParams: { token }, replaceUrl: true });
+      return;
+    }
+
     this.cycle.set(params.get('cycle') === 'Yearly' ? 'Yearly' : 'Monthly');
     this.showCancelledNotice.set(params.get('cancelled') === '1');
     this.loadPlan();
