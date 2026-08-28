@@ -228,7 +228,7 @@
 
                 <button
                   type="submit"
-                  [disabled]="isSubmitting()"
+                  [disabled]="isSubmitting() || !termsAccepted()"
                   class="w-full rounded-lg bg-[linear-gradient(90deg,#1E466B_0%,#67BAF4_100%)] py-2.5 text-sm font-bold uppercase tracking-wide text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {{ isSubmitting() ? t().compSubmitting : t().compSubmitButton }}
