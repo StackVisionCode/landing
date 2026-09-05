@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="512"
+   height="512"
+   viewBox="0 0 512 512"
+   preserveAspectRatio="xMidYMid meet"
+   version="1.1"
+   id="svg4"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs4" />
+  <rect
+     x="16"
+     y="16"
+     width="480"
+     height="480"
+     rx="104"
+     fill="#1E466B"
+     id="rect1" />
+  <g
+     fill="#FAFAFA"
+     transform="translate(66 66) scale(0.742)"
+     id="g4">
+    <path
+       fill-rule="evenodd"
+       d="M188 44H240V184A72 72 0 0 0 184 240H44V188H132V132H188Z M139 181L147 173L188 214L180 222Z"
+       id="path1" />
+    <path
+       fill-rule="evenodd"
+       d="M188 44H240V184A72 72 0 0 0 184 240H44V188H132V132H188Z M139 181L147 173L188 214L180 222Z"
+       transform="rotate(90 256 256)"
+       id="path2" />
+    <path
+       fill-rule="evenodd"
+       d="M188 44H240V184A72 72 0 0 0 184 240H44V188H132V132H188Z M139 181L147 173L188 214L180 222Z"
+       transform="rotate(180 256 256)"
+       id="path3" />
+    <path
+       fill-rule="evenodd"
+       d="M188 44H240V184A72 72 0 0 0 184 240H44V188H132V132H188Z M139 181L147 173L188 214L180 222Z"
+       transform="rotate(270 256 256)"
+       id="path4" />
+  </g>
+</svg>

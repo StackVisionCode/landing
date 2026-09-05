@@ -11,12 +11,15 @@ import {
   CreateEmailChallengeResponse,
   CreateOnboardingRequest,
   CreateOnboardingResponse,
+  OnboardingPaymentOptionsResponse,
   OnboardingStatusResponse,
   PreviewRegistrationResponse,
+  ReconcileOnboardingPaymentResponse,
   StartCheckoutRequest,
   StartCheckoutResponse,
   TermsVersionResponse,
   VerifyEmailChallengeRequest,
+  VerifyEmailChallengeResponse,
 } from './onboarding.models';
 
 /**
@@ -28,13 +31,21 @@ import {
 export class OnboardingService {
   private readonly http = inject(HttpClient);
   private readonly base = SITE_CONFIG.apiUrl;
+  private readonly credentialOptions = { withCredentials: true } as const;
 
   createEmailChallenge(request: CreateEmailChallengeRequest): Observable<CreateEmailChallengeResponse> {
     return this.http.post<CreateEmailChallengeResponse>(`${this.base}/onboarding/email-challenges`, request);
   }
 
-  verifyEmailChallenge(challengeId: string, request: VerifyEmailChallengeRequest): Observable<void> {
-    return this.http.post<void>(`${this.base}/onboarding/email-challenges/${challengeId}/verify`, request);
+  verifyEmailChallenge(
+    challengeId: string,
+    request: VerifyEmailChallengeRequest
+  ): Observable<VerifyEmailChallengeResponse> {
+    return this.http.post<VerifyEmailChallengeResponse>(
+      `${this.base}/onboarding/email-challenges/${challengeId}/verify`,
+      request,
+      this.credentialOptions
+    );
   }
 
   resendEmailChallenge(challengeId: string): Observable<void> {
@@ -42,15 +53,46 @@ export class OnboardingService {
   }
 
   createOnboarding(request: CreateOnboardingRequest): Observable<CreateOnboardingResponse> {
-    return this.http.post<CreateOnboardingResponse>(`${this.base}/onboarding`, request);
+    return this.http.post<CreateOnboardingResponse>(
+      `${this.base}/onboarding`,
+      request,
+      this.credentialOptions
+    );
   }
 
   startCheckout(request: StartCheckoutRequest): Observable<StartCheckoutResponse> {
-    return this.http.post<StartCheckoutResponse>(`${this.base}/onboarding/checkout`, request);
+    return this.http.post<StartCheckoutResponse>(
+      `${this.base}/onboarding/checkout`,
+      request,
+      this.credentialOptions
+    );
+  }
+
+  reconcilePayment(): Observable<ReconcileOnboardingPaymentResponse> {
+    return this.http.post<ReconcileOnboardingPaymentResponse>(
+      `${this.base}/onboarding/reconcile-payment`,
+      {},
+      this.credentialOptions
+    );
   }
 
   cancelOnboarding(onboardingId: string, reason?: string): Observable<void> {
-    return this.http.post<void>(`${this.base}/onboarding/${onboardingId}/cancel`, { reason });
+    return this.http.post<void>(
+      `${this.base}/onboarding/${onboardingId}/cancel`,
+      { reason },
+      this.credentialOptions
+    );
+  }
+
+  getPaymentOptions(
+    planId: string,
+    billingCycle: string,
+    currency = 'USD'
+  ): Observable<OnboardingPaymentOptionsResponse> {
+    return this.http.get<OnboardingPaymentOptionsResponse>(`${this.base}/onboarding/payment-options`, {
+      ...this.credentialOptions,
+      params: { planId, billingCycle, currency },
+    });
   }
 
   checkSubdomain(request: CheckSubdomainRequest): Observable<CheckSubdomainResponse> {
@@ -80,4 +122,5 @@ export class OnboardingService {
   getTermsContent(contentUri: string): Observable<string> {
     return this.http.get(`${this.base}${contentUri}`, { responseType: 'text' });
   }
+
 }

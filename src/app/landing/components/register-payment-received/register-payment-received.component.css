@@ -24,6 +24,11 @@
   will-change: transform, opacity;
 }
 
+.payment-spin {
+  display: inline-block;
+  animation: payment-spin 900ms linear infinite;
+}
+
 @keyframes confetti-fall {
   0% {
     transform: translate3d(0, 0, 0) rotate(0deg);
@@ -38,8 +43,18 @@
   }
 }
 
+@keyframes payment-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .confetti-container {
     display: none;
+  }
+
+  .payment-spin {
+    animation: none;
   }
 }

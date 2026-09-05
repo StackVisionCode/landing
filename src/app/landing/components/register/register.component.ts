@@ -3,11 +3,14 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslationStore } from '@core/i18n/translation.store';
 import { OnboardingService } from '@core/onboarding/onboarding.service';
+import {
+  visibleOnboardingPaymentOptions,
+} from '@core/onboarding/onboarding-payment-options.util';
 import { PlansService } from '@core/plans/plans.service';
 import { moduleLabel } from '@core/plans/module-labels';
 import { apiErrorCode } from '@core/onboarding/onboarding-error.util';
 import type { PlanResponse } from '@core/plans/plans.models';
-import type { BillingCycle } from '@core/onboarding/onboarding.models';
+import type { BillingCycle, OnboardingPaymentOption } from '@core/onboarding/onboarding.models';
 
 type RegisterStep =
   | 'loading'
@@ -26,7 +29,7 @@ const OTP_DURATION_SECONDS = 600; // TTL real del challenge: 10 min (Onboarding_
 /**
  * Página /register (PayFlow "pago primero"): selecciona plan por query param
  * (?plan=&cycle=), verifica el email por OTP, crea el TenantOnboarding y
- * arranca el checkout de Stripe. El onboardingId solo vive en memoria de esta
+ * arranca el checkout del provider elegido. El onboardingId solo vive en memoria de esta
  * sesión — nunca en localStorage/URL (invariante de seguridad del contrato).
  *
  * Orden de pasos verificado contra el código real (Onboarding_PayFirst_PasoAPaso.md
@@ -79,6 +82,8 @@ export class RegisterComponent implements OnInit, OnDestroy {
   protected readonly phone = signal('');
   protected readonly isSubmittingDetails = signal(false);
   protected readonly detailsError = signal('');
+  protected readonly paymentOptions = signal<OnboardingPaymentOption[]>([]);
+  protected readonly selectedPaymentOption = signal<OnboardingPaymentOption | null>(null);
 
   protected readonly showCodeFields = signal(false);
   protected readonly referralCode = signal('');
@@ -227,11 +232,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
 
     this.isVerifying.set(true);
     this.onboarding.verifyEmailChallenge(this.challengeId, { code: this.otp() }).subscribe({
-      next: () => {
-        this.isVerifying.set(false);
-        this.stopOtpTimer();
-        this.step.set('details');
-      },
+      next: () => this.loadPaymentOptionsAfterOtp(),
       error: (err) => {
         this.isVerifying.set(false);
         this.otpError.set(this.mapError(apiErrorCode(err)) || this.t().regErrorGeneric);
@@ -268,6 +269,10 @@ export class RegisterComponent implements OnInit, OnDestroy {
       this.step.set('invalid-plan');
       return;
     }
+    if (!this.selectedPaymentOption()) {
+      this.detailsError.set(this.t().regPaymentMethodUnavailable);
+      return;
+    }
 
     this.isSubmittingDetails.set(true);
     this.onboarding
@@ -295,6 +300,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
     this.processingMessage.set(this.t().regPreparingPayment);
     const origin = typeof window !== 'undefined' ? window.location.origin : 'https://taxproffice.com';
     const plan = this.plan();
+    const paymentOption = this.selectedPaymentOption();
 
     this.onboarding
       .startCheckout({
@@ -302,6 +308,8 @@ export class RegisterComponent implements OnInit, OnDestroy {
         payerEmail: this.email(),
         successUrl: `${origin}/register/payment-received`,
         cancelUrl: `${origin}/register?plan=${plan?.id ?? ''}&cycle=${this.cycle()}&cancelled=1`,
+        provider: paymentOption?.provider,
+        method: paymentOption?.method,
         referralCode: this.referralCode().trim() || undefined,
         promoCode: this.promoCode().trim() || undefined,
         giftCode: this.giftCode().trim() || undefined,
@@ -327,6 +335,39 @@ export class RegisterComponent implements OnInit, OnDestroy {
     this.step.set('error');
   }
 
+  private loadPaymentOptionsAfterOtp(): void {
+    const plan = this.plan();
+    if (!plan) {
+      this.isVerifying.set(false);
+      this.step.set('invalid-plan');
+      return;
+    }
+
+    this.onboarding.getPaymentOptions(plan.id, this.cycle()).subscribe({
+      next: (response) => {
+        this.isVerifying.set(false);
+        this.stopOtpTimer();
+        const visibleOptions = visibleOnboardingPaymentOptions(response.options);
+        this.paymentOptions.set(visibleOptions);
+        this.selectedPaymentOption.set(visibleOptions[0] ?? null);
+        if (!this.selectedPaymentOption()) {
+          this.otpError.set(this.t().regPaymentMethodUnavailable);
+          return;
+        }
+        this.step.set('details');
+      },
+      error: (err) => {
+        this.isVerifying.set(false);
+        this.otpError.set(this.mapError(apiErrorCode(err)) || this.t().regErrorGeneric);
+      },
+    });
+  }
+
+  protected selectPaymentOption(option: OnboardingPaymentOption): void {
+    if (this.isSubmittingDetails()) return;
+    this.selectedPaymentOption.set(option);
+  }
+
   private mapError(code: string | null): string | null {
     const t = this.t();
     switch (code) {
@@ -342,6 +383,8 @@ export class RegisterComponent implements OnInit, OnDestroy {
         return t.regResendCooldown;
       case 'Onboarding.ResendLimitExceeded':
         return t.regResendLimitExceeded;
+      case 'PaymentMethod.Disabled':
+        return t.regPaymentMethodUnavailable;
       default:
         return null;
     }

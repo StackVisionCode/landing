@@ -5,6 +5,7 @@ import { TranslationStore } from '@core/i18n/translation.store';
 import { OnboardingService } from '@core/onboarding/onboarding.service';
 import { SITE_CONFIG } from '@core/config/site-config';
 import { apiErrorCode } from '@core/onboarding/onboarding-error.util';
+import { suggestSubdomainFromOfficeName } from '@core/onboarding/subdomain-suggestion.util';
 import type { OnboardingStatusValue } from '@core/onboarding/onboarding.models';
 
 type CompleteStep = 'loading' | 'invalid' | 'form' | 'provisioning' | 'completed' | 'failed' | 'manual-review';
@@ -64,6 +65,7 @@ export class RegisterCompleteComponent implements OnInit, OnDestroy {
   protected readonly officeName = signal('');
   protected readonly subdomain = signal('');
   protected readonly subdomainStatus = signal<SubdomainStatus>('idle');
+  private subdomainEditedByUser = false;
   private subdomainTimerId: ReturnType<typeof setTimeout> | null = null;
 
   protected readonly password = signal('');
@@ -120,7 +122,19 @@ export class RegisterCompleteComponent implements OnInit, OnDestroy {
     this.showTermsModal.set(false);
   }
 
+  onOfficeNameInput(value: string): void {
+    this.officeName.set(value);
+    if (this.subdomainEditedByUser) return;
+
+    this.applySubdomainInput(suggestSubdomainFromOfficeName(value));
+  }
+
   onSubdomainInput(value: string): void {
+    this.subdomainEditedByUser = true;
+    this.applySubdomainInput(value);
+  }
+
+  private applySubdomainInput(value: string): void {
     const normalized = value.toLowerCase().replace(/[^a-z0-9-]/g, '');
     this.subdomain.set(normalized);
     this.subdomainStatus.set('idle');
