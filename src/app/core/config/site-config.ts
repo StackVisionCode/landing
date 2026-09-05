@@ -7,8 +7,21 @@
  * placeholders — reemplazar por los reales de la cuenta de LeadConnector
  * antes de publicar.
  */
+const productionApiUrl = 'https://api.taxproffice.com';
+const localApiUrl = 'http://localhost:5047';
+
+function resolveApiUrl(): string {
+  if (typeof window === 'undefined') {
+    return productionApiUrl;
+  }
+
+  return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? localApiUrl
+    : productionApiUrl;
+}
+
 export const SITE_CONFIG = {
-  apiUrl: 'https://api.taxproffice.com',
+  apiUrl: resolveApiUrl(),
   appUrl: 'https://app.taxproffice.com',
   clientPortalUrl: 'https://client.taxproffice.com',
   booking: {

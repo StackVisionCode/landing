@@ -17,6 +17,11 @@ export interface VerifyEmailChallengeRequest {
   code: string;
 }
 
+export interface VerifyEmailChallengeResponse {
+  expiresAtUtc: string;
+  tokenType: string;
+}
+
 export type BillingCycle = 'Monthly' | 'Yearly';
 
 export interface CreateOnboardingRequest {
@@ -40,6 +45,8 @@ export interface StartCheckoutRequest {
   payerEmail: string;
   successUrl: string;
   cancelUrl: string;
+  provider?: string;
+  method?: string;
   referralCode?: string;
   promoCode?: string;
   giftCode?: string;
@@ -54,6 +61,28 @@ export interface StartCheckoutResponse {
   discountAmountCents?: number;
   netAmountCents?: number;
   currency?: string;
+}
+
+export interface ReconcileOnboardingPaymentResponse {
+  onboardingId: string;
+  paymentId: string | null;
+  status: OnboardingStatusValue;
+  registrationUrl: string | null;
+  failureCode: string | null;
+  failureMessage: string | null;
+}
+
+export interface OnboardingPaymentOptionsResponse {
+  options: OnboardingPaymentOption[];
+}
+
+export interface OnboardingPaymentOption {
+  provider: string;
+  method: string;
+  displayName: string;
+  enabled: boolean;
+  priority: number;
+  disabledReason: string | null;
 }
 
 export interface CheckSubdomainRequest {

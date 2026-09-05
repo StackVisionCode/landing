@@ -218,6 +218,8 @@ export interface TranslationKeys {
   regCreatingAccount: string;
   regPreparingPayment: string;
   regRedirectingPayment: string;
+  regPaymentMethodLabel: string;
+  regPaymentMethodUnavailable: string;
   regNoPaymentTitle: string;
   regNoPaymentBody: string;
   regErrorGeneric: string;
@@ -225,6 +227,15 @@ export interface TranslationKeys {
   regTryAgainButton: string;
   payReceivedTitle: string;
   payReceivedBody: string;
+  payReceivedCheckingTitle: string;
+  payReceivedCheckingBody: string;
+  payReceivedProcessingTitle: string;
+  payReceivedProcessingBody: string;
+  payReceivedRedirectingTitle: string;
+  payReceivedRedirectingBody: string;
+  payReceivedFailedTitle: string;
+  payReceivedFailedBody: string;
+  payReceivedRetryButton: string;
   payReceivedWelcomeEyebrow: string;
   payReceivedWelcomeHeadline: string;
   regHaveCodeToggle: string;
