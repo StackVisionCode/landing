@@ -15,6 +15,7 @@ import {
   OnboardingStatusResponse,
   PreviewRegistrationResponse,
   ReconcileOnboardingPaymentResponse,
+  ResumeCheckoutRequest,
   StartCheckoutRequest,
   StartCheckoutResponse,
   TermsVersionResponse,
@@ -68,10 +69,22 @@ export class OnboardingService {
     );
   }
 
-  reconcilePayment(): Observable<ReconcileOnboardingPaymentResponse> {
+  /** Reanuda el pago del mismo onboarding desde el link del email (la referencia es la autorización;
+   *  no requiere cookie de sesión — el link puede abrirse en otro navegador/dispositivo). */
+  resumeCheckout(request: ResumeCheckoutRequest): Observable<StartCheckoutResponse> {
+    return this.http.post<StartCheckoutResponse>(
+      `${this.base}/onboarding/resume-checkout`,
+      request,
+      this.credentialOptions
+    );
+  }
+
+  reconcilePayment(reference?: string): Observable<ReconcileOnboardingPaymentResponse> {
+    // La referencia (del successUrl) es el fallback cuando falta la cookie (otro navegador/incógnito).
+    // El backend prefiere la cookie; con la referencia devuelve solo estado, sin registrationUrl.
     return this.http.post<ReconcileOnboardingPaymentResponse>(
       `${this.base}/onboarding/reconcile-payment`,
-      {},
+      reference ? { reference } : {},
       this.credentialOptions
     );
   }
@@ -111,10 +124,11 @@ export class OnboardingService {
     return this.http.get<OnboardingStatusResponse>(`${this.base}/onboarding/status`, { params: { token } });
   }
 
-  /** kind fijo a TermsOfService — es lo único que usa este flujo. */
-  getCurrentTerms(locale: string): Observable<TermsVersionResponse> {
+  /** Versión vigente de un documento legal. `kind` por defecto TermsOfService (el flujo de onboarding);
+   *  las páginas legales del footer pasan también 'PrivacyPolicy'. */
+  getCurrentTerms(locale: string, kind: 'TermsOfService' | 'PrivacyPolicy' = 'TermsOfService'): Observable<TermsVersionResponse> {
     return this.http.get<TermsVersionResponse>(`${this.base}/auth/onboarding/terms/current`, {
-      params: { kind: 'TermsOfService', locale },
+      params: { kind, locale },
     });
   }
 

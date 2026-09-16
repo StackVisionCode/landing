@@ -15,7 +15,7 @@
 
 <div class="flex min-h-screen bg-gray-50">
   <aside
-    class="relative hidden w-full max-w-md shrink-0 flex-col justify-between overflow-hidden bg-[linear-gradient(160deg,#0D0D0D_0%,#16334D_22%,#1E466B_46%,#3679AE_72%,#67BAF4_100%)] p-10 text-white lg:flex"
+    class="relative hidden w-full max-w-md shrink-0 flex-col justify-between overflow-hidden brand-panel-gradient p-10 text-white lg:flex"
   >
     <div class="fluid-blob fluid-blob-1 -left-16 -top-16 h-72 w-72 bg-brand-300/30"></div>
     <div class="fluid-blob fluid-blob-2 -bottom-24 -right-10 h-80 w-80 bg-brand-800/40"></div>
@@ -77,12 +77,34 @@
             </div>
             <h2 class="mt-6 text-2xl font-bold text-gray-900">{{ t().payReceivedFailedTitle }}</h2>
             <p class="mt-2 text-sm text-gray-600">{{ failureMessage() || t().payReceivedFailedBody }}</p>
-            <a
-              routerLink="/"
-              class="mt-6 block w-full rounded-lg bg-[linear-gradient(90deg,#1E466B_0%,#67BAF4_100%)] py-2.5 text-center text-sm font-bold uppercase tracking-wide text-white transition-opacity hover:opacity-90"
-            >
-              {{ t().payReceivedRetryButton }}
-            </a>
+
+            @if (retryError()) {
+              <p role="alert" class="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{{ retryError() }}</p>
+            }
+
+            @if (canRetry()) {
+              <button
+                type="button"
+                (click)="retryPayment()"
+                [disabled]="isRetrying()"
+                class="mt-6 flex w-full items-center justify-center gap-2 rounded-lg btn-brand-gradient py-2.5 text-center text-sm font-bold uppercase tracking-wide text-white transition-opacity hover:opacity-90 disabled:opacity-60"
+              >
+                @if (isRetrying()) {
+                  <ion-icon name="sync-outline" class="payment-spin text-base"></ion-icon>
+                }
+                {{ t().payReceivedRetryPayment }}
+              </button>
+              <a routerLink="/" class="mt-4 inline-flex text-sm font-semibold text-brand-800 hover:text-brand-600">
+                {{ t().payReceivedRetryButton }}
+              </a>
+            } @else {
+              <a
+                routerLink="/"
+                class="mt-6 block w-full rounded-lg btn-brand-gradient py-2.5 text-center text-sm font-bold uppercase tracking-wide text-white transition-opacity hover:opacity-90"
+              >
+                {{ t().payReceivedRetryButton }}
+              </a>
+            }
           }
 
           @default {
@@ -94,7 +116,7 @@
             <button
               type="button"
               (click)="retryReconcile()"
-              class="mt-6 block w-full rounded-lg bg-[linear-gradient(90deg,#1E466B_0%,#67BAF4_100%)] py-2.5 text-center text-sm font-bold uppercase tracking-wide text-white transition-opacity hover:opacity-90"
+              class="mt-6 block w-full rounded-lg btn-brand-gradient py-2.5 text-center text-sm font-bold uppercase tracking-wide text-white transition-opacity hover:opacity-90"
             >
               {{ t().regTryAgainButton }}
             </button>

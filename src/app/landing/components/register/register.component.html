@@ -3,7 +3,7 @@
        convención que Stripe/Linear: la ilustración es un lujo de escritorio,
        en mobile el foco entero es el form). -->
   <aside
-    class="relative hidden w-full max-w-md shrink-0 flex-col justify-between overflow-hidden bg-[linear-gradient(160deg,#0D0D0D_0%,#16334D_22%,#1E466B_46%,#3679AE_72%,#67BAF4_100%)] p-10 text-white lg:flex"
+    class="relative hidden w-full max-w-md shrink-0 flex-col justify-between overflow-hidden brand-panel-gradient p-10 text-white lg:flex"
   >
     <div class="fluid-blob fluid-blob-1 -left-16 -top-16 h-72 w-72 bg-brand-300/30"></div>
     <div class="fluid-blob fluid-blob-2 -bottom-24 -right-10 h-80 w-80 bg-brand-800/40"></div>
@@ -91,7 +91,7 @@
               <button
                 type="button"
                 (click)="retryLoadPlan()"
-                class="mt-6 w-full rounded-lg bg-[linear-gradient(90deg,#1E466B_0%,#67BAF4_100%)] py-2.5 text-sm font-bold uppercase tracking-wide text-white transition-opacity hover:opacity-90"
+                class="mt-6 w-full rounded-lg btn-brand-gradient py-2.5 text-sm font-bold uppercase tracking-wide text-white transition-opacity hover:opacity-90"
               >
                 {{ t().pricingRetry }}
               </button>
@@ -108,7 +108,7 @@
               <a
                 routerLink="/"
                 fragment="pricing"
-                class="mt-6 block w-full rounded-lg bg-[linear-gradient(90deg,#1E466B_0%,#67BAF4_100%)] py-2.5 text-center text-sm font-bold uppercase tracking-wide text-white transition-opacity hover:opacity-90"
+                class="mt-6 block w-full rounded-lg btn-brand-gradient py-2.5 text-center text-sm font-bold uppercase tracking-wide text-white transition-opacity hover:opacity-90"
               >
                 {{ t().regBackToPricing }}
               </a>
@@ -133,9 +133,13 @@
                 <p class="mt-4 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-700">{{ t().regCancelledNotice }}</p>
               }
 
+              @if (showResumeExpiredNotice()) {
+                <p role="alert" class="mt-4 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-700">{{ t().regResumeExpiredNotice }}</p>
+              }
+
               <form (submit)="$event.preventDefault(); submitEmail()" class="mt-6 space-y-3">
                 @if (emailError()) {
-                  <p class="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-600">{{ emailError() }}</p>
+                  <p role="alert" class="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-600">{{ emailError() }}</p>
                 }
 
                 <div>
@@ -147,6 +151,7 @@
                     ></ion-icon>
                     <input
                       type="email"
+                      autocomplete="email"
                       [ngModel]="email()"
                       (ngModelChange)="email.set($event)"
                       name="email"
@@ -161,7 +166,7 @@
                 <button
                   type="submit"
                   [disabled]="isSendingCode()"
-                  class="w-full rounded-lg bg-[linear-gradient(90deg,#1E466B_0%,#67BAF4_100%)] py-2.5 text-sm font-bold uppercase tracking-wide text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                  class="w-full rounded-lg btn-brand-gradient py-2.5 text-sm font-bold uppercase tracking-wide text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {{ isSendingCode() ? t().regSendingCode : t().regContinueButton }}
                 </button>
@@ -180,7 +185,7 @@
 
               <form (submit)="$event.preventDefault(); verifyOtp()" class="mt-6 space-y-3">
                 @if (otpError()) {
-                  <p class="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-600">{{ otpError() }}</p>
+                  <p role="alert" class="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-600">{{ otpError() }}</p>
                 }
 
                 <div>
@@ -188,6 +193,7 @@
                   <input
                     type="text"
                     inputmode="numeric"
+                    autocomplete="one-time-code"
                     [ngModel]="otp()"
                     (ngModelChange)="onOtpInput($event)"
                     name="otp"
@@ -196,7 +202,7 @@
                     placeholder="000000"
                     class="w-full rounded-lg border border-gray-200 px-3 py-2 text-center text-lg font-semibold tracking-[0.3em] focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/30 disabled:opacity-50"
                   />
-                  <p class="mt-1.5 text-xs text-gray-500">
+                  <p role="status" aria-live="polite" class="mt-1.5 text-xs text-gray-500">
                     @if (otpSecondsLeft() > 0) {
                       {{ t().regOtpExpires }} {{ otpTimerDisplay }}
                     } @else {
@@ -208,7 +214,7 @@
                 <button
                   type="submit"
                   [disabled]="isVerifying() || isResending()"
-                  class="w-full rounded-lg bg-[linear-gradient(90deg,#1E466B_0%,#67BAF4_100%)] py-2.5 text-sm font-bold uppercase tracking-wide text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                  class="w-full rounded-lg btn-brand-gradient py-2.5 text-sm font-bold uppercase tracking-wide text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {{ isVerifying() ? t().regVerifying : t().regVerifyButton }}
                 </button>
@@ -241,7 +247,7 @@
 
               <form (submit)="$event.preventDefault(); submitDetails()" class="mt-6 space-y-3">
                 @if (detailsError()) {
-                  <p class="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-600">{{ detailsError() }}</p>
+                  <p role="alert" class="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-600">{{ detailsError() }}</p>
                 }
 
                 <!-- El correo ya quedó verificado en el paso anterior — se muestra
@@ -379,7 +385,7 @@
                 <button
                   type="submit"
                   [disabled]="isSubmittingDetails()"
-                  class="w-full rounded-lg bg-[linear-gradient(90deg,#1E466B_0%,#67BAF4_100%)] py-2.5 text-sm font-bold uppercase tracking-wide text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                  class="w-full rounded-lg btn-brand-gradient py-2.5 text-sm font-bold uppercase tracking-wide text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {{ isSubmittingDetails() ? t().regSendingCode : t().regContinueButton }}
                 </button>
@@ -408,7 +414,7 @@
               }
               <a
                 routerLink="/"
-                class="mt-6 block w-full rounded-lg bg-[linear-gradient(90deg,#1E466B_0%,#67BAF4_100%)] py-2.5 text-center text-sm font-bold uppercase tracking-wide text-white transition-opacity hover:opacity-90"
+                class="mt-6 block w-full rounded-lg btn-brand-gradient py-2.5 text-center text-sm font-bold uppercase tracking-wide text-white transition-opacity hover:opacity-90"
               >
                 {{ t().fpBackHome }}
               </a>
@@ -425,7 +431,7 @@
               <button
                 type="button"
                 (click)="backToDetails()"
-                class="mt-6 w-full rounded-lg bg-[linear-gradient(90deg,#1E466B_0%,#67BAF4_100%)] py-2.5 text-sm font-bold uppercase tracking-wide text-white transition-opacity hover:opacity-90"
+                class="mt-6 w-full rounded-lg btn-brand-gradient py-2.5 text-sm font-bold uppercase tracking-wide text-white transition-opacity hover:opacity-90"
               >
                 {{ t().regTryAgainButton }}
               </button>

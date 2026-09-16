@@ -106,6 +106,12 @@ export interface TranslationKeys {
   footerTermsOfService: string;
   footerAllRightsReserved: string;
 
+  // Legal pages (/terms, /privacy)
+  legalEffective: string;
+  legalVersion: string;
+  legalLoading: string;
+  legalError: string;
+
   // Auth modal
   authSignInTab: string;
   authSignUpTab: string;
@@ -200,6 +206,7 @@ export interface TranslationKeys {
   regContinueButton: string;
   regSendingCode: string;
   regCancelledNotice: string;
+  regResumeExpiredNotice: string;
   regOtpTitle: string;
   regOtpSubtitle: string;
   regOtpLabel: string;
@@ -236,6 +243,8 @@ export interface TranslationKeys {
   payReceivedFailedTitle: string;
   payReceivedFailedBody: string;
   payReceivedRetryButton: string;
+  payReceivedRetryPayment: string;
+  payReceivedRetryError: string;
   payReceivedWelcomeEyebrow: string;
   payReceivedWelcomeHeadline: string;
   regHaveCodeToggle: string;

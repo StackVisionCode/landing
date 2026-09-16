@@ -1,10 +1,11 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { TranslationStore } from '@core/i18n/translation.store';
 
 @Component({
   selector: 'app-footer',
-  imports: [FormsModule],
+  imports: [FormsModule, RouterLink],
   templateUrl: './footer.component.html',
 })
 export class FooterComponent {

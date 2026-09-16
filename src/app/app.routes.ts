@@ -5,6 +5,7 @@ import { ResetPasswordComponent } from '@landing/components/reset-password/reset
 import { RegisterComponent } from '@landing/components/register/register.component';
 import { RegisterPaymentReceivedComponent } from '@landing/components/register-payment-received/register-payment-received.component';
 import { RegisterCompleteComponent } from '@landing/components/register-complete/register-complete.component';
+import { LegalPageComponent } from '@landing/components/legal/legal-page.component';
 
 export const routes: Routes = [
   { path: '', component: LandingPageComponent, title: 'TaxPro Office' },
@@ -17,4 +18,16 @@ export const routes: Routes = [
     title: 'Pago recibido - TaxPro Office',
   },
   { path: 'register/complete', component: RegisterCompleteComponent, title: 'Completa tu registro - TaxPro Office' },
+  {
+    path: 'terms',
+    component: LegalPageComponent,
+    data: { kind: 'TermsOfService' },
+    title: 'Terms of Service - TaxPro Office',
+  },
+  {
+    path: 'privacy',
+    component: LegalPageComponent,
+    data: { kind: 'PrivacyPolicy' },
+    title: 'Privacy Policy - TaxPro Office',
+  },
 ];
