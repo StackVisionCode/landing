@@ -63,6 +63,19 @@ export interface StartCheckoutResponse {
   currency?: string;
 }
 
+/**
+ * Reanudación del pago desde el link del email de "pago fallido". La referencia opaca (del correo) es
+ * la autorización — no viaja el onboardingId ni ninguna credencial de registro. El backend la canjea
+ * en /onboarding/resume-checkout, reabre el mismo onboarding y devuelve un StartCheckoutResponse.
+ */
+export interface ResumeCheckoutRequest {
+  reference: string;
+  successUrl: string;
+  cancelUrl: string;
+  provider?: string;
+  method?: string;
+}
+
 export interface ReconcileOnboardingPaymentResponse {
   onboardingId: string;
   paymentId: string | null;
@@ -70,6 +83,8 @@ export interface ReconcileOnboardingPaymentResponse {
   registrationUrl: string | null;
   failureCode: string | null;
   failureMessage: string | null;
+  // Presente solo en el camino de la cookie: habilita reintentar el pago sobre el mismo onboarding.
+  payerEmail: string | null;
 }
 
 export interface OnboardingPaymentOptionsResponse {

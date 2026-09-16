@@ -1,0 +1,71 @@
+<div class="flex min-h-screen flex-col bg-gray-50">
+  <!-- Top bar -->
+  <header class="sticky top-0 z-10 border-b border-gray-100 bg-white/90 backdrop-blur-sm">
+    <div class="mx-auto flex h-16 max-w-4xl items-center justify-between px-4 sm:px-6 lg:px-8">
+      <a routerLink="/" class="flex items-center gap-1.5">
+        <img src="brand/taxproffice-logo.svg" alt="TaxPro Office" class="h-7 w-auto" />
+      </a>
+      <a routerLink="/" class="text-sm font-semibold text-brand-800 hover:text-brand-600">{{ t().fpBackHome }}</a>
+    </div>
+  </header>
+
+  <main class="mx-auto w-full max-w-3xl flex-1 px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
+    <!-- Title -->
+    <div class="border-b border-gray-200 pb-6">
+      <span class="text-xs font-semibold uppercase tracking-[0.18em] text-brand-700">Legal</span>
+      <h1 class="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">{{ title }}</h1>
+
+      @if (step() === 'ready') {
+        <div class="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-gray-500">
+          @if (effectiveFromUtc(); as eff) {
+            <span>{{ t().legalEffective }} {{ eff | date: 'longDate' }}</span>
+          }
+          @if (version()) {
+            <span class="inline-flex items-center gap-1.5">
+              <span class="inline-block h-1.5 w-1.5 rounded-full bg-brand-400"></span>
+              {{ t().legalVersion }} {{ version() }}
+            </span>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- States -->
+    @switch (step()) {
+      @case ('loading') {
+        <div class="flex flex-col items-center justify-center gap-3 py-24 text-center">
+          <ion-icon name="sync-outline" class="payment-spin text-3xl text-brand-600"></ion-icon>
+          <p class="text-sm text-gray-500">{{ t().legalLoading }}</p>
+        </div>
+      }
+
+      @case ('error') {
+        <div class="flex flex-col items-center justify-center gap-4 py-24 text-center">
+          <div class="flex h-14 w-14 items-center justify-center rounded-full bg-red-50">
+            <ion-icon name="alert-circle-outline" class="text-3xl text-red-500"></ion-icon>
+          </div>
+          <p class="max-w-sm text-sm text-gray-600">{{ t().legalError }}</p>
+          <button
+            type="button"
+            (click)="retry()"
+            class="rounded-lg btn-brand-gradient px-5 py-2.5 text-sm font-bold uppercase tracking-wide text-white transition-opacity hover:opacity-90"
+          >
+            {{ t().regTryAgainButton }}
+          </button>
+        </div>
+      }
+
+      @default {
+        <article class="legal-prose mt-8" (click)="onContentClick($event)" [innerHTML]="content()"></article>
+      }
+    }
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-gray-100 bg-white">
+    <div class="mx-auto flex max-w-3xl flex-col items-center justify-between gap-3 px-4 py-6 text-xs text-gray-500 sm:flex-row sm:px-6 lg:px-8">
+      <p>© {{ (effectiveFromUtc() | date: 'yyyy') || '' }} TaxProffice LLC. {{ t().footerAllRightsReserved }}</p>
+      <a [routerLink]="otherLink.path" class="font-semibold text-brand-800 hover:text-brand-600">{{ otherLink.label }}</a>
+    </div>
+  </footer>
+</div>

@@ -1,5 +1,5 @@
 import { Component, CUSTOM_ELEMENTS_SCHEMA, OnDestroy, OnInit, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslationStore } from '@core/i18n/translation.store';
 import { OnboardingService } from '@core/onboarding/onboarding.service';
 import type { OnboardingStatusValue, ReconcileOnboardingPaymentResponse } from '@core/onboarding/onboarding.models';
@@ -30,11 +30,19 @@ const FAILURE_STATUSES: OnboardingStatusValue[] = ['PaymentFailed', 'Cancelled',
 })
 export class RegisterPaymentReceivedComponent implements OnInit, OnDestroy {
   private readonly onboarding = inject(OnboardingService);
+  private readonly route = inject(ActivatedRoute);
   protected readonly t = inject(TranslationStore).t;
   protected readonly step = signal<PaymentReceivedStep>('checking');
   protected readonly failureMessage = signal('');
+  protected readonly isRetrying = signal(false);
+  protected readonly retryError = signal('');
   private attemptCount = 0;
   private pollTimerId: ReturnType<typeof setTimeout> | null = null;
+  // Referencia de retorno del successUrl: fallback para reconciliar sin cookie (otro navegador).
+  private readonly returnReference = this.route.snapshot.queryParamMap.get('r') ?? undefined;
+  // Capturados del reconcile cuando el pago falló (solo por cookie): habilitan reintentar el pago.
+  private onboardingId: string | null = null;
+  private payerEmail: string | null = null;
 
   protected readonly confetti: ConfettiPiece[] = Array.from({ length: CONFETTI_COUNT }, () => ({
     left: Math.random() * 100,
@@ -60,9 +68,43 @@ export class RegisterPaymentReceivedComponent implements OnInit, OnDestroy {
     this.reconcile();
   }
 
+  // Solo cuando el reconcile llegó por cookie (trae el email): permite reintentar el pago sobre el
+  // mismo onboarding (el backend lo reabre). Sin email (camino por referencia) se ofrece empezar de nuevo.
+  protected canRetry(): boolean {
+    return !!this.onboardingId && !!this.payerEmail;
+  }
+
+  protected retryPayment(): void {
+    if (!this.onboardingId || !this.payerEmail || typeof window === 'undefined') return;
+    this.isRetrying.set(true);
+    this.retryError.set('');
+    const origin = window.location.origin;
+    this.onboarding
+      .startCheckout({
+        onboardingId: this.onboardingId,
+        payerEmail: this.payerEmail,
+        successUrl: `${origin}/register/payment-received`,
+        cancelUrl: `${origin}/register/payment-received`,
+      })
+      .subscribe({
+        next: (response) => {
+          if (response.checkoutUrl) {
+            window.location.href = response.checkoutUrl;
+            return;
+          }
+          this.isRetrying.set(false);
+          this.retryError.set(this.t().payReceivedRetryError);
+        },
+        error: () => {
+          this.isRetrying.set(false);
+          this.retryError.set(this.t().payReceivedRetryError);
+        },
+      });
+  }
+
   private reconcile(): void {
     this.step.set(this.attemptCount === 0 ? 'checking' : 'processing');
-    this.onboarding.reconcilePayment().subscribe({
+    this.onboarding.reconcilePayment(this.returnReference).subscribe({
       next: (response) => this.handleReconcileResponse(response),
       error: () => this.showFallback(),
     });
@@ -76,6 +118,8 @@ export class RegisterPaymentReceivedComponent implements OnInit, OnDestroy {
     }
 
     if (FAILURE_STATUSES.includes(response.status)) {
+      this.onboardingId = response.onboardingId;
+      this.payerEmail = response.payerEmail;
       this.failureMessage.set(response.failureMessage || '');
       this.step.set('failed');
       return;

@@ -20,6 +20,22 @@ export const serverRoutes: ServerRoute[] = [
     renderMode: RenderMode.Client
   },
   {
+    // Retorno de Stripe: lee ?r= real y reconcilia en runtime — prerenderizarla horneraría
+    // un estado vacío. Mismo motivo que register/register-complete.
+    path: 'register/payment-received',
+    renderMode: RenderMode.Client
+  },
+  {
+    // Páginas legales: el HTML del documento se baja del backend en runtime — prerenderizarlas
+    // horneraría el estado de carga vacío. Cliente, mismo motivo que las rutas de onboarding.
+    path: 'terms',
+    renderMode: RenderMode.Client
+  },
+  {
+    path: 'privacy',
+    renderMode: RenderMode.Client
+  },
+  {
     path: '**',
     renderMode: RenderMode.Prerender
   }

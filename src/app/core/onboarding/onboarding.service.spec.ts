@@ -111,4 +111,20 @@ describe('OnboardingService', () => {
       failureMessage: null,
     });
   });
+
+  it('sends the return reference in the reconcile body as the fallback without a cookie', () => {
+    service.reconcilePayment('return-ref-123').subscribe();
+
+    const reconcileRequest = http.expectOne(`${SITE_CONFIG.apiUrl}/onboarding/reconcile-payment`);
+    expect(reconcileRequest.request.withCredentials).toBe(true);
+    expect(reconcileRequest.request.body).toEqual({ reference: 'return-ref-123' });
+    reconcileRequest.flush({
+      onboardingId: 'onboarding-1',
+      paymentId: 'payment-1',
+      status: 'RegistrationPending',
+      registrationUrl: null,
+      failureCode: null,
+      failureMessage: null,
+    });
+  });
 });

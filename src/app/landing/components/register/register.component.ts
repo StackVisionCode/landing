@@ -60,6 +60,8 @@ export class RegisterComponent implements OnInit, OnDestroy {
   protected readonly plan = signal<PlanResponse | null>(null);
   protected readonly cycle = signal<BillingCycle>('Monthly');
   protected readonly showCancelledNotice = signal(false);
+  // El link de reintento del email expiró/era inválido: se cae al flujo normal con este aviso.
+  protected readonly showResumeExpiredNotice = signal(false);
 
   // Paso 1: solo el correo — es lo único que exige POST onboarding/email-challenges.
   protected readonly email = signal('');
@@ -135,7 +137,46 @@ export class RegisterComponent implements OnInit, OnDestroy {
 
     this.cycle.set(params.get('cycle') === 'Yearly' ? 'Yearly' : 'Monthly');
     this.showCancelledNotice.set(params.get('cancelled') === '1');
+
+    // Link del email de "pago fallido": referencia de reanudación opaca (?r=). El comprador cae directo
+    // al pago del MISMO onboarding, sin re-hacer email+OTP. Si el token expiró, se cae al flujo normal.
+    const resumeReference = params.get('r');
+    if (resumeReference) {
+      this.resumeCheckout(resumeReference);
+      return;
+    }
+
     this.loadPlan();
+  }
+
+  /** Canjea la referencia del email por un checkout del mismo onboarding y redirige al provider. Si la
+   *  referencia expiró/era inválida, cae al flujo normal (email→OTP→pago) con el plan preseleccionado
+   *  por los query params y un aviso. El token es la autorización — no requiere la cookie de sesión. */
+  private resumeCheckout(reference: string): void {
+    this.step.set('processing');
+    this.processingMessage.set(this.t().regPreparingPayment);
+    const params = this.route.snapshot.queryParamMap;
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://taxproffice.com';
+    const cancelUrl = `${origin}/register?plan=${params.get('plan') ?? ''}&cycle=${this.cycle()}&cancelled=1`;
+
+    this.onboarding
+      .resumeCheckout({
+        reference,
+        successUrl: `${origin}/register/payment-received`,
+        cancelUrl,
+      })
+      .subscribe({
+        next: (res) => {
+          this.processingMessage.set(this.t().regRedirectingPayment);
+          if (typeof window !== 'undefined') {
+            window.location.href = res.checkoutUrl;
+          }
+        },
+        error: () => {
+          this.showResumeExpiredNotice.set(true);
+          this.loadPlan();
+        },
+      });
   }
 
   retryLoadPlan(): void {
