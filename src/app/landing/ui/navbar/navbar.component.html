@@ -34,16 +34,9 @@
       >
         {{ lang() === 'es' ? 'EN' : 'ES' }}
       </button>
-      @if (currentUser(); as user) {
-        <span class="max-w-[160px] truncate text-sm font-medium text-gray-900">{{ user.displayName }}</span>
-        <button type="button" (click)="signOut()" class="text-sm font-medium text-gray-500 hover:text-gray-900">
-          {{ t().navSignOut }}
-        </button>
-      } @else {
-        <button type="button" (click)="openAuthModal()" class="text-sm font-medium text-gray-500 hover:text-gray-900">
-          {{ t().navSignIn }}
-        </button>
-      }
+      <a [routerLink]="signInPath" class="text-sm font-medium text-gray-500 hover:text-gray-900">
+        {{ t().navSignIn }}
+      </a>
       <a
         [href]="siteConfig.appUrl"
         class="rounded-full bg-gray-900 px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-gray-700"
@@ -75,22 +68,13 @@
           {{ link.label }}
         </a>
       }
-      @if (currentUser(); as user) {
-        <span class="truncate px-3 py-2 text-sm font-medium text-gray-900">{{ user.displayName }}</span>
-        <button
-          (click)="signOut()"
-          class="rounded-xl px-3 py-2 text-left text-sm font-medium text-gray-700 hover:bg-gray-50"
-        >
-          {{ t().navSignOut }}
-        </button>
-      } @else {
-        <button
-          (click)="openAuthModal()"
-          class="rounded-xl px-3 py-2 text-left text-sm font-medium text-gray-700 hover:bg-gray-50"
-        >
-          {{ t().navSignIn }}
-        </button>
-      }
+      <a
+        [routerLink]="signInPath"
+        (click)="closeMobileMenu()"
+        class="rounded-xl px-3 py-2 text-left text-sm font-medium text-gray-700 hover:bg-gray-50"
+      >
+        {{ t().navSignIn }}
+      </a>
 
       <div class="mt-2 flex items-center gap-3 border-t border-gray-100 pt-3">
         <button
@@ -108,4 +92,3 @@
   }
 </header>
 
-<app-auth-modal [isOpen]="showAuthModal()" (closed)="showAuthModal.set(false)" />

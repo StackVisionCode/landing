@@ -4,12 +4,15 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslationStore } from '@core/i18n/translation.store';
 import { OnboardingService } from '@core/onboarding/onboarding.service';
 import { SITE_CONFIG } from '@core/config/site-config';
-import { apiErrorCode } from '@core/onboarding/onboarding-error.util';
+import { apiErrorCode } from '@core/http/api-error';
 import { suggestSubdomainFromOfficeName } from '@core/onboarding/subdomain-suggestion.util';
+import { ActionCooldown } from '@core/http/action-cooldown';
+import { nextPollDelayMs } from '@core/http/polling';
+import { formatClock, readThrottle, type ThrottleKind } from '@core/http/throttling';
 import type { OnboardingStatusValue } from '@core/onboarding/onboarding.models';
 
-type CompleteStep = 'loading' | 'invalid' | 'form' | 'provisioning' | 'completed' | 'failed' | 'manual-review';
-type SubdomainStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid' | 'reserved';
+type CompleteStep = 'loading' | 'invalid' | 'form' | 'provisioning' | 'slow' | 'completed' | 'failed' | 'manual-review';
+type SubdomainStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid' | 'reserved' | 'throttled';
 // El backend distingue 3 motivos bajo el mismo "token inválido" (API_Contract.md
 // §2.7/§2.8) — colapsarlos en un solo mensaje genérico es engañoso: a alguien con
 // TokenUsed ya se le cobró y terminó el registro (necesita loguearse, no pagar de
@@ -20,7 +23,10 @@ type SubdomainStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid' |
 type InvalidReason = 'no-token' | 'used' | 'expired' | 'generic';
 
 const SUBDOMAIN_DEBOUNCE_MS = 500;
-const POLL_INTERVAL_MS = 2500;
+const POLL_BASE_MS = 2500;
+const POLL_MAX_MS = 15000;
+// Pasado este tiempo se deja de consultar y se ofrece verificar a mano (el provisioning sigue en el backend).
+const POLL_MAX_DURATION_MS = 5 * 60 * 1000;
 const REDIRECT_SECONDS = 5;
 // Mismo criterio del backend (SubdomainSlug.Create): 3-63, minúsculas/dígitos/guiones,
 // sin guion inicial/final — la validación real de "xn--" y reservados la hace el servidor.
@@ -87,6 +93,13 @@ export class RegisterCompleteComponent implements OnInit, OnDestroy {
   private redirectTimerId: ReturnType<typeof setInterval> | null = null;
 
   private pollTimerId: ReturnType<typeof setTimeout> | null = null;
+  private pollAttempt = 0;
+  private pollStartedAt = 0;
+
+  // Espera pedida por el backend (429/503). La verificación de subdominio no se reintenta sola.
+  protected readonly subdomainCooldown = new ActionCooldown();
+  protected readonly submitCooldown = new ActionCooldown();
+  protected readonly throttleKind = signal<ThrottleKind>('rate-limited');
 
   ngOnInit(): void {
     this.token = this.route.snapshot.queryParamMap.get('token') || '';
@@ -102,6 +115,26 @@ export class RegisterCompleteComponent implements OnInit, OnDestroy {
     this.stopSubdomainTimer();
     this.stopPolling();
     this.stopRedirectCountdown();
+    this.subdomainCooldown.stop();
+    this.submitCooldown.stop();
+  }
+
+  protected throttleNotice(): string {
+    const t = this.t();
+    return this.throttleKind() === 'overloaded' ? t.throttleOverloadedNotice : t.throttleNotice;
+  }
+
+  protected waitLabel(cooldown: ActionCooldown): string {
+    return this.t().throttleButton.replace('{time}', formatClock(cooldown.secondsLeft()));
+  }
+
+  recheckSubdomain(): void {
+    if (this.subdomainCooldown.active() || !this.subdomain()) return;
+    this.checkSubdomain(this.subdomain());
+  }
+
+  checkProvisioningAgain(): void {
+    this.startPolling();
   }
 
   openTerms(): void {
@@ -150,12 +183,16 @@ export class RegisterCompleteComponent implements OnInit, OnDestroy {
       this.subdomainStatus.set('invalid');
       return;
     }
+    if (this.subdomainCooldown.active()) {
+      this.subdomainStatus.set('throttled');
+      return;
+    }
 
     this.subdomainTimerId = setTimeout(() => this.checkSubdomain(normalized), SUBDOMAIN_DEBOUNCE_MS);
   }
 
   submit(): void {
-    if (this.isSubmitting()) return;
+    if (this.isSubmitting() || this.submitCooldown.active()) return;
     this.formError.set('');
 
     if (!this.officeName().trim() || !this.password() || !this.confirmPassword()) {
@@ -196,11 +233,17 @@ export class RegisterCompleteComponent implements OnInit, OnDestroy {
       .subscribe({
         next: () => {
           this.isSubmitting.set(false);
-          this.step.set('provisioning');
-          this.poll();
+          this.startPolling();
         },
         error: (err) => {
           this.isSubmitting.set(false);
+          const throttle = readThrottle(err);
+          if (throttle) {
+            this.throttleKind.set(throttle.kind);
+            this.formError.set('');
+            this.submitCooldown.start(throttle.retryAfterSeconds);
+            return;
+          }
           this.handleSubmitError(apiErrorCode(err));
         },
       });
@@ -255,8 +298,15 @@ export class RegisterCompleteComponent implements OnInit, OnDestroy {
         if (this.subdomain() !== slug) return; // respuesta obsoleta, el usuario siguió escribiendo
         this.subdomainStatus.set(res.available ? 'available' : 'taken');
       },
-      error: () => {
+      error: (err) => {
         if (this.subdomain() !== slug) return;
+        const throttle = readThrottle(err);
+        if (throttle) {
+          this.throttleKind.set(throttle.kind);
+          this.subdomainCooldown.start(throttle.retryAfterSeconds);
+          this.subdomainStatus.set('throttled');
+          return;
+        }
         this.subdomainStatus.set('invalid');
       },
     });
@@ -287,13 +337,28 @@ export class RegisterCompleteComponent implements OnInit, OnDestroy {
     this.formError.set(this.t().compFailedBody);
   }
 
+  private startPolling(): void {
+    this.stopPolling();
+    this.pollAttempt = 0;
+    this.pollStartedAt = Date.now();
+    this.step.set('provisioning');
+    this.poll();
+  }
+
   private poll(): void {
     this.onboarding.getStatus(this.token).subscribe({
       next: (res) => this.handleStatus(res.status, res.failureReason, res.redirectUrl),
-      error: () => {
-        this.pollTimerId = setTimeout(() => this.poll(), POLL_INTERVAL_MS);
-      },
+      error: (err) => this.scheduleNextPoll(readThrottle(err)?.retryAfterSeconds),
     });
+  }
+
+  private scheduleNextPoll(retryAfterSeconds?: number): void {
+    if (Date.now() - this.pollStartedAt >= POLL_MAX_DURATION_MS) {
+      this.step.set('slow');
+      return;
+    }
+    const delay = nextPollDelayMs(this.pollAttempt++, POLL_BASE_MS, POLL_MAX_MS, retryAfterSeconds);
+    this.pollTimerId = setTimeout(() => this.poll(), delay);
   }
 
   private handleStatus(
@@ -316,7 +381,7 @@ export class RegisterCompleteComponent implements OnInit, OnDestroy {
       this.step.set('failed');
       return;
     }
-    this.pollTimerId = setTimeout(() => this.poll(), POLL_INTERVAL_MS);
+    this.scheduleNextPoll();
   }
 
   private startRedirectCountdown(): void {

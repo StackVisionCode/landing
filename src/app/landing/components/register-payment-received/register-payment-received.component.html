@@ -78,7 +78,9 @@
             <h2 class="mt-6 text-2xl font-bold text-gray-900">{{ t().payReceivedFailedTitle }}</h2>
             <p class="mt-2 text-sm text-gray-600">{{ failureMessage() || t().payReceivedFailedBody }}</p>
 
-            @if (retryError()) {
+            @if (retryCooldown.active()) {
+              <p role="alert" class="mt-4 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-700">{{ throttleNotice() }}</p>
+            } @else if (retryError()) {
               <p role="alert" class="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{{ retryError() }}</p>
             }
 
@@ -86,13 +88,13 @@
               <button
                 type="button"
                 (click)="retryPayment()"
-                [disabled]="isRetrying()"
+                [disabled]="isRetrying() || retryCooldown.active()"
                 class="mt-6 flex w-full items-center justify-center gap-2 rounded-lg btn-brand-gradient py-2.5 text-center text-sm font-bold uppercase tracking-wide text-white transition-opacity hover:opacity-90 disabled:opacity-60"
               >
                 @if (isRetrying()) {
                   <ion-icon name="sync-outline" class="payment-spin text-base"></ion-icon>
                 }
-                {{ t().payReceivedRetryPayment }}
+                {{ retryCooldown.active() ? waitLabel() : t().payReceivedRetryPayment }}
               </button>
               <a routerLink="/" class="mt-4 inline-flex text-sm font-semibold text-brand-800 hover:text-brand-600">
                 {{ t().payReceivedRetryButton }}

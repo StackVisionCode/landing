@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
-import { of } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
+import { of, throwError } from 'rxjs';
 import { OnboardingService } from '@core/onboarding/onboarding.service';
 import type { StartCheckoutRequest } from '@core/onboarding/onboarding.models';
 import { RegisterPaymentReceivedComponent } from './register-payment-received.component';
@@ -15,6 +16,10 @@ function failedResponse(payerEmail: string | null) {
     failureMessage: 'Your card was declined.',
     payerEmail,
   };
+}
+
+function rateLimited(retryAfterSeconds: number) {
+  return new HttpErrorResponse({ status: 429, error: { code: 'RateLimit.Exceeded', retryAfterSeconds } });
 }
 
 describe('RegisterPaymentReceivedComponent', () => {
@@ -35,6 +40,13 @@ describe('RegisterPaymentReceivedComponent', () => {
     return { startCheckout };
   }
 
+  // La primera detección de cambios corre ngOnInit (el reconcile) una sola vez.
+  function start() {
+    const fixture = TestBed.createComponent(RegisterPaymentReceivedComponent);
+    fixture.detectChanges();
+    return fixture.componentInstance as any;
+  }
+
   beforeEach(() => {
     Object.defineProperty(window, 'location', {
       configurable: true,
@@ -49,9 +61,7 @@ describe('RegisterPaymentReceivedComponent', () => {
 
   it('retries the payment on the same onboarding when the failed reconcile carries the email', () => {
     const { startCheckout } = configure(failedResponse('buyer@example.com'));
-    const component = TestBed.createComponent(RegisterPaymentReceivedComponent).componentInstance as any;
-
-    component.ngOnInit();
+    const component = start();
     expect(component.step()).toBe('failed');
     expect(component.canRetry()).toBe(true);
 
@@ -66,10 +76,59 @@ describe('RegisterPaymentReceivedComponent', () => {
 
   it('offers only start-over when the failed reconcile has no email (reference path)', () => {
     configure(failedResponse(null));
-    const component = TestBed.createComponent(RegisterPaymentReceivedComponent).componentInstance as any;
-
-    component.ngOnInit();
+    const component = start();
     expect(component.step()).toBe('failed');
     expect(component.canRetry()).toBe(false);
+  });
+
+  it('waits the throttle and checks again instead of giving up when reconcile is rate limited', () => {
+    vi.useFakeTimers();
+    try {
+      const reconcilePayment = vi
+        .fn()
+        .mockReturnValueOnce(throwError(() => rateLimited(20)))
+        .mockReturnValue(of(failedResponse('buyer@example.com')));
+      TestBed.configureTestingModule({
+        imports: [RegisterPaymentReceivedComponent],
+        providers: [
+          { provide: OnboardingService, useValue: { reconcilePayment, startCheckout: vi.fn() } },
+          { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: { get: () => null } } } },
+        ],
+      });
+      const component = start();
+      expect(component.step()).toBe('processing');
+
+      vi.advanceTimersByTime(19_000);
+      expect(reconcilePayment).toHaveBeenCalledTimes(1);
+
+      vi.advanceTimersByTime(1_000);
+      expect(reconcilePayment).toHaveBeenCalledTimes(2);
+      expect(component.step()).toBe('failed');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('blocks the payment retry with a countdown when it is rate limited', () => {
+    vi.useFakeTimers();
+    try {
+      const { startCheckout } = configure(failedResponse('buyer@example.com'));
+      startCheckout.mockReturnValueOnce(throwError(() => rateLimited(5)));
+      const component = start();
+
+      component.retryPayment();
+      expect(component.retryCooldown.active()).toBe(true);
+      expect(component.retryError()).toBe('');
+      expect(component.waitLabel()).toContain('0:05');
+
+      component.retryPayment();
+      expect(startCheckout).toHaveBeenCalledTimes(1);
+
+      vi.advanceTimersByTime(5_000);
+      component.retryPayment();
+      expect(startCheckout).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

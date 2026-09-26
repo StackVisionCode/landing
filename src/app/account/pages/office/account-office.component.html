@@ -1,0 +1,56 @@
+<section>
+  <h1 class="text-2xl font-bold text-ink sm:text-3xl">{{ t().accOfficeTitle }}</h1>
+  <p class="mt-1 text-sm text-gray-500">{{ t().accOfficeSubtitle }}</p>
+
+  @if (me(); as profile) {
+    <div class="mt-6 grid gap-4 lg:grid-cols-2">
+      <article class="rounded-3xl border border-gray-200 bg-white p-6">
+        <h2 class="text-xs font-semibold uppercase tracking-[0.18em] text-gray-400">{{ t().accOfficeSectionOffice }}</h2>
+
+        <div class="mt-4 flex items-center gap-4">
+          @if (logoUrl(); as logo) {
+            <img [src]="logo" [alt]="t().accOfficeLogoAlt"
+              class="h-12 w-12 rounded-2xl border border-gray-100 object-contain" />
+          } @else {
+            <span class="grid h-12 w-12 place-items-center rounded-2xl bg-brand-50 text-sm font-bold text-brand-800">
+              {{ initials() }}
+            </span>
+          }
+          <p class="min-w-0 text-base font-semibold text-ink">{{ profile.tenant.name }}</p>
+        </div>
+
+        <dl class="mt-5 space-y-3 text-sm">
+          <div class="flex flex-wrap items-baseline justify-between gap-2">
+            <dt class="text-gray-500">{{ t().accOfficeNameLabel }}</dt>
+            <dd class="font-medium text-ink">{{ profile.tenant.name }}</dd>
+          </div>
+          <div class="flex flex-wrap items-baseline justify-between gap-2">
+            <dt class="text-gray-500">{{ t().accOfficeAddressLabel }}</dt>
+            <dd class="min-w-0 font-medium text-ink">
+              @if (workspaceUrl(); as url) {
+                <a [href]="url" class="break-all text-brand-700 underline-offset-2 hover:underline">{{ url }}</a>
+              }
+            </dd>
+          </div>
+        </dl>
+
+        <p class="mt-5 text-xs text-gray-400">{{ t().accOfficeEditHint }}</p>
+      </article>
+
+      <article class="rounded-3xl border border-gray-200 bg-white p-6">
+        <h2 class="text-xs font-semibold uppercase tracking-[0.18em] text-gray-400">{{ t().accOfficeSectionAdmin }}</h2>
+
+        <dl class="mt-4 space-y-3 text-sm">
+          <div class="flex flex-wrap items-baseline justify-between gap-2">
+            <dt class="text-gray-500">{{ t().accOfficeAdminNameLabel }}</dt>
+            <dd class="font-medium text-ink">{{ adminName() }}</dd>
+          </div>
+          <div class="flex flex-wrap items-baseline justify-between gap-2">
+            <dt class="text-gray-500">{{ t().accOfficeAdminEmailLabel }}</dt>
+            <dd class="min-w-0 break-all font-medium text-ink">{{ profile.email }}</dd>
+          </div>
+        </dl>
+      </article>
+    </div>
+  }
+</section>

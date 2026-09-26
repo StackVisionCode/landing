@@ -12,10 +12,9 @@ import {
   signal,
 } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { TranslationStore } from '@core/i18n/translation.store';
 import { SITE_CONFIG } from '@core/config/site-config';
-import { AuthModalComponent } from '@shared/ui/auth-modal/auth-modal.component';
-import { AuthService } from '@core/auth/auth.service';
 
 interface NavLinkDef {
   id: string;
@@ -34,7 +33,7 @@ const HEADER_OFFSET = 80;
 
 @Component({
   selector: 'app-navbar',
-  imports: [AuthModalComponent],
+  imports: [RouterLink],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: './navbar.component.html',
 })
@@ -43,13 +42,14 @@ export class NavbarComponent implements AfterViewInit, OnDestroy {
   protected readonly t = this.translation.t;
   protected readonly lang = this.translation.lang;
   protected readonly siteConfig = SITE_CONFIG;
-
-  private readonly authService = inject(AuthService);
-  protected readonly currentUser = this.authService.currentUser;
+  /**
+   * "Sign In" entra al Account, que es lo propio del sitio; al espacio de trabajo se va por "Go to app",
+   * que ya está al lado. Es una ruta interna, así que va por el router y no recarga la página.
+   */
+  protected readonly signInPath = '/account/sign-in';
   private readonly platformId = inject(PLATFORM_ID);
 
   protected readonly mobileMenuOpen = signal(false);
-  protected readonly showAuthModal = signal(false);
 
   /** Enlaces del nav con su label ya traducido — se recalcula al cambiar de idioma. */
   protected readonly navLinks = computed(() => NAV_LINK_DEFS.map((def) => ({ id: def.id, label: this.t()[def.key] })));
@@ -182,16 +182,6 @@ export class NavbarComponent implements AfterViewInit, OnDestroy {
     } else {
       performScroll();
     }
-  }
-
-  openAuthModal(): void {
-    this.showAuthModal.set(true);
-    this.closeMobileMenu();
-  }
-
-  signOut(): void {
-    this.authService.logout();
-    this.closeMobileMenu();
   }
 
   toggleMobileMenu(): void {

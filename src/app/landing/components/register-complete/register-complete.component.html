@@ -104,7 +104,9 @@
               <p class="mt-3 text-sm text-gray-600 lg:hidden">{{ maskedEmail() }}</p>
 
               <form (submit)="$event.preventDefault(); submit()" class="mt-4 space-y-3 lg:mt-0">
-                @if (formError()) {
+                @if (submitCooldown.active()) {
+                  <p role="alert" class="rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-700">{{ throttleNotice() }}</p>
+                } @else if (formError()) {
                   <p role="alert" class="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-600">{{ formError() }}</p>
                 }
 
@@ -145,15 +147,27 @@
                   </div>
                   <p aria-live="polite" class="mt-1.5 text-xs" [class.text-gray-500]="subdomainStatus() === 'idle' || subdomainStatus() === 'checking'"
                      [class.text-emerald-600]="subdomainStatus() === 'available'"
-                     [class.text-red-600]="subdomainStatus() === 'taken' || subdomainStatus() === 'invalid' || subdomainStatus() === 'reserved'">
+                     [class.text-red-600]="subdomainStatus() === 'taken' || subdomainStatus() === 'invalid' || subdomainStatus() === 'reserved'"
+                     [class.text-amber-700]="subdomainStatus() === 'throttled'">
                     @switch (subdomainStatus()) {
                       @case ('checking') { {{ t().compSubdomainChecking }} }
                       @case ('available') { {{ t().compSubdomainAvailable }} }
                       @case ('taken') { {{ t().compSubdomainTaken }} }
                       @case ('invalid') { {{ t().compSubdomainInvalid }} }
                       @case ('reserved') { {{ t().compSubdomainReserved }} }
+                      @case ('throttled') { {{ t().compSubdomainThrottled }} }
                     }
                   </p>
+                  @if (subdomainStatus() === 'throttled') {
+                    <button
+                      type="button"
+                      (click)="recheckSubdomain()"
+                      [disabled]="subdomainCooldown.active()"
+                      class="mt-1 text-xs font-semibold text-brand-800 hover:text-brand-600 disabled:cursor-not-allowed disabled:text-gray-400"
+                    >
+                      {{ subdomainCooldown.active() ? waitLabel(subdomainCooldown) : t().compSubdomainCheckAgain }}
+                    </button>
+                  }
                 </div>
 
                 <div>
@@ -228,10 +242,14 @@
 
                 <button
                   type="submit"
-                  [disabled]="isSubmitting() || !termsAccepted()"
+                  [disabled]="isSubmitting() || !termsAccepted() || submitCooldown.active()"
                   class="w-full rounded-lg btn-brand-gradient py-2.5 text-sm font-bold uppercase tracking-wide text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {{ isSubmitting() ? t().compSubmitting : t().compSubmitButton }}
+                  @if (submitCooldown.active()) {
+                    {{ waitLabel(submitCooldown) }}
+                  } @else {
+                    {{ isSubmitting() ? t().compSubmitting : t().compSubmitButton }}
+                  }
                 </button>
               </form>
             </div>
@@ -268,6 +286,23 @@
               <div class="h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-brand-800"></div>
               <h1 class="text-xl font-bold text-gray-900">{{ t().compProvisioningTitle }}</h1>
               <p class="text-sm text-gray-600">{{ t().compProvisioningBody }}</p>
+            </div>
+          }
+
+          @case ('slow') {
+            <div class="text-center">
+              <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-amber-50">
+                <ion-icon name="time-outline" class="text-2xl text-amber-600"></ion-icon>
+              </div>
+              <h1 class="mt-6 text-xl font-bold text-gray-900">{{ t().compProvisioningSlowTitle }}</h1>
+              <p class="mt-2 text-sm text-gray-600">{{ t().compProvisioningSlowBody }}</p>
+              <button
+                type="button"
+                (click)="checkProvisioningAgain()"
+                class="mt-6 w-full rounded-lg btn-brand-gradient py-2.5 text-sm font-bold uppercase tracking-wide text-white transition-opacity hover:opacity-90"
+              >
+                {{ t().compProvisioningCheckAgain }}
+              </button>
             </div>
           }
 

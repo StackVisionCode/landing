@@ -1,4 +1,4 @@
-import { Component, CUSTOM_ELEMENTS_SCHEMA, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Component, CUSTOM_ELEMENTS_SCHEMA, OnDestroy, OnInit, WritableSignal, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslationStore } from '@core/i18n/translation.store';
@@ -8,7 +8,9 @@ import {
 } from '@core/onboarding/onboarding-payment-options.util';
 import { PlansService } from '@core/plans/plans.service';
 import { moduleLabel } from '@core/plans/module-labels';
-import { apiErrorCode } from '@core/onboarding/onboarding-error.util';
+import { apiErrorCode } from '@core/http/api-error';
+import { ActionCooldown } from '@core/http/action-cooldown';
+import { formatClock, readThrottle, type ThrottleKind } from '@core/http/throttling';
 import type { PlanResponse } from '@core/plans/plans.models';
 import type { BillingCycle, OnboardingPaymentOption } from '@core/onboarding/onboarding.models';
 
@@ -23,8 +25,11 @@ type RegisterStep =
   | 'no-payment'
   | 'error';
 
+type ThrottledAction = 'send' | 'resend' | 'verify' | 'submit';
+
 const OTP_LENGTH = 6;
 const OTP_DURATION_SECONDS = 600; // TTL real del challenge: 10 min (Onboarding_PayFirst_PasoAPaso.md §1.1)
+const RESEND_COOLDOWN_SECONDS = 60; // cooldown real del reenvío en Auth
 
 /**
  * Página /register (PayFlow "pago primero"): selecciona plan por query param
@@ -100,6 +105,18 @@ export class RegisterComponent implements OnInit, OnDestroy {
   protected readonly processingMessage = signal('');
   protected readonly errorMessage = signal('');
 
+  // Espera pedida por el backend (429/503): una por acción. El botón muestra la cuenta regresiva y la
+  // acción nunca se reintenta sola; lo escrito en el formulario se conserva.
+  protected readonly sendCodeCooldown = new ActionCooldown();
+  protected readonly resendCooldown = new ActionCooldown();
+  protected readonly verifyCooldown = new ActionCooldown();
+  protected readonly submitCooldown = new ActionCooldown();
+  protected readonly throttledAction = signal<ThrottledAction | null>(null);
+  protected readonly throttleKind = signal<ThrottleKind>('rate-limited');
+
+  // El onboarding ya creado se reutiliza al reintentar el pago: repetir el POST crearía otro.
+  private onboardingId: string | null = null;
+
   get otpTimerDisplay(): string {
     const seconds = this.otpSecondsLeft();
     const minutes = Math.floor(seconds / 60);
@@ -137,6 +154,13 @@ export class RegisterComponent implements OnInit, OnDestroy {
 
     this.cycle.set(params.get('cycle') === 'Yearly' ? 'Yearly' : 'Monthly');
     this.showCancelledNotice.set(params.get('cancelled') === '1');
+
+    // Link de referido (?referral=CODE): se precarga en los códigos del checkout.
+    const referral = params.get('referral')?.trim();
+    if (referral) {
+      this.referralCode.set(referral);
+      this.showCodeFields.set(true);
+    }
 
     // Link del email de "pago fallido": referencia de reanudación opaca (?r=). El comprador cae directo
     // al pago del MISMO onboarding, sin re-hacer email+OTP. Si el token expiró, se cae al flujo normal.
@@ -209,10 +233,24 @@ export class RegisterComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.stopOtpTimer();
+    for (const cooldown of [this.sendCodeCooldown, this.resendCooldown, this.verifyCooldown, this.submitCooldown]) {
+      cooldown.stop();
+    }
+  }
+
+  /** Aviso fijo mientras dura la espera de la acción que la provocó. */
+  protected throttleNotice(action: ThrottledAction, cooldown: ActionCooldown): string | null {
+    if (this.throttledAction() !== action || !cooldown.active()) return null;
+    const t = this.t();
+    return this.throttleKind() === 'overloaded' ? t.throttleOverloadedNotice : t.throttleNotice;
+  }
+
+  protected waitLabel(cooldown: ActionCooldown, template = this.t().throttleButton): string {
+    return template.replace('{time}', formatClock(cooldown.secondsLeft()));
   }
 
   submitEmail(): void {
-    if (this.isSendingCode()) return;
+    if (this.isSendingCode() || this.sendCodeCooldown.active()) return;
     this.emailError.set('');
 
     if (!this.email()) {
@@ -233,10 +271,11 @@ export class RegisterComponent implements OnInit, OnDestroy {
         this.otpError.set('');
         this.step.set('otp');
         this.startOtpTimer();
+        this.resendCooldown.start(RESEND_COOLDOWN_SECONDS);
       },
       error: (err) => {
         this.isSendingCode.set(false);
-        this.emailError.set(this.mapError(apiErrorCode(err)) || this.t().regErrorGeneric);
+        this.handleError(err, 'send', this.emailError, this.sendCodeCooldown);
       },
     });
   }
@@ -246,7 +285,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
   }
 
   resendOtp(): void {
-    if (this.isResending()) return;
+    if (this.isResending() || this.resendCooldown.active()) return;
     this.isResending.set(true);
     this.otpError.set('');
     this.onboarding.resendEmailChallenge(this.challengeId).subscribe({
@@ -254,16 +293,17 @@ export class RegisterComponent implements OnInit, OnDestroy {
         this.isResending.set(false);
         this.otp.set('');
         this.startOtpTimer();
+        this.resendCooldown.start(RESEND_COOLDOWN_SECONDS);
       },
       error: (err) => {
         this.isResending.set(false);
-        this.otpError.set(this.mapError(apiErrorCode(err)) || this.t().regErrorGeneric);
+        this.handleError(err, 'resend', this.otpError, this.resendCooldown);
       },
     });
   }
 
   verifyOtp(): void {
-    if (this.isVerifying()) return;
+    if (this.isVerifying() || this.verifyCooldown.active()) return;
     this.otpError.set('');
 
     if (this.otp().length !== OTP_LENGTH) {
@@ -276,7 +316,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
       next: () => this.loadPaymentOptionsAfterOtp(),
       error: (err) => {
         this.isVerifying.set(false);
-        this.otpError.set(this.mapError(apiErrorCode(err)) || this.t().regErrorGeneric);
+        this.handleError(err, 'verify', this.otpError, this.verifyCooldown);
       },
     });
   }
@@ -285,6 +325,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
    *  El challenge en curso se deja morir solo (nunca se cancela server-side). */
   backToEmail(): void {
     this.stopOtpTimer();
+    this.onboardingId = null;
     this.step.set('email');
     this.otpError.set('');
   }
@@ -297,7 +338,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
   }
 
   submitDetails(): void {
-    if (this.isSubmittingDetails()) return;
+    if (this.isSubmittingDetails() || this.submitCooldown.active()) return;
     this.detailsError.set('');
 
     if (!this.firstName() || !this.lastName()) {
@@ -316,6 +357,11 @@ export class RegisterComponent implements OnInit, OnDestroy {
     }
 
     this.isSubmittingDetails.set(true);
+    if (this.onboardingId) {
+      this.startCheckout(this.onboardingId);
+      return;
+    }
+
     this.onboarding
       .createOnboarding({
         email: this.email(),
@@ -327,10 +373,13 @@ export class RegisterComponent implements OnInit, OnDestroy {
         billingCycle: this.cycle(),
       })
       .subscribe({
-        next: (created) => this.startCheckout(created.onboardingId),
+        next: (created) => {
+          this.onboardingId = created.onboardingId;
+          this.startCheckout(created.onboardingId);
+        },
         error: (err) => {
           this.isSubmittingDetails.set(false);
-          this.detailsError.set(this.mapError(apiErrorCode(err)) || this.t().regErrorGeneric);
+          this.handleError(err, 'submit', this.detailsError, this.submitCooldown);
         },
       });
   }
@@ -348,7 +397,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
         onboardingId,
         payerEmail: this.email(),
         successUrl: `${origin}/register/payment-received`,
-        cancelUrl: `${origin}/register?plan=${plan?.id ?? ''}&cycle=${this.cycle()}&cancelled=1`,
+        cancelUrl: this.cancelUrl(origin, plan?.id ?? ''),
         provider: paymentOption?.provider,
         method: paymentOption?.method,
         referralCode: this.referralCode().trim() || undefined,
@@ -367,8 +416,40 @@ export class RegisterComponent implements OnInit, OnDestroy {
             window.location.href = res.checkoutUrl;
           }
         },
-        error: (err) => this.showError(err),
+        error: (err) => {
+          // Un 429/503 del checkout vuelve al paso de datos con la espera; el onboarding ya creado se reutiliza.
+          if (readThrottle(err)) {
+            this.step.set('details');
+            this.handleError(err, 'submit', this.detailsError, this.submitCooldown);
+            return;
+          }
+          this.showError(err);
+        },
       });
+  }
+
+  /** Volver de un checkout cancelado conserva plan, ciclo y referido. */
+  private cancelUrl(origin: string, planId: string): string {
+    const referral = this.referralCode().trim();
+    const referralParam = referral ? `&referral=${encodeURIComponent(referral)}` : '';
+    return `${origin}/register?plan=${planId}&cycle=${this.cycle()}&cancelled=1${referralParam}`;
+  }
+
+  private handleError(
+    err: unknown,
+    action: ThrottledAction,
+    target: WritableSignal<string>,
+    cooldown: ActionCooldown,
+  ): void {
+    const throttle = readThrottle(err);
+    if (throttle) {
+      this.throttleKind.set(throttle.kind);
+      this.throttledAction.set(action);
+      target.set('');
+      cooldown.start(throttle.retryAfterSeconds);
+      return;
+    }
+    target.set(this.mapError(apiErrorCode(err)) || this.t().regErrorGeneric);
   }
 
   private showError(err: unknown): void {
@@ -399,7 +480,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         this.isVerifying.set(false);
-        this.otpError.set(this.mapError(apiErrorCode(err)) || this.t().regErrorGeneric);
+        this.handleError(err, 'verify', this.otpError, this.verifyCooldown);
       },
     });
   }
@@ -418,10 +499,6 @@ export class RegisterComponent implements OnInit, OnDestroy {
         return t.regOtpLocked;
       case 'Onboarding.OtpExpired':
         return t.regOtpExpired;
-      case 'Onboarding.OtpRateLimited':
-        return t.regOtpRateLimited;
-      case 'Onboarding.ResendCooldown':
-        return t.regResendCooldown;
       case 'Onboarding.ResendLimitExceeded':
         return t.regResendLimitExceeded;
       case 'PaymentMethod.Disabled':
