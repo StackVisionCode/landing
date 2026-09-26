@@ -1,0 +1,70 @@
+<div class="min-h-screen bg-[#FAFAFA]">
+  <header class="sticky top-0 z-30 border-b border-gray-200 bg-white/95 backdrop-blur">
+    <div class="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3 sm:px-6">
+      <a [href]="workspaceUrl" class="flex min-w-0 items-center gap-3">
+        @if (officeLogo(); as logo) {
+          <img [src]="logo" [alt]="officeName()" class="h-9 w-9 shrink-0 rounded-xl object-contain" />
+        } @else {
+          <span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl btn-brand-gradient text-sm font-bold text-white">
+            {{ officeInitials() }}
+          </span>
+        }
+        <span class="min-w-0">
+          <span class="block text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-600">{{ t().accEyebrow }}</span>
+          <span class="block truncate text-sm font-semibold text-ink">{{ officeName() }}</span>
+        </span>
+      </a>
+
+      <div class="ml-auto flex items-center gap-2">
+        <a [href]="workspaceUrl"
+          class="hidden rounded-full border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 sm:inline-block">
+          {{ t().accBackToWorkspace }}
+        </a>
+        <button type="button" (click)="signOut()" [disabled]="signingOut()"
+          class="rounded-full bg-brand-800 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-900 disabled:opacity-60">
+          {{ t().accSignOut }}
+        </button>
+        <button type="button" (click)="toggleMenu()" [attr.aria-expanded]="isMenuOpen()"
+          [attr.aria-label]="t().accNavMenu"
+          class="rounded-full border border-gray-200 p-2 text-gray-700 transition-colors hover:bg-gray-50 md:hidden">
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" d="M4 7h16M4 12h16M4 17h16" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    @if (isMenuOpen()) {
+      <nav class="border-t border-gray-100 px-4 pb-3 md:hidden">
+        @for (link of links; track link.path) {
+          <a [routerLink]="[link.path]" [routerLinkActiveOptions]="{ exact: link.exact }" routerLinkActive="bg-brand-50 text-brand-800 font-semibold"
+            (click)="closeMenu()" class="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm text-gray-700 hover:bg-gray-50">
+            <ion-icon [name]="link.icon" class="shrink-0 text-lg"></ion-icon>
+            {{ link.label() }}
+          </a>
+        }
+      </nav>
+    }
+  </header>
+
+  <div class="mx-auto flex max-w-6xl gap-8 px-4 py-6 sm:px-6 lg:py-10">
+    <nav class="hidden w-52 shrink-0 md:block" [attr.aria-label]="t().accNavMenu">
+      <ul class="sticky top-24 space-y-1">
+        @for (link of links; track link.path) {
+          <li>
+            <a [routerLink]="[link.path]" [routerLinkActiveOptions]="{ exact: link.exact }"
+              routerLinkActive="bg-brand-50 text-brand-800 font-semibold"
+              class="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm text-gray-600 transition-colors hover:bg-gray-100">
+              <ion-icon [name]="link.icon" class="shrink-0 text-lg"></ion-icon>
+              {{ link.label() }}
+            </a>
+          </li>
+        }
+      </ul>
+    </nav>
+
+    <main class="min-w-0 flex-1">
+      <router-outlet />
+    </main>
+  </div>
+</div>

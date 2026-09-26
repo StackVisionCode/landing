@@ -6,7 +6,7 @@ import { en } from './locales/en';
 const TRANSLATIONS = { es, en } as const;
 const STORAGE_KEY = 'tpo.lang.v1';
 
-/** Idioma actual del landing (ES por defecto) + textos derivados, persistido en localStorage. */
+/** Idioma actual del landing (EN por defecto) + textos derivados, persistido en localStorage. */
 @Injectable({ providedIn: 'root' })
 export class TranslationStore {
   private readonly _lang = signal<Lang>(this.loadInitialLang());
@@ -29,9 +29,9 @@ export class TranslationStore {
 
   private loadInitialLang(): Lang {
     try {
-      return localStorage.getItem(STORAGE_KEY) === 'en' ? 'en' : 'es';
+      return localStorage.getItem(STORAGE_KEY) === 'es' ? 'es' : 'en';
     } catch {
-      return 'es';
+      return 'en';
     }
   }
 }

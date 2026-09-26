@@ -30,3 +30,10 @@ export const SITE_CONFIG = {
     faq: 'REPLACE_ME_FAQ_BOOKING_ID',
   },
 } as const;
+
+/** Espacio de trabajo de una oficina: `https://<slug>.taxproffice.com`, derivado del dominio de appUrl. */
+export function officeWorkspaceUrl(slug: string): string {
+  const { protocol, host } = new URL(SITE_CONFIG.appUrl);
+  return `${protocol}//${slug}.${host.split(".").slice(1).join(".")}`;
+}
+

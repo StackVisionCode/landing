@@ -1,7 +1,5 @@
 import { Routes } from '@angular/router';
 import { LandingPageComponent } from '@landing/components/landing-page/landing-page.component';
-import { ForgotPasswordComponent } from '@landing/components/forgot-password/forgot-password.component';
-import { ResetPasswordComponent } from '@landing/components/reset-password/reset-password.component';
 import { RegisterComponent } from '@landing/components/register/register.component';
 import { RegisterPaymentReceivedComponent } from '@landing/components/register-payment-received/register-payment-received.component';
 import { RegisterCompleteComponent } from '@landing/components/register-complete/register-complete.component';
@@ -9,8 +7,6 @@ import { LegalPageComponent } from '@landing/components/legal/legal-page.compone
 
 export const routes: Routes = [
   { path: '', component: LandingPageComponent, title: 'TaxPro Office' },
-  { path: 'forgot-password', component: ForgotPasswordComponent, title: 'Recuperar Contraseña - TaxPro Office' },
-  { path: 'reset-password', component: ResetPasswordComponent, title: 'Restablecer Contraseña - TaxPro Office' },
   { path: 'register', component: RegisterComponent, title: 'Crear cuenta - TaxPro Office' },
   {
     path: 'register/payment-received',
@@ -18,6 +14,11 @@ export const routes: Routes = [
     title: 'Pago recibido - TaxPro Office',
   },
   { path: 'register/complete', component: RegisterCompleteComponent, title: 'Completa tu registro - TaxPro Office' },
+  {
+    // Account (Manage subscription): área autenticada, se carga solo cuando se entra.
+    path: 'account',
+    loadChildren: () => import('@account/account.routes').then(m => m.ACCOUNT_ROUTES),
+  },
   {
     path: 'terms',
     component: LegalPageComponent,

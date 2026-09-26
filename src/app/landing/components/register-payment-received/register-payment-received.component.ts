@@ -3,6 +3,9 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslationStore } from '@core/i18n/translation.store';
 import { OnboardingService } from '@core/onboarding/onboarding.service';
 import type { OnboardingStatusValue, ReconcileOnboardingPaymentResponse } from '@core/onboarding/onboarding.models';
+import { ActionCooldown } from '@core/http/action-cooldown';
+import { nextPollDelayMs } from '@core/http/polling';
+import { formatClock, readThrottle, type ThrottleKind } from '@core/http/throttling';
 
 interface ConfettiPiece {
   left: number;
@@ -15,7 +18,8 @@ interface ConfettiPiece {
 
 const CONFETTI_COLORS = ['#67BAF4', '#1E466B', '#8CC7F5', '#FFFFFF', '#F5B942'];
 const CONFETTI_COUNT = 44;
-const POLL_INTERVAL_MS = 2500;
+const POLL_BASE_MS = 2500;
+const POLL_MAX_MS = 10000;
 const MAX_RECONCILE_ATTEMPTS = 8;
 
 type PaymentReceivedStep = 'checking' | 'redirecting' | 'processing' | 'fallback' | 'failed';
@@ -38,6 +42,8 @@ export class RegisterPaymentReceivedComponent implements OnInit, OnDestroy {
   protected readonly retryError = signal('');
   private attemptCount = 0;
   private pollTimerId: ReturnType<typeof setTimeout> | null = null;
+  protected readonly retryCooldown = new ActionCooldown();
+  protected readonly throttleKind = signal<ThrottleKind>('rate-limited');
   // Referencia de retorno del successUrl: fallback para reconciliar sin cookie (otro navegador).
   private readonly returnReference = this.route.snapshot.queryParamMap.get('r') ?? undefined;
   // Capturados del reconcile cuando el pago falló (solo por cookie): habilitan reintentar el pago.
@@ -59,6 +65,16 @@ export class RegisterPaymentReceivedComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.stopPolling();
+    this.retryCooldown.stop();
+  }
+
+  protected throttleNotice(): string {
+    const t = this.t();
+    return this.throttleKind() === 'overloaded' ? t.throttleOverloadedNotice : t.throttleNotice;
+  }
+
+  protected waitLabel(): string {
+    return this.t().throttleButton.replace('{time}', formatClock(this.retryCooldown.secondsLeft()));
   }
 
   protected retryReconcile(): void {
@@ -75,7 +91,7 @@ export class RegisterPaymentReceivedComponent implements OnInit, OnDestroy {
   }
 
   protected retryPayment(): void {
-    if (!this.onboardingId || !this.payerEmail || typeof window === 'undefined') return;
+    if (!this.onboardingId || !this.payerEmail || typeof window === 'undefined' || this.retryCooldown.active()) return;
     this.isRetrying.set(true);
     this.retryError.set('');
     const origin = window.location.origin;
@@ -95,8 +111,15 @@ export class RegisterPaymentReceivedComponent implements OnInit, OnDestroy {
           this.isRetrying.set(false);
           this.retryError.set(this.t().payReceivedRetryError);
         },
-        error: () => {
+        error: (err) => {
           this.isRetrying.set(false);
+          const throttle = readThrottle(err);
+          if (throttle) {
+            this.throttleKind.set(throttle.kind);
+            this.retryError.set('');
+            this.retryCooldown.start(throttle.retryAfterSeconds);
+            return;
+          }
           this.retryError.set(this.t().payReceivedRetryError);
         },
       });
@@ -106,7 +129,15 @@ export class RegisterPaymentReceivedComponent implements OnInit, OnDestroy {
     this.step.set(this.attemptCount === 0 ? 'checking' : 'processing');
     this.onboarding.reconcilePayment(this.returnReference).subscribe({
       next: (response) => this.handleReconcileResponse(response),
-      error: () => this.showFallback(),
+      error: (err) => {
+        // Un 429/503 no es un fallo del pago: se espera lo indicado y se vuelve a consultar.
+        const throttle = readThrottle(err);
+        if (throttle) {
+          this.scheduleRetryOrFallback(throttle.retryAfterSeconds);
+          return;
+        }
+        this.showFallback();
+      },
     });
   }
 
@@ -133,7 +164,7 @@ export class RegisterPaymentReceivedComponent implements OnInit, OnDestroy {
     this.scheduleRetryOrFallback();
   }
 
-  private scheduleRetryOrFallback(): void {
+  private scheduleRetryOrFallback(retryAfterSeconds?: number): void {
     this.attemptCount++;
     if (this.attemptCount >= MAX_RECONCILE_ATTEMPTS) {
       this.showFallback();
@@ -141,7 +172,8 @@ export class RegisterPaymentReceivedComponent implements OnInit, OnDestroy {
     }
 
     this.step.set('processing');
-    this.pollTimerId = setTimeout(() => this.reconcile(), POLL_INTERVAL_MS);
+    const delay = nextPollDelayMs(this.attemptCount - 1, POLL_BASE_MS, POLL_MAX_MS, retryAfterSeconds);
+    this.pollTimerId = setTimeout(() => this.reconcile(), delay);
   }
 
   private showFallback(): void {

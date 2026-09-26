@@ -138,7 +138,9 @@
               }
 
               <form (submit)="$event.preventDefault(); submitEmail()" class="mt-6 space-y-3">
-                @if (emailError()) {
+                @if (throttleNotice('send', sendCodeCooldown); as notice) {
+                  <p role="alert" class="rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-700">{{ notice }}</p>
+                } @else if (emailError()) {
                   <p role="alert" class="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-600">{{ emailError() }}</p>
                 }
 
@@ -165,10 +167,14 @@
 
                 <button
                   type="submit"
-                  [disabled]="isSendingCode()"
+                  [disabled]="isSendingCode() || sendCodeCooldown.active()"
                   class="w-full rounded-lg btn-brand-gradient py-2.5 text-sm font-bold uppercase tracking-wide text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {{ isSendingCode() ? t().regSendingCode : t().regContinueButton }}
+                  @if (sendCodeCooldown.active()) {
+                    {{ waitLabel(sendCodeCooldown) }}
+                  } @else {
+                    {{ isSendingCode() ? t().regSendingCode : t().regContinueButton }}
+                  }
                 </button>
               </form>
             </div>
@@ -184,7 +190,9 @@
               <p class="mt-2 text-center text-sm text-gray-600">{{ t().regOtpSubtitle }} <strong>{{ email() }}</strong></p>
 
               <form (submit)="$event.preventDefault(); verifyOtp()" class="mt-6 space-y-3">
-                @if (otpError()) {
+                @if (throttleNotice('verify', verifyCooldown) ?? throttleNotice('resend', resendCooldown); as notice) {
+                  <p role="alert" class="rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-700">{{ notice }}</p>
+                } @else if (otpError()) {
                   <p role="alert" class="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-600">{{ otpError() }}</p>
                 }
 
@@ -213,19 +221,27 @@
 
                 <button
                   type="submit"
-                  [disabled]="isVerifying() || isResending()"
+                  [disabled]="isVerifying() || isResending() || verifyCooldown.active()"
                   class="w-full rounded-lg btn-brand-gradient py-2.5 text-sm font-bold uppercase tracking-wide text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {{ isVerifying() ? t().regVerifying : t().regVerifyButton }}
+                  @if (verifyCooldown.active()) {
+                    {{ waitLabel(verifyCooldown) }}
+                  } @else {
+                    {{ isVerifying() ? t().regVerifying : t().regVerifyButton }}
+                  }
                 </button>
 
                 <button
                   type="button"
                   (click)="resendOtp()"
-                  [disabled]="isResending() || isVerifying()"
+                  [disabled]="isResending() || isVerifying() || resendCooldown.active()"
                   class="w-full rounded-lg border border-gray-200 py-2.5 text-sm font-bold uppercase tracking-wide text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {{ isResending() ? t().regSendingOtp : t().regResendCode }}
+                  @if (resendCooldown.active()) {
+                    {{ waitLabel(resendCooldown, t().regResendIn) }}
+                  } @else {
+                    {{ isResending() ? t().regSendingOtp : t().regResendCode }}
+                  }
                 </button>
               </form>
             </div>
@@ -246,7 +262,9 @@
               <p class="mt-3 text-sm text-gray-600">{{ t().regStep1Subtitle }}</p>
 
               <form (submit)="$event.preventDefault(); submitDetails()" class="mt-6 space-y-3">
-                @if (detailsError()) {
+                @if (throttleNotice('submit', submitCooldown); as notice) {
+                  <p role="alert" class="rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-700">{{ notice }}</p>
+                } @else if (detailsError()) {
                   <p role="alert" class="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-600">{{ detailsError() }}</p>
                 }
 
@@ -384,10 +402,14 @@
 
                 <button
                   type="submit"
-                  [disabled]="isSubmittingDetails()"
+                  [disabled]="isSubmittingDetails() || submitCooldown.active()"
                   class="w-full rounded-lg btn-brand-gradient py-2.5 text-sm font-bold uppercase tracking-wide text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {{ isSubmittingDetails() ? t().regSendingCode : t().regContinueButton }}
+                  @if (submitCooldown.active()) {
+                    {{ waitLabel(submitCooldown) }}
+                  } @else {
+                    {{ isSubmittingDetails() ? t().regSendingCode : t().regContinueButton }}
+                  }
                 </button>
               </form>
             </div>

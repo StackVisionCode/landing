@@ -10,7 +10,9 @@ To start a local development server, run:
 ng serve
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+Once the server is running, open your browser and navigate to `http://localhost:4201/`. The application will automatically reload whenever you modify any of the source files.
+
+The port is fixed so the CRM (`4200`) and the client portal (`4300`) can run next to it; the CRM sends its `/register*` links and the plan picker here.
 
 ## Code scaffolding
 
