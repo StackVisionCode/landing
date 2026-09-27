@@ -417,8 +417,10 @@ export const es: TranslationKeys = {
   accStepUpConfirm: "Confirmar",
   accStepUpConfirming: "Confirmando...",
   accStepUpCancel: "Cancelar",
-  accStepUpWrongPassword: "Esa contraseña no coincide. Inténtalo de nuevo.",
+  accStepUpWrongPassword: "Esa contraseña o ese código no son correctos. Inténtalo de nuevo.",
   accStepUpWrongCode: "Ese código no funcionó. Inténtalo de nuevo.",
+  accStepUpCodeRequired: "Escribe el código de tu app de autenticación.",
+  accStepUpSessionEnded: "Tu sesión terminó. Inicia sesión de nuevo para continuar.",
   accStepUpLocked: "Demasiados intentos. Inténtalo más tarde.",
   accStepUpError: "No pudimos confirmarlo. Inténtalo de nuevo.",
 

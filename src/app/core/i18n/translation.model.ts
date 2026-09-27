@@ -428,6 +428,8 @@ export interface TranslationKeys {
   accStepUpWrongCode: string;
   accStepUpLocked: string;
   accStepUpError: string;
+  accStepUpCodeRequired: string;
+  accStepUpSessionEnded: string;
 
   // Account — deshacer el cambio de plan agendado
   accOvPendingUndo: string;

@@ -416,10 +416,12 @@ export const en: TranslationKeys = {
   accStepUpConfirm: "Confirm",
   accStepUpConfirming: "Confirming...",
   accStepUpCancel: "Cancel",
-  accStepUpWrongPassword: "That password doesn't match. Try again.",
+  accStepUpWrongPassword: "That password or code isn't right. Try again.",
   accStepUpWrongCode: "That code didn't work. Try again.",
   accStepUpLocked: "Too many attempts. Try again later.",
   accStepUpError: "We couldn't confirm it. Please try again.",
+  accStepUpCodeRequired: "Enter the code from your authenticator app.",
+  accStepUpSessionEnded: "Your session ended. Sign in again to continue.",
 
   // Account — deshacer el cambio de plan agendado
   accOvPendingUndo: "Undo",
