@@ -298,6 +298,7 @@ export const es: TranslationKeys = {
   accSignInOfficeBody: "Tu correo pertenece a más de una oficina, o esta pide un segundo paso.",
   accSignInCodeLabel: "Código de verificación",
   accSignInCodeHint: "Escribe el código de tu aplicación de verificación, o un código de recuperación.",
+  accSignInRememberDevice: "No volver a pedirme un código en este dispositivo",
   accSignInWorkspaceHint: "¿Ya iniciaste sesión en tu oficina?",
   accTakeoverTitle: "Ya iniciaste sesión en otro lugar",
   accTakeoverBody: "Tienes la sesión abierta en tu espacio de trabajo. Si continúas aquí, allí se cerrará.",

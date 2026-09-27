@@ -3,6 +3,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, catchError, finalize, map, of, shareReplay, switchMap, tap, throwError } from 'rxjs';
 import { ACCOUNT_ACTOR_TYPE, AccountSessionResponse, MeResponse, ReauthenticateRequest } from './account-session.models';
 import { AccountSessionService } from './account-session.service';
+import { TrustedDeviceStore } from './trusted-device.store';
 
 /**
  * - `unknown`: todavía no se intentó recuperar la sesión de la cookie.
@@ -26,6 +27,7 @@ export type AccountSignInOutcome =
 @Injectable({ providedIn: 'root' })
 export class AccountSessionStore {
   private readonly api = inject(AccountSessionService);
+  private readonly device = inject(TrustedDeviceStore);
 
   private readonly _accessToken = signal<string | null>(null);
   private readonly _me = signal<MeResponse | null>(null);
@@ -91,6 +93,9 @@ export class AccountSessionStore {
   }
 
   private signIn(tokens: AccountSessionResponse): Observable<AccountSignInOutcome> {
+    // El dispositivo nace con la sesión y se guarda aunque el perfil falle después: ya existe en el
+    // backend, y tirarlo solo lograría que el próximo login pidiera un código de más.
+    this.device.save(tokens.deviceToken);
     if (tokens.takeoverRequired && tokens.takeoverTicket) {
       return of({
         kind: 'takeover-required' as const,

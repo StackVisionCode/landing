@@ -305,6 +305,8 @@ export interface TranslationKeys {
   accSignInOfficeBody: string;
   accSignInCodeLabel: string;
   accSignInCodeHint: string;
+  /** Casilla del segundo factor: marca este navegador como de confianza. */
+  accSignInRememberDevice: string;
   accSignInWorkspaceHint: string;
   accTakeoverTitle: string;
   accTakeoverBody: string;

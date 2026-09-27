@@ -1,7 +1,7 @@
 import { Component, CUSTOM_ELEMENTS_SCHEMA, inject, signal } from '@angular/core';
 import { TranslationStore } from '@core/i18n/translation.store';
 import { ModalComponent } from '@shared/ui/modal/modal.component';
-import { MODULE_LABELS, moduleIcon, moduleLabel } from '@core/plans/module-labels';
+import { OFFERED_MODULES, moduleIcon, moduleLabel } from '@core/plans/module-labels';
 
 const MODULE_DESCRIPTIONS: Record<string, { es: string; en: string }> = {
   signatures: {
@@ -33,8 +33,12 @@ const MODULE_DESCRIPTIONS: Record<string, { es: string; en: string }> = {
     en: 'Create and send campaigns to keep your clients informed.',
   },
   comms: {
-    es: 'Chatea con tus clientes en tiempo real, vinculado a su expediente.',
-    en: 'Chat with your clients in real time, tied to their file.',
+    es: 'Chatea y llama a tus clientes en tiempo real, vinculado a su expediente.',
+    en: 'Chat and call your clients in real time, tied to their file.',
+  },
+  meetings: {
+    es: 'Reuniones por vídeo con tus clientes, con sala de espera e invitaciones.',
+    en: 'Video meetings with your clients, with a waiting room and invitations.',
   },
   marketing: {
     es: 'Herramientas para promocionar tu oficina y atraer nuevos clientes.',
@@ -71,11 +75,12 @@ export class FeaturesGridComponent {
   private readonly translation = inject(TranslationStore);
   protected readonly t = this.translation.t;
 
-  /** Todos los módulos reales del catálogo (mismo `MODULE_LABELS` que Pricing
+  /** Los módulos que se VENDEN (`OFFERED_MODULES`, no todo `MODULE_LABELS`: ese es un diccionario
+   *  y contiene también los que ya no se ofrecen, para poder nombrar snapshots viejos)
    *  y Register) — "todo lo que ofrecemos", no una selección curada. */
   protected get modules(): ModuleCard[] {
     const lang = this.translation.lang();
-    return Object.keys(MODULE_LABELS).map((key) => ({
+    return OFFERED_MODULES.map((key) => ({
       key,
       icon: moduleIcon(key),
       label: moduleLabel(key, lang),

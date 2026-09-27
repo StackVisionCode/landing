@@ -48,6 +48,8 @@ export class AccountSignInComponent implements OnDestroy {
   readonly password = signal('');
   readonly passwordVisible = signal(false);
   readonly mfaCode = signal('');
+  /** "No volver a pedirme el código en este navegador". Solo aplica si el código es del autenticador. */
+  readonly rememberDevice = signal(false);
 
   readonly offices = signal<DiscoverOffice[]>([]);
   readonly chosenTenantId = signal<string | null>(null);
@@ -113,6 +115,8 @@ export class AccountSignInComponent implements OnDestroy {
   chooseOffice(tenantId: string): void {
     this.chosenTenantId.set(tenantId);
     this.mfaCode.set('');
+    // Cambiar de oficina reinicia la decisión: se marca para ESTA, no para la anterior.
+    this.rememberDevice.set(false);
     this.error.set(null);
   }
 
@@ -120,10 +124,17 @@ export class AccountSignInComponent implements OnDestroy {
     if (!this.canSubmitOffice() || !this.sessionRef) return;
     this.begin();
 
-    this.central.handoff(this.sessionRef, this.chosenTenantId()!, this.needsCode() ? this.mfaCode().trim() : null).subscribe({
-      next: handoff => this.redeem(handoff.ticket),
-      error: (err: unknown) => this.fail(this.messageFor(err, this.t().accSignInBadCode)),
-    });
+    this.central
+      .handoff(
+        this.sessionRef,
+        this.chosenTenantId()!,
+        this.needsCode() ? this.mfaCode().trim() : null,
+        this.needsCode() && this.rememberDevice()
+      )
+      .subscribe({
+        next: handoff => this.redeem(handoff.ticket),
+        error: (err: unknown) => this.fail(this.messageFor(err, this.t().accSignInBadCode)),
+      });
   }
 
   confirmTakeover(): void {
@@ -142,6 +153,7 @@ export class AccountSignInComponent implements OnDestroy {
     this.offices.set([]);
     this.chosenTenantId.set(null);
     this.mfaCode.set('');
+    this.rememberDevice.set(false);
     this.password.set('');
     this.passwordVisible.set(false);
     this.error.set(null);

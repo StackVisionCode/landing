@@ -43,7 +43,7 @@
             @for (addOn of available(); track addOn.code) {
               <li class="flex flex-wrap items-center justify-between gap-3 py-3">
                 <div class="min-w-0">
-                  <p class="text-sm font-medium text-ink">{{ addOn.name }}</p>
+                  <p class="text-sm font-medium text-ink">{{ displayName(addOn) }}</p>
                   <p class="text-xs text-gray-500">{{ priceLabel(addOn) }}</p>
                 </div>
                 <button type="button" (click)="buy(addOn)" [disabled]="buyingCode() !== null || waiting()"
@@ -63,7 +63,7 @@
             @for (addOn of active(); track addOn.code) {
               <li class="flex flex-wrap items-center justify-between gap-3 py-3">
                 <div class="min-w-0">
-                  <p class="text-sm font-medium text-ink">{{ addOn.name }}</p>
+                  <p class="text-sm font-medium text-ink">{{ displayName(addOn) }}</p>
                   @if (activeDetail(addOn); as detail) {
                     <p class="text-xs text-gray-500">{{ detail }}</p>
                   }
@@ -83,7 +83,7 @@
           <ul class="mt-3 divide-y divide-gray-100">
             @for (addOn of included(); track addOn.code) {
               <li class="py-3">
-                <p class="text-sm font-medium text-ink">{{ addOn.name }}</p>
+                <p class="text-sm font-medium text-ink">{{ displayName(addOn) }}</p>
               </li>
             }
           </ul>

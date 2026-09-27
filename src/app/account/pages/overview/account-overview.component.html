@@ -162,7 +162,7 @@
             @for (addOn of data.addOns; track addOn.code) {
               <li class="flex flex-wrap items-center justify-between gap-2 py-3">
                 <div class="min-w-0">
-                  <p class="truncate text-sm font-medium text-ink">{{ addOn.name }}</p>
+                  <p class="truncate text-sm font-medium text-ink">{{ displayName(addOn) }}</p>
                   @if (addOnDetail(addOn); as detail) {
                     <p class="text-xs text-gray-500">{{ detail }}</p>
                   }

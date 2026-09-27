@@ -49,7 +49,10 @@ export type AddOnEligibility = 'Included' | 'Active' | 'Available';
 
 export interface AccountAddOn {
   code: string;
+  /** Nombre del catálogo, en la base y solo en español. Para MOSTRAR se usa `modules` + `MODULE_LABELS`. */
   name: string;
+  /** Los `module.*` que habilita. Es lo que permite nombrarlo con el mismo diccionario que Plan. */
+  modules: string[];
   description: string;
   category: string;
   eligibility: AddOnEligibility;
