@@ -5,6 +5,7 @@ import { AccountSubscriptionService } from '@core/account/account-subscription.s
 import { AccountSessionStore } from '@core/auth/account-session.store';
 import { apiErrorCode } from '@core/http/api-error';
 import { nextPollDelayMs } from '@core/http/polling';
+import { moduleLabel } from '@core/plans/module-labels';
 import { TranslationStore } from '@core/i18n/translation.store';
 import { ActionCooldown } from '@core/http/action-cooldown';
 import { formatClock } from '@core/http/throttling';
@@ -103,6 +104,18 @@ export class AccountAddOnsComponent {
           this.load();
         },
       });
+  }
+
+  /**
+   * El nombre que se MUESTRA. Sale del mismo diccionario que la pantalla de Plan (`MODULE_LABELS`,
+   * con es/en) y no de `addOn.name`, que vive en la base y solo existe en español — por eso el mismo
+   * módulo aparecía como "Correo" aquí y como "Integrated email" allá.
+   *
+   * `addOn.name` queda como respaldo para un add-on que no aporte módulos (p. ej. uno de solo cupos).
+   */
+  displayName(addOn: AccountAddOn): string {
+    const [module] = addOn.modules ?? [];
+    return module ? moduleLabel(module, this.i18n.lang()) : addOn.name;
   }
 
   priceLabel(addOn: AccountAddOn): string {

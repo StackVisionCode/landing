@@ -19,6 +19,8 @@ export interface AccountSessionResponse {
   takeoverRequired?: boolean;
   takeoverTicket?: string | null;
   takeoverTicketExpiresInSeconds?: number | null;
+  /** Dispositivo de confianza recién creado; solo viene si se pidió al resolver el segundo factor. */
+  deviceToken?: string | null;
 }
 
 /** Vale de un solo uso que emite el CRM para abrir el Account con la misma sesión. */

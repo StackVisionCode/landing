@@ -23,6 +23,8 @@ function addOn(code: string, eligibility: AccountAddOn['eligibility'], overrides
   return {
     code,
     name: code,
+    // El nombre visible sale de `modules` + MODULE_LABELS, no de `name` (que en la base va en español).
+    modules: [code.replace('addon-', '').replace('.addon', '')],
     description: '',
     category: 'module',
     eligibility,
@@ -171,5 +173,22 @@ describe('AccountAddOnsComponent', () => {
     const { page } = create([]);
 
     expect(page.textContent).toContain('No add-ons available for your plan yet.');
+  });
+
+  it('nombra el complemento con el mismo diccionario que la pantalla de Plan', () => {
+    // El catálogo guarda el nombre en la base y solo en español ("Correo"), así que el MISMO módulo
+    // salía como "Correo" en Add-ons y como "Integrated email" en Plan. Ahora los dos leen
+    // MODULE_LABELS, y el nombre de la base solo queda de respaldo.
+    const { page } = create([addOn('addon-email', 'Available', { name: 'Correo', modules: ['email'] })]);
+
+    expect(page.textContent).toContain('Integrated email');
+    expect(page.textContent).not.toContain('Correo');
+  });
+
+  it('si el complemento no aporta módulos, cae al nombre del catálogo', () => {
+    // Un add-on de solo cupos (sin `module.*`) no tiene etiqueta que buscar.
+    const { page } = create([addOn('addon-seats', 'Available', { name: 'Extra seats', modules: [] })]);
+
+    expect(page.textContent).toContain('Extra seats');
   });
 });

@@ -203,8 +203,8 @@ describe('AccountOverviewComponent', () => {
   it('marca como incluido el add-on que el plan ya cubre y con precio el que no', () => {
     const data = subscription({
       addOns: [
-        { code: 'email.addon', name: 'Email', description: '', category: 'module', eligibility: 'Included', unitAmountCents: 2900, currency: 'USD', tenantAddOnId: null, currentPeriodEndUtc: null, autoRenew: null },
-        { code: 'sms.addon', name: 'SMS', description: '', category: 'module', eligibility: 'Available', unitAmountCents: 1500, currency: 'USD', tenantAddOnId: null, currentPeriodEndUtc: null, autoRenew: null },
+        { code: 'email.addon', name: 'Email', modules: ['email'], description: '', category: 'module', eligibility: 'Included', unitAmountCents: 2900, currency: 'USD', tenantAddOnId: null, currentPeriodEndUtc: null, autoRenew: null },
+        { code: 'sms.addon', name: 'SMS', modules: ['sms'], description: '', category: 'module', eligibility: 'Available', unitAmountCents: 1500, currency: 'USD', tenantAddOnId: null, currentPeriodEndUtc: null, autoRenew: null },
       ],
     });
 

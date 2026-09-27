@@ -54,19 +54,27 @@ export class StepUpDialogComponent {
     this.dismissed.emit();
   }
 
-  /** El backend decide; la pantalla solo traduce. Una contraseña mala NO cierra la sesión. */
+  /**
+   * El backend decide; la pantalla solo traduce. Una contraseña mala NO cierra la sesión.
+   *
+   * Los códigos son los que emite `ReauthenticateHandler` de verdad. Antes esperaba
+   * `Auth.InvalidCredentials`, `Auth.TwoFactorRequired` y `User.Locked`, que **no existen**: los
+   * reales son `Auth.ReauthenticationFailed`, `Auth.MfaCodeRequired` y `Auth.LockedOut`. Con
+   * ninguno coincidiendo, TODO caía en el mensaje genérico — y el peor caso era "te falta el código
+   * del autenticador", que se leía como "contraseña incorrecta" y dejaba al usuario reintentando
+   * la contraseña para siempre.
+   */
   private messageFor(err: unknown): string {
     const t = this.t();
     switch (apiErrorCode(err)) {
-      case 'Auth.InvalidCredentials':
-      case 'User.InvalidCredentials':
+      case 'Auth.ReauthenticationFailed':
         return t.accStepUpWrongPassword;
-      case 'Auth.TwoFactorRequired':
-      case 'Auth.InvalidTwoFactorCode':
-        return t.accStepUpWrongCode;
-      case 'User.Locked':
-      case 'Auth.AccountLocked':
+      case 'Auth.MfaCodeRequired':
+        return t.accStepUpCodeRequired;
+      case 'Auth.LockedOut':
         return t.accStepUpLocked;
+      case 'Auth.SessionRevoked':
+        return t.accStepUpSessionEnded;
       default:
         return t.accStepUpError;
     }

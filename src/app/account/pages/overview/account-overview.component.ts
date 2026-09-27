@@ -10,6 +10,7 @@ import {
 import { AccountSubscriptionService } from '@core/account/account-subscription.service';
 import { apiErrorCode } from '@core/http/api-error';
 import { TranslationStore } from '@core/i18n/translation.store';
+import { moduleLabel } from '@core/plans/module-labels';
 
 /** Chip de estado: el tono lo decide el estado de la suscripción, no el texto. */
 type StatusTone = 'ok' | 'warn' | 'danger';
@@ -219,6 +220,12 @@ export class AccountOverviewComponent {
     const template = pending.status === 'PaymentFailed' ? t.accOvPendingUpgradeFailed : t.accOvPendingUpgrade;
     return template.replace('{plan}', pending.toPlanCode);
   });
+
+  /** Mismo criterio que la pantalla de Add-ons: el nombre visible sale de `MODULE_LABELS`. */
+  displayName(addOn: AccountAddOn): string {
+    const [module] = addOn.modules ?? [];
+    return module ? moduleLabel(module, this.i18n.lang()) : addOn.name;
+  }
 
   addOnStatusLabel(addOn: AccountAddOn): string {
     const t = this.t();

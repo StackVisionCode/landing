@@ -183,6 +183,18 @@
                 </div>
                 <p class="mt-1.5 text-xs text-gray-500">{{ t().accSignInCodeHint }}</p>
               </div>
+
+              <label class="flex cursor-pointer items-start gap-2.5 text-xs text-gray-600">
+                <input
+                  type="checkbox"
+                  name="rememberDevice"
+                  [ngModel]="rememberDevice()"
+                  (ngModelChange)="rememberDevice.set($event)"
+                  [disabled]="busy()"
+                  class="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 text-brand-600 focus:ring-brand-600/30 disabled:opacity-50"
+                />
+                <span>{{ t().accSignInRememberDevice }}</span>
+              </label>
             }
 
             <button

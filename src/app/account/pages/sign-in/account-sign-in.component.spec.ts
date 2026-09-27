@@ -104,7 +104,40 @@ describe('AccountSignInComponent', () => {
     component.mfaCode.set('123456');
     component.submitOffice();
 
-    expect(central.handoff).toHaveBeenCalledWith('ref-1', 't-2', '123456');
+    expect(central.handoff).toHaveBeenCalledWith('ref-1', 't-2', '123456', false);
+  });
+
+  // ---- "no volver a pedirme el código" ----
+
+  it('pide marcar el dispositivo solo cuando se marcó la casilla', () => {
+    const { component, central } = create({
+      discover: vi.fn(() => of({ kind: 'choose', sessionRef: 'ref-1', offices: OFFICES } as DiscoverOutcome)),
+    });
+
+    component.submitCredentials();
+    component.chooseOffice('t-2');
+    component.mfaCode.set('123456');
+    component.rememberDevice.set(true);
+    component.submitOffice();
+
+    expect(central.handoff).toHaveBeenCalledWith('ref-1', 't-2', '123456', true);
+  });
+
+  it('una oficina sin segundo factor nunca manda el pedido', () => {
+    // Sin código que resolver no hay nada que saltarse después; mandarlo marcaría un dispositivo que
+    // no prueba nada.
+    const { component, central } = create({
+      discover: vi.fn(() => of({ kind: 'choose', sessionRef: 'ref-1', offices: OFFICES } as DiscoverOutcome)),
+    });
+
+    component.submitCredentials();
+    component.chooseOffice('t-2');
+    component.rememberDevice.set(true);
+    component.chooseOffice('t-1');
+    component.submitOffice();
+
+    expect(component.rememberDevice()).toBe(false);
+    expect(central.handoff).toHaveBeenCalledWith('ref-1', 't-1', null, false);
   });
 
   // Sesión única: entrar acá cierra la del espacio de trabajo, así que primero se dice.
