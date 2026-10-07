@@ -111,6 +111,12 @@ export interface TranslationKeys {
   legalVersion: string;
   legalLoading: string;
   legalError: string;
+  legalSearchPlaceholder: string;
+  legalSearchNoResults: string;
+  legalSearchOf: string;
+  legalSearchPrev: string;
+  legalSearchNext: string;
+  legalSearchClear: string;
 
   // Campos compartidos de formularios (registro)
   authEmailLabel: string;

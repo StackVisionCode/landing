@@ -119,8 +119,21 @@
   margin-top: 0;
 }
 /* Desplazamiento al saltar por un anchor del índice: deja espacio para el header sticky. */
+/* Header (64px) + buscador sticky (~84px). */
 .legal-prose [id] {
-  scroll-margin-top: 84px;
+  scroll-margin-top: 160px;
+}
+/* Coincidencias del buscador de la página legal (los <mark> se crean por JS dentro del HTML inyectado). */
+.legal-prose mark.legal-search-hit {
+  background-color: #fde68a;
+  color: inherit;
+  border-radius: 3px;
+  padding: 0 1px;
+}
+.legal-prose mark.legal-search-hit--active {
+  background-color: #f59e0b;
+  color: #0d0d0d;
+  box-shadow: 0 0 0 2px #f59e0b;
 }
 .legal-prose h1 {
   font-size: 1.55rem;
