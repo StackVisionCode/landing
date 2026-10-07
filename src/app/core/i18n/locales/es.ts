@@ -108,6 +108,12 @@ export const es: TranslationKeys = {
   legalVersion: 'Versión',
   legalLoading: 'Cargando el documento…',
   legalError: 'No pudimos cargar este documento en este momento. Inténtalo de nuevo.',
+  legalSearchPlaceholder: 'Buscar en este documento…',
+  legalSearchNoResults: 'Sin resultados',
+  legalSearchOf: 'de',
+  legalSearchPrev: 'Resultado anterior',
+  legalSearchNext: 'Siguiente resultado',
+  legalSearchClear: 'Borrar búsqueda',
 
   authEmailLabel: 'Correo electrónico',
   authEmailPlaceholder: 'Ingresa tu correo electrónico',

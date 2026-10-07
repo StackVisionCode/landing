@@ -107,6 +107,12 @@ export const en: TranslationKeys = {
   legalVersion: 'Version',
   legalLoading: 'Loading the document…',
   legalError: 'We could not load this document right now. Please try again.',
+  legalSearchPlaceholder: 'Search this document…',
+  legalSearchNoResults: 'No results',
+  legalSearchOf: 'of',
+  legalSearchPrev: 'Previous result',
+  legalSearchNext: 'Next result',
+  legalSearchClear: 'Clear search',
 
   authEmailLabel: 'Email address',
   authEmailPlaceholder: 'Enter your email',
