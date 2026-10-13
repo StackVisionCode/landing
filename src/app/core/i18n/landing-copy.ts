@@ -1,7 +1,8 @@
 import type { Lang } from './translation.model';
+import { PLATFORM_BRAND } from '@core/config/site-config';
 
 /**
- * Copy del landing Taxoffix (propuesta C). Basado en funciones reales del
+ * Copy del landing (propuesta C). El nombre de la plataforma sale de PLATFORM_BRAND, nunca escrito aquí. Basado en funciones reales del
  * producto: nada de garantías, cifras de clientes ni reseñas inventadas —
  * la prueba social queda como placeholder hasta tener datos reales.
  */
@@ -266,7 +267,7 @@ const es = {
   cta: {
     titleA: 'Entra a la próxima temporada con',
     titleB: 'tu oficina en orden',
-    subtitle: 'Agenda una demo y mira cómo se vería tu oficina en Taxoffix.',
+    subtitle: `Agenda una demo y mira cómo se vería tu oficina en ${PLATFORM_BRAND}.`,
   },
 
   footer: {
@@ -540,7 +541,7 @@ const en: LandingCopy = {
   cta: {
     titleA: 'Start the next tax season with',
     titleB: 'your office in order',
-    subtitle: 'Book a demo and see how your office would look in Taxoffix.',
+    subtitle: `Book a demo and see how your office would look in ${PLATFORM_BRAND}.`,
   },
 
   footer: {

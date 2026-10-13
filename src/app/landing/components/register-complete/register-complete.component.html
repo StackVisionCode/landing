@@ -95,7 +95,7 @@
                       [disabled]="isSubmitting()"
                       class="min-w-0 flex-1 px-2 py-2 text-sm focus:outline-none disabled:opacity-50"
                     />
-                    <span class="flex items-center bg-sand px-3 text-sm text-muted">{{ t().compSubdomainSuffix }}</span>
+                    <span class="flex items-center bg-sand px-3 text-sm text-muted">{{ subdomainSuffix }}</span>
                   </div>
                   <p aria-live="polite" class="mt-1.5 text-xs" [class.text-muted]="subdomainStatus() === 'idle' || subdomainStatus() === 'checking'"
                      [class.text-star]="subdomainStatus() === 'available'"

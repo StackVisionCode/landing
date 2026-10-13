@@ -16,7 +16,7 @@ import {
 import { isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { SITE_CONFIG } from '@core/config/site-config';
+import { SITE_CONFIG, PLATFORM_BRAND } from '@core/config/site-config';
 import { TranslationStore } from '@core/i18n/translation.store';
 import { apiErrorCode } from '@core/http/api-error';
 import { ActionCooldown } from '@core/http/action-cooldown';
@@ -42,6 +42,9 @@ type Step = 'credentials' | 'office' | 'takeover';
   styleUrl: './account-sign-in.component.css',
 })
 export class AccountSignInComponent implements AfterViewInit, OnDestroy {
+  /** Marca de la plataforma (site-config), nunca escrita en el template. */
+  protected readonly brand = PLATFORM_BRAND;
+
   private readonly i18n = inject(TranslationStore);
   private readonly central = inject(CentralLoginService);
   private readonly session = inject(AccountSessionStore);

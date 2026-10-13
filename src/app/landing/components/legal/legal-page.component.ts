@@ -4,6 +4,7 @@ import { DatePipe } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { TranslationStore } from '@core/i18n/translation.store';
 import { OnboardingService } from '@core/onboarding/onboarding.service';
+import { PLATFORM_BRAND, PLATFORM_LEGAL_NAME } from '@core/config/site-config';
 
 type LegalKind = 'TermsOfService' | 'PrivacyPolicy';
 type LegalStep = 'loading' | 'ready' | 'error';
@@ -28,6 +29,10 @@ const ACTIVE_HIT_CLASS = 'legal-search-hit--active';
   templateUrl: './legal-page.component.html',
 })
 export class LegalPageComponent implements OnInit, OnDestroy {
+  /** Marca y razón social de la plataforma (site-config), nunca escritas en el template. */
+  protected readonly brand = PLATFORM_BRAND;
+  protected readonly legalName = PLATFORM_LEGAL_NAME;
+
   private readonly route = inject(ActivatedRoute);
   private readonly onboarding = inject(OnboardingService);
   private readonly sanitizer = inject(DomSanitizer);

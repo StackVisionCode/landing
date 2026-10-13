@@ -1,6 +1,7 @@
 import { Component, CUSTOM_ELEMENTS_SCHEMA, computed, inject, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslationStore } from '@core/i18n/translation.store';
+import { PLATFORM_BRAND } from '@core/config/site-config';
 
 /**
  * Marco común del alta (/register, /register/payment-received, /register/complete):
@@ -14,7 +15,7 @@ import { TranslationStore } from '@core/i18n/translation.store';
   template: `
     <div class="flex min-h-screen flex-col bg-cream font-sans text-twilight lg:flex-row">
       <aside class="hidden w-[520px] shrink-0 flex-col justify-between bg-twilight p-14 text-white lg:flex xl:w-[560px]">
-        <a routerLink="/" class="font-display text-2xl font-extrabold tracking-tight">Tax<span class="text-azure">offix</span></a>
+        <a routerLink="/" [attr.aria-label]="brand" class="font-display text-2xl font-extrabold tracking-tight">Tax<span class="text-azure">offix</span></a>
 
         <div class="space-y-9">
           <h1 class="font-display text-4xl font-semibold leading-[1.12] tracking-tight">{{ t().regShellHeadline }}</h1>
@@ -43,7 +44,7 @@ import { TranslationStore } from '@core/i18n/translation.store';
 
       <header class="bg-twilight px-6 pb-5 pt-8 text-white lg:hidden">
         <div class="flex items-center justify-between">
-          <a routerLink="/" class="font-display text-xl font-extrabold tracking-tight">Tax<span class="text-azure">offix</span></a>
+          <a routerLink="/" [attr.aria-label]="brand" class="font-display text-xl font-extrabold tracking-tight">Tax<span class="text-azure">offix</span></a>
           <span class="text-xs font-semibold text-lime">{{ counter() }}</span>
         </div>
         <div class="mt-4 flex gap-1.5" aria-hidden="true">
@@ -63,6 +64,8 @@ import { TranslationStore } from '@core/i18n/translation.store';
   `,
 })
 export class RegisterShellComponent {
+  /** Marca de la plataforma (site-config): nombre accesible del logotipo. */
+  protected readonly brand = PLATFORM_BRAND;
   protected readonly t = inject(TranslationStore).t;
 
   readonly step = input.required<number>();

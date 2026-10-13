@@ -1,4 +1,5 @@
 import type { TranslationKeys } from '../translation.model';
+import { PLATFORM_BRAND } from '@core/config/site-config';
 
 export const es: TranslationKeys = {
   navFeatures: 'Características',
@@ -80,7 +81,7 @@ export const es: TranslationKeys = {
 
   faqSidebarTitleHtml: 'Preguntas <span class="highlight">Frecuentes</span>',
   helpCenterButton: 'Centro de Ayuda',
-  faqQuestion1: '¿Es TaxPro Office compatible con otros software de impuestos?',
+  faqQuestion1: `¿Es ${PLATFORM_BRAND} compatible con otros software de impuestos?`,
   faqAnswer1:
     'Sí, nuestra plataforma está diseñada para integrarse perfectamente con los principales proveedores de software fiscal del mercado. Puedes exportar e importar datos fácilmente para mantener tu flujo de trabajo sin interrupciones.',
   faqQuestion3: '¿Mis datos están seguros en la nube?',
@@ -91,7 +92,7 @@ export const es: TranslationKeys = {
     '¡Por supuesto! Ofrecemos sesiones de capacitación en vivo, una extensa biblioteca de videos tutoriales y webinars semanales.',
 
   ctaMainTitleHtml: '¿Listo para transformar tu <span class="highlight">oficina</span>?',
-  ctaMainSubtitle: 'Únete a miles de profesionales que ya están escalando sus negocios con TaxPro Office.',
+  ctaMainSubtitle: `Únete a miles de profesionales que ya están escalando sus negocios con ${PLATFORM_BRAND}.`,
   startNowButton: 'Comenzar Ahora',
   scheduleDemoButton: 'Programar Demo',
 
@@ -187,7 +188,7 @@ export const es: TranslationKeys = {
   payReceivedRetryPayment: 'Reintentar pago',
   payReceivedRetryError: 'No pudimos reiniciar el pago. Inténtalo una vez más.',
   payReceivedWelcomeEyebrow: '¡Bienvenido!',
-  payReceivedWelcomeHeadline: 'Gracias por unirte a TaxPro Office',
+  payReceivedWelcomeHeadline: `Gracias por unirte a ${PLATFORM_BRAND}`,
   regHaveCodeToggle: '¿Tienes un código de referido, promoción o regalo?',
   regReferralCodeLabel: 'Código de referido (opcional)',
   regPromoCodeLabel: 'Código de promoción (opcional)',
@@ -218,7 +219,6 @@ export const es: TranslationKeys = {
   compOfficeNameLabel: 'Nombre de tu oficina',
   compOfficeNamePlaceholder: 'Mi Oficina de Impuestos',
   compSubdomainLabel: 'Elige tu subdominio',
-  compSubdomainSuffix: '.taxproffice.com',
   compSubdomainChecking: 'Verificando disponibilidad...',
   compSubdomainAvailable: '¡Disponible!',
   compSubdomainTaken: 'Ese subdominio ya está en uso',

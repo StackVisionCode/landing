@@ -4,7 +4,7 @@ import { RegisterShellComponent } from '../register-shell/register-shell.compone
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslationStore } from '@core/i18n/translation.store';
 import { OnboardingService } from '@core/onboarding/onboarding.service';
-import { SITE_CONFIG } from '@core/config/site-config';
+import { SITE_CONFIG, PLATFORM_BRAND, PLATFORM_LEGAL_NAME } from '@core/config/site-config';
 import { apiErrorCode } from '@core/http/api-error';
 import { suggestSubdomainFromOfficeName } from '@core/onboarding/subdomain-suggestion.util';
 import { ActionCooldown } from '@core/http/action-cooldown';
@@ -53,6 +53,10 @@ const TERMINAL_FAILURE_STATUSES: OnboardingStatusValue[] = [
   templateUrl: './register-complete.component.html',
 })
 export class RegisterCompleteComponent implements OnInit, OnDestroy {
+  /** Marca y razón social de la plataforma (site-config), nunca escritas en el template. */
+  protected readonly brand = PLATFORM_BRAND;
+  protected readonly legalName = PLATFORM_LEGAL_NAME;
+
   private readonly route = inject(ActivatedRoute);
   private readonly onboarding = inject(OnboardingService);
   protected readonly translation = inject(TranslationStore);
@@ -61,10 +65,11 @@ export class RegisterCompleteComponent implements OnInit, OnDestroy {
   protected readonly step = signal<CompleteStep>('loading');
   /** Pie del panel: dónde vivirá la oficina. */
   protected readonly panelFootnote = computed(() =>
-    `${this.t().compPanelFootnotePrefix} ${this.subdomain()}${this.t().compSubdomainSuffix}`,
+    `${this.t().compPanelFootnotePrefix} ${this.subdomain()}${this.subdomainSuffix}`,
   );
   protected readonly invalidReason = signal<InvalidReason>('generic');
   protected readonly appUrl = SITE_CONFIG.appUrl;
+  protected readonly subdomainSuffix = SITE_CONFIG.subdomainSuffix;
   protected readonly firstName = signal('');
   protected readonly planName = signal<string | null>(null);
   protected readonly maskedEmail = signal('');

@@ -7,6 +7,7 @@ import type { OnboardingStatusValue, ReconcileOnboardingPaymentResponse } from '
 import { ActionCooldown } from '@core/http/action-cooldown';
 import { nextPollDelayMs } from '@core/http/polling';
 import { formatClock, readThrottle, type ThrottleKind } from '@core/http/throttling';
+import { PLATFORM_BRAND, PLATFORM_LEGAL_NAME } from '@core/config/site-config';
 
 interface ConfettiPiece {
   left: number;
@@ -34,6 +35,10 @@ const FAILURE_STATUSES: OnboardingStatusValue[] = ['PaymentFailed', 'Cancelled',
   styleUrl: './register-payment-received.component.css',
 })
 export class RegisterPaymentReceivedComponent implements OnInit, OnDestroy {
+  /** Marca y razón social de la plataforma (site-config), nunca escritas en el template. */
+  protected readonly brand = PLATFORM_BRAND;
+  protected readonly legalName = PLATFORM_LEGAL_NAME;
+
   private readonly onboarding = inject(OnboardingService);
   private readonly route = inject(ActivatedRoute);
   protected readonly t = inject(TranslationStore).t;

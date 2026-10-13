@@ -225,7 +225,6 @@ export interface TranslationKeys {
   compOfficeNameLabel: string;
   compOfficeNamePlaceholder: string;
   compSubdomainLabel: string;
-  compSubdomainSuffix: string;
   compSubdomainChecking: string;
   compSubdomainAvailable: string;
   compSubdomainTaken: string;
