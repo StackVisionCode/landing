@@ -1,0 +1,24 @@
+<section class="bg-cream px-4 py-14 sm:px-8 sm:py-20 lg:px-16 lg:py-[88px]">
+  <div class="mx-auto grid max-w-[1280px] items-center gap-6 lg:grid-cols-[640px_1fr] lg:gap-12">
+  <div class="relative h-[300px] overflow-hidden rounded-[20px] bg-sand sm:h-[420px]">
+    <img src="img/team.jpg" alt="Profesional de impuestos trabajando en su portátil" class="h-full w-full object-cover object-top" loading="lazy" />
+    <span class="absolute bottom-5 left-5 inline-flex items-center gap-2.5 rounded-full bg-white px-4 py-2.5 text-[13px] font-semibold text-twilight shadow-[0_8px_20px_rgba(8,54,69,0.2)]">
+      <span class="h-2.5 w-2.5 rounded-full border border-twilight bg-lime"></span>
+      {{ t().team.pill }}
+    </span>
+  </div>
+
+  <div class="flex flex-col items-start gap-5 px-3 pb-6 sm:px-6 lg:pb-0 lg:pr-12">
+    <span class="rounded-full border border-line bg-white px-3.5 py-1.5 text-xs font-medium text-muted">{{ t().team.tag }}</span>
+    <h2 class="font-display text-3xl font-semibold leading-tight tracking-[-0.03em] text-twilight sm:text-4xl">{{ t().team.title }}</h2>
+    <p class="text-[15px] leading-relaxed text-muted">{{ t().team.desc }}</p>
+    <button
+      type="button"
+      (click)="booking.open('cta')"
+      class="rounded-full bg-twilight px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-star"
+    >
+      {{ t().scheduleDemo }}
+    </button>
+  </div>
+  </div>
+</section>

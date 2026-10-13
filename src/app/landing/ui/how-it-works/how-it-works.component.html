@@ -1,24 +1,45 @@
-<section class="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
-  <div class="mx-auto max-w-2xl text-center">
-    <span class="rounded-full border border-brand-200 px-3 py-1 text-xs font-semibold text-brand-800">{{ t().howItWorksBadge }}</span>
-    <h2 class="mt-4 text-3xl font-bold text-gray-900 sm:text-4xl" [innerHTML]="t().howItWorksTitleHtml"></h2>
+<section id="how" class="bg-white px-4 py-14 sm:px-8 sm:py-20 lg:px-16 lg:py-[88px]">
+  <div class="mx-auto flex max-w-3xl flex-col items-center text-center">
+    <h2 class="font-display text-3xl font-semibold leading-tight tracking-[-0.03em] text-twilight sm:text-5xl">
+      {{ t().steps.titleA }}
+      <span class="text-star">{{ t().steps.titleB }}</span>
+    </h2>
+    <p class="mt-4 max-w-xl text-[15px] text-muted">{{ t().steps.subtitle }}</p>
   </div>
 
-  <div class="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-3">
-    <div class="rounded-[28px] bg-white p-6">
-      <span class="flex h-10 w-10 items-center justify-center rounded-full bg-gray-900 text-sm font-bold text-white">1</span>
-      <h3 class="mt-4 text-xl font-bold text-gray-900">{{ t().step1Title }}</h3>
-      <p class="mt-2 text-sm text-gray-500">{{ t().step1Description }}</p>
-    </div>
-    <div class="rounded-[28px] bg-white p-6">
-      <span class="flex h-10 w-10 items-center justify-center rounded-full bg-gray-900 text-sm font-bold text-white">2</span>
-      <h3 class="mt-4 text-xl font-bold text-gray-900">{{ t().step2Title }}</h3>
-      <p class="mt-2 text-sm text-gray-500">{{ t().step2Description }}</p>
-    </div>
-    <div class="rounded-[28px] bg-white p-6">
-      <span class="flex h-10 w-10 items-center justify-center rounded-full bg-gray-900 text-sm font-bold text-white">3</span>
-      <h3 class="mt-4 text-xl font-bold text-gray-900">{{ t().step3Title }}</h3>
-      <p class="mt-2 text-sm text-gray-500">{{ t().step3Description }}</p>
-    </div>
+  <div class="mx-auto mt-10 flex max-w-[880px] flex-col gap-3.5 sm:mt-12">
+    @for (step of t().steps.items; track step.title; let i = $index) {
+      <div class="grid overflow-hidden rounded-[20px] border border-line bg-cream sm:grid-cols-2">
+        <div class="flex flex-col justify-center gap-2 p-6 sm:p-8">
+          <span class="font-display text-4xl font-semibold text-star">0{{ i + 1 }}</span>
+          <h3 class="font-display text-lg font-bold text-twilight">{{ step.title }}</h3>
+          <p class="text-sm leading-relaxed text-muted">{{ step.desc }}</p>
+        </div>
+
+        <div class="m-2 flex min-h-[150px] items-center justify-center rounded-2xl bg-sand p-6" aria-hidden="true">
+          @if (i === 0) {
+            <a routerLink="/register" class="inline-flex items-center gap-2 rounded-full bg-star px-5 py-2.5 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(5,123,193,0.35)]">
+              <ion-icon name="business-outline"></ion-icon>
+              {{ t().steps.createOffice }}
+            </a>
+          } @else if (i === 1) {
+            <div class="flex w-full max-w-[240px] flex-col gap-2">
+              @for (row of t().steps.mockRows; track row) {
+                <div class="flex items-center justify-between rounded-lg bg-white px-3 py-2 text-xs font-medium text-twilight">
+                  {{ row }}
+                  <ion-icon name="checkmark-outline" class="text-star"></ion-icon>
+                </div>
+              }
+            </div>
+          } @else {
+            <div class="flex h-24 items-end gap-3">
+              @for (bar of bars; track $index) {
+                <span class="w-9 rounded-t-md" [class.bg-azure]="$index < 2" [class.bg-star]="$index >= 2" [style.height.%]="bar"></span>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    }
   </div>
 </section>

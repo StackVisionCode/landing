@@ -1,241 +1,334 @@
-<div class="flex min-h-screen bg-gray-50">
-  <!-- Panel de marca — misma convención que el registro: en móvil el foco entero es el formulario. -->
-  <aside
-    class="relative hidden w-full max-w-md shrink-0 flex-col justify-between overflow-hidden brand-panel-gradient p-10 text-white lg:flex"
-  >
-    <div class="fluid-blob fluid-blob-1 -left-16 -top-16 h-72 w-72 bg-brand-300/30"></div>
-    <div class="fluid-blob fluid-blob-2 -bottom-24 -right-10 h-80 w-80 bg-brand-800/40"></div>
-    <div class="fluid-blob fluid-blob-3 right-10 top-1/3 h-56 w-56 bg-brand-300/20"></div>
+<div class="relative min-h-screen overflow-hidden bg-cream font-sans text-twilight">
+  <!-- Fondo: resplandor + barra de luz detrás de la tarjeta (solo escritorio). -->
+  <div class="pointer-events-none absolute left-1/2 top-1/2 hidden h-[780px] w-[920px] -translate-x-1/2 -translate-y-1/2 bg-[radial-gradient(ellipse_at_center,rgba(77,216,255,0.3),transparent_65%)] lg:block"></div>
+  <div
+    class="signin-beam pointer-events-none absolute inset-y-0 left-1/2 hidden w-2.5 -translate-x-1/2 rounded-full bg-gradient-to-b from-azure to-star shadow-[0_0_34px_rgba(5,123,193,0.6)] lg:block"
+  ></div>
 
-    <a routerLink="/" class="relative z-10 flex items-center gap-1.5">
-      <img src="brand/taxproffice-reversed.svg" alt="TaxPro Office" class="h-8 w-auto" />
+  <header class="absolute inset-x-0 top-0 z-20 flex items-center justify-between px-4 py-5 sm:px-8 lg:px-12">
+    <a routerLink="/" class="flex items-center gap-2" aria-label="Taxoffix">
+      <img src="img/logo-mark.png" alt="" class="h-7 w-auto" />
+      <span class="font-display text-2xl font-extrabold tracking-tight text-twilight">Tax<span class="text-star">offix</span></span>
     </a>
 
-    <div class="relative z-10">
-      <span class="text-xs font-semibold uppercase tracking-[0.2em] text-brand-200">{{ t().accEyebrow }}</span>
-      <h1 class="mt-4 text-4xl font-bold leading-tight">{{ t().accSignInPanelHeadline }}</h1>
-      <ul class="mt-6 space-y-2.5">
-        @for (point of panelPoints(); track point) {
-          <li class="flex items-center gap-2 text-sm text-brand-100">
-            <ion-icon name="checkmark-circle" class="shrink-0 text-lg text-brand-300"></ion-icon>
-            {{ point }}
-          </li>
-        }
-      </ul>
+    <div class="relative flex w-[84px] items-center rounded-full border border-line bg-white p-0.5 text-xs font-semibold" role="group" aria-label="Idioma / Language">
+      <span
+        class="pointer-events-none absolute inset-y-0.5 left-0.5 w-[calc(50%-2px)] rounded-full bg-cream transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none"
+        [class.translate-x-full]="lang() === 'en'"
+      ></span>
+      <button
+        type="button"
+        (click)="lang() !== 'es' && toggleLang()"
+        [attr.aria-pressed]="lang() === 'es'"
+        class="relative z-10 flex-1 rounded-full py-1 text-center transition-colors duration-300"
+        [class.text-twilight]="lang() === 'es'"
+        [class.text-muted]="lang() !== 'es'"
+      >
+        ES
+      </button>
+      <button
+        type="button"
+        (click)="lang() !== 'en' && toggleLang()"
+        [attr.aria-pressed]="lang() === 'en'"
+        class="relative z-10 flex-1 rounded-full py-1 text-center transition-colors duration-300"
+        [class.text-twilight]="lang() === 'en'"
+        [class.text-muted]="lang() !== 'en'"
+      >
+        EN
+      </button>
+    </div>
+  </header>
+
+  <div #stage class="relative z-10 mx-auto grid min-h-screen max-w-[1440px] items-center gap-6 px-4 pb-10 pt-24 sm:px-8 lg:grid-cols-[1fr_460px_1fr] lg:gap-0 lg:px-12">
+    <!-- Hilos: cada pendiente lanza un hilo que pasa por detrás de la tarjeta y atrapa a su cliente resuelto. -->
+    <svg class="pointer-events-none absolute inset-0 z-[15] hidden h-full w-full overflow-visible lg:block" aria-hidden="true">
+      <defs>
+        <linearGradient id="thread-grad" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="1440" y2="0">
+          <stop offset="0" stop-color="#4DD8FF" />
+          <stop offset="1" stop-color="#057BC1" />
+        </linearGradient>
+      </defs>
+      @for (th of threads(); track th.i) {
+        <path class="signin-thread" pathLength="1" [attr.d]="th.d" [style.--t]="th.delay + 's'" />
+      }
+      @for (th of threads(); track th.i) {
+        <circle class="signin-head" r="7" cx="0" cy="0" [style.offset-path]="'path(\'' + th.d + '\')'" [style.--t]="th.delay + 's'" />
+      }
+    </svg>
+
+    <!-- Historia, lado "antes": cada pendiente fluye hacia el formulario (escritorio). -->
+    <div class="relative z-10 hidden self-stretch py-16 lg:flex lg:flex-col lg:justify-around" aria-hidden="true">
+      @for (i of rows; track i) {
+        <div #rowEl class="signin-emerge-l flex items-center gap-3" [style.margin-left.px]="i % 2 === 0 ? 24 : 96" [style.--d]="0.5 + i * 0.14 + 's'">
+          <img [src]="before[i]" alt="" class="signin-bob h-16 w-16 shrink-0 rounded-full border-4 border-white object-cover shadow-[0_8px_20px_rgba(8,54,69,0.25)]" [style.--f]="i * 0.5 + 's'" />
+          <span #tagEl class="signin-tag rounded-[10px] bg-white px-3.5 py-2 text-[13px] font-medium text-twilight shadow-[0_6px_14px_rgba(8,54,69,0.15)]" [style.--f]="i * 0.7 + 's'">
+            {{ story().pending[i].name }} · {{ story().pending[i].text }}
+          </span>
+        </div>
+      }
     </div>
 
-    <p class="relative z-10 text-xs text-brand-200">{{ t().accSignInPanelFootnote }}</p>
-  </aside>
-
-  <div class="relative flex flex-1 flex-col">
-    <header class="border-b border-gray-100 bg-white/90 backdrop-blur-sm lg:hidden">
-      <div class="mx-auto flex h-16 max-w-7xl items-center px-4 sm:px-6">
-        <a routerLink="/" class="flex items-center gap-1.5">
-          <img src="brand/taxproffice-logo.svg" alt="TaxPro Office" class="h-7 w-auto" />
-        </a>
+    <!-- Tarjeta de acceso -->
+    <main class="signin-card relative z-20 mx-auto w-full max-w-[460px] rounded-[28px] bg-white p-7 shadow-[0_24px_60px_rgba(8,54,69,0.2)] sm:p-10">
+      <!-- Historia compacta (móvil/tablet) -->
+      <div class="mb-6 flex items-center gap-3 lg:hidden" aria-hidden="true">
+        <img [src]="before[0]" alt="" class="h-11 w-11 rounded-full border-[3px] border-white object-cover shadow-md" />
+        <span class="h-0.5 flex-1 bg-star/30"></span>
+        <span class="h-11 w-2.5 rounded-full bg-gradient-to-b from-azure to-star"></span>
+        <span class="h-0.5 flex-1 bg-star/30"></span>
+        <span class="flex h-11 w-11 items-center justify-center rounded-full bg-lime text-twilight">
+          <ion-icon name="checkmark-outline" class="text-xl"></ion-icon>
+        </span>
       </div>
-    </header>
 
-    <main class="flex flex-1 items-center justify-center p-4 sm:p-6 lg:p-10">
-      <div class="w-full max-w-md">
-        @if (step() === 'credentials') {
-          <h2 class="border-b border-gray-100 pb-4 text-lg font-bold uppercase tracking-wide text-gray-800">
+      @if (step() === 'credentials') {
+        <div class="signin-step">
+        <div class="flex flex-col items-center text-center">
+          <span class="flex h-14 w-14 items-center justify-center rounded-[18px] bg-lime text-twilight">
+            <ion-icon name="lock-closed-outline" class="text-2xl"></ion-icon>
+          </span>
+          <h1 class="mt-5 font-display text-[28px] font-semibold leading-[1.12] tracking-[-0.03em] text-twilight">
             {{ t().accSignInTitle }}
-          </h2>
-          <p class="mt-3 text-sm text-gray-600">{{ t().accSignInBody }}</p>
+          </h1>
+          <p class="mt-2.5 text-sm leading-relaxed text-muted">{{ t().accSignInBody }}</p>
+        </div>
 
-          <form (submit)="$event.preventDefault(); submitCredentials()" class="mt-6 space-y-3">
-            @if (error(); as message) {
-              <p role="alert" class="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-600">{{ message }}</p>
-            }
+        <form (submit)="$event.preventDefault(); submitCredentials()" class="mt-7 space-y-3.5">
+          @if (error(); as message) {
+            <p role="alert" class="rounded-2xl bg-red-50 px-4 py-2.5 text-sm text-red-600">{{ message }}</p>
+          }
 
-            <div>
-              <label for="acc-email" class="mb-1 block text-xs font-medium text-gray-700">{{ t().authEmailLabel }}</label>
-              <div class="relative">
-                <ion-icon
-                  name="mail-outline"
-                  class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-base text-gray-400"
-                ></ion-icon>
-                <input
-                  id="acc-email"
-                  name="email"
-                  type="email"
-                  autocomplete="username"
-                  [placeholder]="t().authEmailPlaceholder"
-                  [ngModel]="email()"
-                  (ngModelChange)="email.set($event)"
-                  [disabled]="busy()"
-                  class="w-full rounded-lg border border-gray-200 py-2 pl-9 pr-3 text-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/30 disabled:opacity-50"
-                />
-              </div>
+          <div>
+            <label for="acc-email" class="sr-only">{{ t().authEmailLabel }}</label>
+            <div class="relative">
+              <ion-icon
+                name="mail-outline"
+                class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-lg text-muted"
+              ></ion-icon>
+              <input
+                id="acc-email"
+                name="email"
+                type="email"
+                autocomplete="username"
+                [placeholder]="t().authEmailPlaceholder"
+                [ngModel]="email()"
+                (ngModelChange)="email.set($event)"
+                [disabled]="busy()"
+                class="h-[52px] w-full rounded-full border border-line bg-cream pl-11 pr-4 text-sm text-twilight placeholder:text-muted focus:border-star focus:bg-white focus:outline-none focus:ring-2 focus:ring-star/25 disabled:opacity-50"
+              />
             </div>
+          </div>
 
-            <div>
-              <label for="acc-password" class="mb-1 block text-xs font-medium text-gray-700">{{ t().accSignInPassword }}</label>
-              <div class="relative">
-                <ion-icon
-                  name="lock-closed-outline"
-                  class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-base text-gray-400"
-                ></ion-icon>
-                <input
-                  id="acc-password"
-                  name="password"
-                  [type]="passwordVisible() ? 'text' : 'password'"
-                  autocomplete="current-password"
-                  [placeholder]="t().accSignInPasswordPlaceholder"
-                  [ngModel]="password()"
-                  (ngModelChange)="password.set($event)"
-                  [disabled]="busy()"
-                  class="w-full rounded-lg border border-gray-200 py-2 pl-9 pr-10 text-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/30 disabled:opacity-50"
-                />
+          <div>
+            <label for="acc-password" class="sr-only">{{ t().accSignInPassword }}</label>
+            <div class="relative">
+              <ion-icon
+                name="lock-closed-outline"
+                class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-lg text-muted"
+              ></ion-icon>
+              <input
+                id="acc-password"
+                name="password"
+                [type]="passwordVisible() ? 'text' : 'password'"
+                autocomplete="current-password"
+                [placeholder]="t().accSignInPasswordPlaceholder"
+                [ngModel]="password()"
+                (ngModelChange)="password.set($event)"
+                [disabled]="busy()"
+                class="h-[52px] w-full rounded-full border border-line bg-cream pl-11 pr-12 text-sm text-twilight placeholder:text-muted focus:border-star focus:bg-white focus:outline-none focus:ring-2 focus:ring-star/25 disabled:opacity-50"
+              />
+              <button
+                type="button"
+                (click)="togglePassword()"
+                [attr.aria-label]="passwordVisible() ? t().accSignInHidePassword : t().accSignInShowPassword"
+                class="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full text-muted transition-colors hover:bg-white hover:text-twilight"
+              >
+                <ion-icon [name]="passwordVisible() ? 'eye-off-outline' : 'eye-outline'" class="text-lg"></ion-icon>
+              </button>
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            [disabled]="!canSubmitCredentials()"
+            class="flex h-[54px] w-full items-center justify-center gap-2 rounded-full bg-twilight text-[15px] font-semibold text-white transition-colors hover:bg-star disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            @if (waiting()) {
+              {{ t().accSignInWait }} {{ waitLabel() }}
+            } @else {
+              {{ busy() ? t().accSignInWorking : t().accSignInSubmit }}
+              @if (!busy()) {
+                <ion-icon name="arrow-forward-outline" class="text-lg text-lime"></ion-icon>
+              }
+            }
+          </button>
+        </form>
+
+        <p class="mt-6 text-center text-[13px] text-muted">
+          {{ t().accSignInWorkspaceHint }}
+          <a [href]="workspaceUrl" class="font-semibold text-star hover:underline">{{ t().accSignInCta }}</a>
+        </p>
+        </div>
+      } @else if (step() === 'office') {
+        <div class="signin-step">
+        <button
+          type="button"
+          (click)="backToCredentials()"
+          class="mb-4 flex items-center gap-1.5 text-[13px] font-medium text-muted transition-colors hover:text-twilight"
+        >
+          <ion-icon name="arrow-back-outline"></ion-icon>
+          {{ t().accSignInBack }}
+        </button>
+
+        <h1 class="font-display text-[28px] font-semibold leading-[1.12] tracking-[-0.03em] text-twilight">
+          {{ t().accSignInOfficeTitle }}
+        </h1>
+        <p class="mt-2.5 text-sm leading-relaxed text-muted">{{ t().accSignInOfficeBody }}</p>
+
+        <form (submit)="$event.preventDefault(); submitOffice()" class="mt-6 space-y-3.5">
+          @if (error(); as message) {
+            <p role="alert" class="rounded-2xl bg-red-50 px-4 py-2.5 text-sm text-red-600">{{ message }}</p>
+          }
+
+          <ul class="space-y-2.5">
+            @for (office of offices(); track office.tenantId) {
+              <li>
                 <button
                   type="button"
-                  (click)="togglePassword()"
-                  [attr.aria-label]="passwordVisible() ? t().accSignInHidePassword : t().accSignInShowPassword"
-                  class="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+                  (click)="chooseOffice(office.tenantId)"
+                  [class]="
+                    office.tenantId === chosenTenantId()
+                      ? 'flex w-full items-center gap-3 rounded-2xl border-2 border-star bg-cream px-3.5 py-3 text-left'
+                      : 'flex w-full items-center gap-3 rounded-2xl border border-line bg-white px-3.5 py-3 text-left transition-colors hover:border-star/40 hover:bg-cream'
+                  "
                 >
-                  <ion-icon [name]="passwordVisible() ? 'eye-off-outline' : 'eye-outline'" class="text-base"></ion-icon>
+                  <span
+                    class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
+                    [class]="office.tenantId === chosenTenantId() ? 'bg-star text-white' : 'bg-cream text-star'"
+                  >
+                    <ion-icon name="business-outline" class="text-lg"></ion-icon>
+                  </span>
+                  <span class="min-w-0 flex-1">
+                    <span class="block truncate text-sm font-semibold text-twilight">{{ office.tenantName }}</span>
+                    <span class="block truncate text-xs text-muted">{{ office.subdomain }}</span>
+                  </span>
+                  @if (office.tenantId === chosenTenantId()) {
+                    <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-lime text-twilight">
+                      <ion-icon name="checkmark-outline" class="text-sm"></ion-icon>
+                    </span>
+                  }
                 </button>
+              </li>
+            }
+          </ul>
+
+          @if (needsCode()) {
+            <div>
+              <label for="acc-code" class="mb-1.5 block text-[13px] font-semibold text-twilight">{{ t().accSignInCodeLabel }}</label>
+              <div class="relative">
+                <ion-icon
+                  name="shield-checkmark-outline"
+                  class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-lg text-muted"
+                ></ion-icon>
+                <input
+                  id="acc-code"
+                  name="code"
+                  type="text"
+                  inputmode="numeric"
+                  autocomplete="one-time-code"
+                  [ngModel]="mfaCode()"
+                  (ngModelChange)="mfaCode.set($event)"
+                  [disabled]="busy()"
+                  class="h-[52px] w-full rounded-full border border-line bg-cream pl-11 pr-4 text-sm tracking-[0.25em] text-twilight focus:border-star focus:bg-white focus:outline-none focus:ring-2 focus:ring-star/25 disabled:opacity-50"
+                />
               </div>
+              <p class="mt-1.5 text-xs text-muted">{{ t().accSignInCodeHint }}</p>
             </div>
 
-            <button
-              type="submit"
-              [disabled]="!canSubmitCredentials()"
-              class="w-full rounded-lg btn-brand-gradient py-2.5 text-sm font-bold uppercase tracking-wide text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              @if (waiting()) {
-                {{ t().accSignInWait }} {{ waitLabel() }}
-              } @else {
-                {{ busy() ? t().accSignInWorking : t().accSignInSubmit }}
-              }
-            </button>
-          </form>
-
-          <p class="mt-6 text-center text-xs text-gray-500">
-            {{ t().accSignInWorkspaceHint }}
-            <a [href]="workspaceUrl" class="font-semibold text-brand-700 hover:underline">{{ t().accSignInCta }}</a>
-          </p>
-        } @else if (step() === 'office') {
-          <button
-            type="button"
-            (click)="backToCredentials()"
-            class="mb-4 flex items-center gap-1 text-sm font-medium text-gray-500 transition-colors hover:text-gray-700"
-          >
-            <ion-icon name="arrow-back-outline"></ion-icon>
-            {{ t().accSignInBack }}
-          </button>
-
-          <h2 class="border-b border-gray-100 pb-4 text-lg font-bold uppercase tracking-wide text-gray-800">
-            {{ t().accSignInOfficeTitle }}
-          </h2>
-          <p class="mt-3 text-sm text-gray-600">{{ t().accSignInOfficeBody }}</p>
-
-          <form (submit)="$event.preventDefault(); submitOffice()" class="mt-6 space-y-3">
-            @if (error(); as message) {
-              <p role="alert" class="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-600">{{ message }}</p>
-            }
-
-            <ul class="space-y-2">
-              @for (office of offices(); track office.tenantId) {
-                <li>
-                  <button
-                    type="button"
-                    (click)="chooseOffice(office.tenantId)"
-                    [class]="
-                      office.tenantId === chosenTenantId()
-                        ? 'flex w-full items-center gap-3 rounded-lg border-2 border-brand-600 bg-brand-50 px-3 py-2.5 text-left'
-                        : 'flex w-full items-center gap-3 rounded-lg border border-gray-200 px-3 py-2.5 text-left transition-colors hover:border-gray-300 hover:bg-gray-50'
-                    "
-                  >
-                    <ion-icon name="business-outline" class="shrink-0 text-lg text-brand-700"></ion-icon>
-                    <span class="min-w-0 flex-1">
-                      <span class="block truncate text-sm font-semibold text-gray-900">{{ office.tenantName }}</span>
-                      <span class="block truncate text-xs text-gray-500">{{ office.subdomain }}</span>
-                    </span>
-                    @if (office.tenantId === chosenTenantId()) {
-                      <ion-icon name="checkmark-circle" class="shrink-0 text-lg text-brand-600"></ion-icon>
-                    }
-                  </button>
-                </li>
-              }
-            </ul>
-
-            @if (needsCode()) {
-              <div>
-                <label for="acc-code" class="mb-1 block text-xs font-medium text-gray-700">{{ t().accSignInCodeLabel }}</label>
-                <div class="relative">
-                  <ion-icon
-                    name="shield-checkmark-outline"
-                    class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-base text-gray-400"
-                  ></ion-icon>
-                  <input
-                    id="acc-code"
-                    name="code"
-                    type="text"
-                    inputmode="numeric"
-                    autocomplete="one-time-code"
-                    [ngModel]="mfaCode()"
-                    (ngModelChange)="mfaCode.set($event)"
-                    [disabled]="busy()"
-                    class="w-full rounded-lg border border-gray-200 py-2 pl-9 pr-3 text-sm tracking-[0.25em] focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/30 disabled:opacity-50"
-                  />
-                </div>
-                <p class="mt-1.5 text-xs text-gray-500">{{ t().accSignInCodeHint }}</p>
-              </div>
-
-              <label class="flex cursor-pointer items-start gap-2.5 text-xs text-gray-600">
-                <input
-                  type="checkbox"
-                  name="rememberDevice"
-                  [ngModel]="rememberDevice()"
-                  (ngModelChange)="rememberDevice.set($event)"
-                  [disabled]="busy()"
-                  class="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 text-brand-600 focus:ring-brand-600/30 disabled:opacity-50"
-                />
-                <span>{{ t().accSignInRememberDevice }}</span>
-              </label>
-            }
-
-            <button
-              type="submit"
-              [disabled]="!canSubmitOffice()"
-              class="w-full rounded-lg btn-brand-gradient py-2.5 text-sm font-bold uppercase tracking-wide text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              @if (waiting()) {
-                {{ t().accSignInWait }} {{ waitLabel() }}
-              } @else {
-                {{ busy() ? t().accSignInWorking : t().accSignInContinue }}
-              }
-            </button>
-          </form>
-        } @else {
-          <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-amber-50">
-            <ion-icon name="log-out-outline" class="text-2xl text-amber-600"></ion-icon>
-          </div>
-          <h2 class="mt-6 text-center text-xl font-bold text-gray-900">{{ t().accTakeoverTitle }}</h2>
-          <p class="mt-2 text-center text-sm text-gray-600">{{ t().accTakeoverBody }}</p>
-
-          @if (error(); as message) {
-            <p role="alert" class="mt-4 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-600">{{ message }}</p>
+            <label class="flex cursor-pointer items-start gap-2.5 text-xs text-muted">
+              <input
+                type="checkbox"
+                name="rememberDevice"
+                [ngModel]="rememberDevice()"
+                (ngModelChange)="rememberDevice.set($event)"
+                [disabled]="busy()"
+                class="mt-0.5 h-4 w-4 shrink-0 rounded border-line text-star focus:ring-star/30 disabled:opacity-50"
+              />
+              <span>{{ t().accSignInRememberDevice }}</span>
+            </label>
           }
 
           <button
-            type="button"
-            (click)="confirmTakeover()"
-            [disabled]="busy()"
-            class="mt-6 w-full rounded-lg btn-brand-gradient py-2.5 text-sm font-bold uppercase tracking-wide text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+            type="submit"
+            [disabled]="!canSubmitOffice()"
+            class="flex h-[54px] w-full items-center justify-center gap-2 rounded-full bg-twilight text-[15px] font-semibold text-white transition-colors hover:bg-star disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {{ busy() ? t().accSignInWorking : t().accTakeoverConfirm }}
+            @if (waiting()) {
+              {{ t().accSignInWait }} {{ waitLabel() }}
+            } @else {
+              {{ busy() ? t().accSignInWorking : t().accSignInContinue }}
+              @if (!busy()) {
+                <ion-icon name="arrow-forward-outline" class="text-lg text-lime"></ion-icon>
+              }
+            }
           </button>
-          <a
-            [href]="workspaceUrl"
-            class="mt-3 block w-full rounded-lg border border-gray-200 py-2.5 text-center text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
-          >
-            {{ t().accTakeoverUseWorkspace }}
-          </a>
+        </form>
+        </div>
+      } @else {
+        <div class="signin-step">
+        <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-lime text-twilight">
+          <ion-icon name="log-out-outline" class="text-2xl"></ion-icon>
+        </div>
+        <h1 class="mt-5 text-center font-display text-[26px] font-semibold leading-[1.12] tracking-[-0.03em] text-twilight">{{ t().accTakeoverTitle }}</h1>
+        <p class="mt-2.5 text-center text-sm leading-relaxed text-muted">{{ t().accTakeoverBody }}</p>
+
+        @if (error(); as message) {
+          <p role="alert" class="mt-4 rounded-2xl bg-red-50 px-4 py-2.5 text-sm text-red-600">{{ message }}</p>
         }
-      </div>
+
+        <button
+          type="button"
+          (click)="confirmTakeover()"
+          [disabled]="busy()"
+          class="mt-6 flex h-[54px] w-full items-center justify-center gap-2 rounded-full bg-twilight text-[15px] font-semibold text-white transition-colors hover:bg-star disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {{ busy() ? t().accSignInWorking : t().accTakeoverConfirm }}
+          @if (!busy()) {
+            <ion-icon name="arrow-forward-outline" class="text-lg text-lime"></ion-icon>
+          }
+        </button>
+        <a
+          [href]="workspaceUrl"
+          class="mt-3 flex h-[54px] w-full items-center justify-center rounded-full border border-line bg-white text-[15px] font-semibold text-twilight transition-colors hover:border-twilight"
+        >
+          {{ t().accTakeoverUseWorkspace }}
+        </a>
+        </div>
+      }
+
+      <p class="mt-6 flex items-center justify-center gap-2 text-xs font-medium text-muted">
+        <ion-icon name="shield-checkmark-outline" class="text-base text-star"></ion-icon>
+        {{ c().trust.items[0] }}
+      </p>
     </main>
+
+    <!-- Historia, lado "después": los mismos clientes ya resueltos (escritorio). -->
+    <div class="relative z-10 hidden self-stretch py-16 lg:flex lg:flex-col lg:justify-around" aria-hidden="true">
+      @for (k of rows; track k) {
+        @let i = rightOrder[k];
+        <div #pillEl class="signin-emerge-r" [style.margin-left.px]="k % 2 === 0 ? 40 : 8" [style.margin-right.px]="k % 2 === 0 ? 0 : 32" [style.--d]="0.65 + k * 0.14 + 's'">
+        <div class="signin-bob signin-caught flex items-center gap-3 rounded-full bg-white p-2 pr-4 shadow-[0_6px_16px_rgba(8,54,69,0.15)]" [style.--f]="0.4 + k * 0.6 + 's'" [style.--t]="threadDelay(i) + 's'">
+          <img [src]="after[i]" alt="" class="h-11 w-11 shrink-0 rounded-full object-cover" />
+          <div class="min-w-0 flex-1 leading-tight">
+            <p class="truncate text-sm font-semibold text-twilight">{{ story().done[i].name }}</p>
+            <p class="truncate text-xs text-muted">{{ story().done[i].text }}</p>
+          </div>
+          <span class="signin-check relative flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-lime text-twilight" [style.--t]="threadDelay(i) + 's'">
+            <ion-icon name="checkmark-outline" class="text-sm"></ion-icon>
+          </span>
+        </div>
+        </div>
+      }
+    </div>
   </div>
 </div>

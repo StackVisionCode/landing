@@ -1,0 +1,293 @@
+/* Animaciones de la pantalla de acceso.
+   Los elementos de la historia nacen DETRÁS de la tarjeta (z-20) y salen hacia los lados con un
+   resorte suave; después flotan. Se usa `translate`/`scale` (propiedades individuales) para poder
+   encadenar entrada + flotado sin pisar transform. */
+
+/* Tarjeta: sube y se asienta. */
+.signin-card {
+  opacity: 0;
+  translate: 0 28px;
+  scale: 0.96;
+  animation: card-in 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.05s forwards;
+}
+
+/* Barra de luz: crece de arriba abajo y luego respira. */
+.signin-beam {
+  transform-origin: top;
+  scale: 1 0;
+  animation:
+    beam-grow 1.2s cubic-bezier(0.22, 1, 0.36, 1) 0.1s forwards,
+    beam-pulse 3.4s ease-in-out 1.4s infinite;
+}
+
+/* Salen de detrás de la tarjeta: parten tapados bajo ella y se deslizan a su lugar. */
+.signin-emerge-l {
+  opacity: 0;
+  translate: 480px 0;
+  scale: 0.7;
+  animation: emerge 1.1s cubic-bezier(0.22, 1.2, 0.36, 1) forwards;
+  animation-delay: var(--d, 0s);
+}
+
+.signin-emerge-r {
+  opacity: 0;
+  translate: -480px 0;
+  scale: 0.7;
+  animation: emerge 1.1s cubic-bezier(0.22, 1.2, 0.36, 1) forwards;
+  animation-delay: var(--d, 0s);
+}
+
+/* Flotado continuo, cada elemento a su fase. */
+.signin-bob {
+  animation: bob 5.2s ease-in-out infinite;
+  animation-delay: var(--f, 0s);
+}
+
+.signin-tag {
+  display: inline-block;
+  animation: bob 5.6s ease-in-out infinite;
+  animation-delay: var(--f, 0s);
+}
+
+/* Cambio de paso: el contenido nuevo entra con fundido y desenfoque. */
+.signin-step {
+  animation: step-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes card-in {
+  to {
+    opacity: 1;
+    translate: 0 0;
+    scale: 1;
+  }
+}
+
+@keyframes beam-grow {
+  to {
+    scale: 1 1;
+  }
+}
+
+@keyframes beam-pulse {
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.2);
+    box-shadow: 0 0 48px rgba(77, 216, 255, 0.85);
+  }
+}
+
+@keyframes emerge {
+  0% {
+    opacity: 0;
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    translate: 0 0;
+    scale: 1;
+  }
+}
+
+@keyframes bob {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  25% {
+    translate: 3px -5px;
+  }
+  50% {
+    translate: 0 -8px;
+  }
+  75% {
+    translate: -3px -4px;
+  }
+}
+
+@keyframes step-in {
+  from {
+    opacity: 0;
+    translate: 0 14px;
+    filter: blur(5px);
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+    filter: blur(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .signin-card,
+  .signin-emerge-l,
+  .signin-emerge-r,
+  .signin-check {
+    animation: none;
+    opacity: 1;
+    translate: 0 0;
+    scale: 1;
+  }
+
+  .signin-beam {
+    animation: none;
+    scale: 1 1;
+  }
+
+  .signin-bob,
+  .signin-tag,
+  .signin-step {
+    animation: none;
+  }
+
+  .signin-thread,
+  .signin-head {
+    display: none;
+  }
+
+  .signin-caught {
+    animation: none;
+  }
+}
+
+/* ===== Hilos: ciclo de 9 s por cliente (retardo --t).
+   0–18 %   el hilo se lanza y su cabeza viaja hasta la tarjeta del cliente
+   18–24 %  atrapa: la cabeza encaja, la tarjeta destella y aparece el check
+   24–72 %  conectado (hilo lima)
+   72–90 %  el hilo se suelta y el check se guarda, listo para el siguiente ciclo ===== */
+.signin-thread {
+  fill: none;
+  stroke: url(#thread-grad);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  opacity: 0;
+  filter: drop-shadow(0 0 4px rgba(77, 216, 255, 0.8));
+  animation: thread-cycle 9s cubic-bezier(0.45, 0, 0.2, 1) infinite;
+  animation-delay: var(--t, 0s);
+}
+
+.signin-head {
+  fill: #4dd8ff;
+  stroke: #ffffff;
+  stroke-width: 3;
+  transform-box: fill-box;
+  transform-origin: center;
+  offset-rotate: 0deg;
+  offset-distance: 0%;
+  opacity: 0;
+  filter: drop-shadow(0 0 6px rgba(77, 216, 255, 0.9));
+  animation: head-cycle 9s cubic-bezier(0.45, 0, 0.2, 1) infinite;
+  animation-delay: var(--t, 0s);
+}
+
+.signin-caught {
+  animation:
+    bob 5.2s ease-in-out infinite,
+    caught 9s ease-out infinite;
+  animation-delay: var(--f, 0s), var(--t, 0s);
+}
+
+.signin-check {
+  scale: 0;
+  animation: check-cycle 9s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
+  animation-delay: var(--t, 0s);
+}
+
+@keyframes thread-cycle {
+  0% {
+    stroke-dashoffset: 1;
+    opacity: 1;
+    stroke-width: 2.5;
+  }
+  18% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+    stroke-width: 2.5;
+  }
+  24% {
+    stroke-width: 4;
+  }
+  30% {
+    stroke-width: 2.5;
+  }
+  72% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  90% {
+    stroke-dashoffset: -1;
+    opacity: 0;
+  }
+  100% {
+    stroke-dashoffset: -1;
+    opacity: 0;
+  }
+}
+
+@keyframes head-cycle {
+  0% {
+    offset-distance: 0%;
+    opacity: 1;
+    scale: 1;
+  }
+  18% {
+    offset-distance: 100%;
+    opacity: 1;
+    scale: 1;
+  }
+  22% {
+    scale: 1.9;
+    fill: #e3ff00;
+  }
+  30% {
+    scale: 1;
+    fill: #e3ff00;
+    opacity: 1;
+  }
+  38%,
+  100% {
+    offset-distance: 100%;
+    opacity: 0;
+    scale: 0.4;
+    fill: #e3ff00;
+  }
+}
+
+@keyframes caught {
+  0%,
+  17% {
+    box-shadow: 0 6px 16px rgba(8, 54, 69, 0.15);
+  }
+  22% {
+    box-shadow:
+      0 0 0 6px rgba(227, 255, 0, 0.6),
+      0 10px 28px rgba(5, 123, 193, 0.35);
+  }
+  38%,
+  100% {
+    box-shadow: 0 6px 16px rgba(8, 54, 69, 0.15);
+  }
+}
+
+@keyframes check-cycle {
+  0%,
+  17% {
+    scale: 0;
+  }
+  24% {
+    scale: 1;
+  }
+  80% {
+    scale: 1;
+  }
+  90%,
+  100% {
+    scale: 0;
+  }
+}

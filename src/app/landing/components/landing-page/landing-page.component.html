@@ -1,11 +1,21 @@
-<div class="min-h-screen bg-[#FAFAFA]">
+<div class="min-h-screen bg-cream font-sans text-twilight">
   <app-navbar />
-  <app-hero />
-  <app-features-grid />
-  <app-products />
-  <app-how-it-works />
-  <app-pricing />
-  <app-faq />
-  <app-cta />
-  <app-footer />
+  <main class="flex flex-col">
+    <app-hero />
+    <app-features-grid />
+    <app-benefits />
+    <app-how-it-works />
+    <app-team-photo />
+    <app-pricing />
+    <app-faq />
+    <app-newsletter />
+    <app-cta />
+  </main>
 </div>
+
+<app-booking-modal
+  [bookingId]="booking.bookingId()"
+  [isOpen]="booking.isOpen()"
+  [heading]="t().scheduleDemo"
+  (closed)="booking.close()"
+/>

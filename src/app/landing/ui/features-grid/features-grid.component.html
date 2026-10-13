@@ -1,33 +1,116 @@
-<section id="features" class="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
-  <div class="mx-auto max-w-2xl text-center">
-    <span class="rounded-full border border-brand-200 px-3 py-1 text-xs font-semibold text-brand-800">{{ t().featuresBadge }}</span>
-    <h2 class="mt-4 text-3xl font-bold text-gray-900 sm:text-4xl" [innerHTML]="t().featuresMainTitleHtml"></h2>
-    <p class="mt-4 text-gray-500">{{ t().featuresSubtitle }}</p>
+<section id="features" class="bg-white px-4 py-14 sm:px-8 sm:py-20 lg:px-16 lg:py-[88px]">
+  <div class="mx-auto flex max-w-3xl flex-col items-center text-center">
+    <span class="rounded-full border border-line bg-cream px-3.5 py-1.5 text-xs font-medium text-muted">{{ t().features.badge }}</span>
+    <h2 class="mt-5 font-display text-3xl font-semibold leading-tight tracking-[-0.03em] text-twilight sm:text-5xl">
+      {{ t().features.titleA }}
+      <span class="text-star">{{ t().features.titleB }}</span>
+    </h2>
+    <p class="mt-4 text-[15px] text-muted">{{ t().features.subtitle }}</p>
   </div>
 
-  <div class="mt-12 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-    @for (module of modules; track module.key) {
-      <button
-        type="button"
-        (click)="open(module)"
-        class="flex flex-col items-start gap-3 rounded-xl border border-gray-200 bg-white p-5 text-left transition-all hover:-translate-y-1 hover:border-brand-300 hover:shadow-lg"
-      >
-        <span class="flex h-10 w-10 items-center justify-center rounded-full bg-brand-50 text-brand-800">
-          <ion-icon [name]="module.icon" class="text-xl"></ion-icon>
-        </span>
-        <h3 class="text-sm font-bold text-gray-900">{{ module.label }}</h3>
-      </button>
-    }
+  <div
+    class="mx-auto mt-10 grid max-w-[1280px] gap-4 sm:mt-14 lg:h-[660px] lg:grid-cols-[440px_1fr] lg:gap-6"
+    (mouseenter)="hovered.set(true)"
+    (mouseleave)="hovered.set(false)"
+  >
+    <div class="flex flex-col gap-2.5" role="tablist" [attr.aria-label]="t().features.badge">
+      @for (item of t().features.items; track item.title; let i = $index) {
+        <div
+          class="fx-item relative flex flex-col overflow-hidden rounded-2xl border"
+          [class.fx-item--active]="activeIndex() === i"
+          [class.border-twilight]="activeIndex() === i"
+          [class.bg-twilight]="activeIndex() === i"
+          [class.border-line]="activeIndex() !== i"
+          [class.bg-cream]="activeIndex() !== i"
+          [class.hover:bg-white]="activeIndex() !== i"
+        >
+          <button
+            type="button"
+            role="tab"
+            [attr.aria-selected]="activeIndex() === i"
+            (click)="select(i)"
+            class="flex w-full items-center gap-3.5 px-5 py-4 text-left"
+          >
+            <span
+              class="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] transition-colors duration-500"
+              [class.bg-lime]="activeIndex() === i"
+              [class.text-twilight]="activeIndex() === i"
+              [class.bg-white]="activeIndex() !== i"
+              [class.text-star]="activeIndex() !== i"
+            >
+              <ion-icon [name]="item.icon" class="text-lg"></ion-icon>
+            </span>
+            <span
+              class="flex-1 font-display text-[17px] font-semibold transition-colors duration-500"
+              [class.text-white]="activeIndex() === i"
+              [class.text-twilight]="activeIndex() !== i"
+            >
+              {{ item.title }}
+            </span>
+            <ion-icon
+              name="add-outline"
+              class="text-lg transition-transform duration-500"
+              [class.rotate-45]="activeIndex() === i"
+              [class.text-cream]="activeIndex() === i"
+              [class.text-muted]="activeIndex() !== i"
+            ></ion-icon>
+          </button>
+
+          <div class="fx-body" [attr.aria-hidden]="activeIndex() !== i">
+            <div class="min-h-0 overflow-hidden">
+              <div class="flex flex-col gap-3.5 px-5 pb-6">
+                <p class="text-sm leading-relaxed text-cream">{{ item.desc }}</p>
+                <div class="flex flex-wrap gap-2">
+                  @for (pill of item.pills; track pill) {
+                    <span class="rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-cream">{{ pill }}</span>
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+
+          @if (activeIndex() === i) {
+            <span class="pointer-events-none absolute inset-x-0 bottom-0 h-1 bg-white/10">
+              <span
+                class="fx-progress block h-full bg-lime"
+                [class.fx-progress--paused]="!playing()"
+                (animationend)="next()"
+              ></span>
+            </span>
+          }
+        </div>
+      }
+    </div>
+
+    <div class="relative min-h-[460px] overflow-hidden rounded-3xl bg-twilight lg:min-h-0" role="tabpanel" (pointerdown)="engaged.set(true)">
+      <img
+        src="img/features.jpg"
+        alt=""
+        class="fx-photo absolute inset-0 h-full w-full object-cover opacity-40 blur-[2px]"
+        loading="lazy"
+      />
+      <div class="absolute inset-0 bg-gradient-to-br from-twilight/80 via-twilight/55 to-star/60"></div>
+
+      <div class="relative z-10 flex h-full flex-col items-center justify-center gap-5 p-4 sm:p-8">
+        @for (key of [activeIndex()]; track key) {
+          <div class="fx-stage flex w-full justify-center">
+          <div class="w-full max-w-[380px] [&>*]:block">
+            @switch (key) {
+              @case (0) { <app-demo-clients /> }
+              @case (1) { <app-demo-tasks /> }
+              @case (2) { <app-demo-signature /> }
+              @case (3) { <app-demo-voice /> }
+              @case (4) { <app-demo-upload /> }
+              @default { <app-demo-pay /> }
+            }
+            </div>
+          </div>
+        }
+        <p class="flex items-center gap-2 rounded-full bg-white/10 px-3.5 py-1.5 text-xs font-medium text-cream backdrop-blur">
+          <ion-icon name="hand-left-outline"></ion-icon>
+          {{ t().features.demo.hint }}
+        </p>
+      </div>
+    </div>
   </div>
 </section>
-
-<app-modal [isOpen]="selected() !== null" [heading]="selected()?.label ?? ''" size="md" (closed)="close()">
-  @if (selected(); as module) {
-    <div class="mt-4 flex items-center gap-3">
-      <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-800">
-        <ion-icon [name]="module.icon" class="text-2xl"></ion-icon>
-      </span>
-      <p class="text-sm text-gray-600">{{ module.description }}</p>
-    </div>
-  }
-</app-modal>
