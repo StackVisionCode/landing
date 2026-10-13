@@ -3,6 +3,7 @@ import {
   Component,
   CUSTOM_ELEMENTS_SCHEMA,
   ElementRef,
+  HostListener,
   OnDestroy,
   PLATFORM_ID,
   QueryList,
@@ -18,18 +19,18 @@ import { SITE_CONFIG, PLATFORM_BRAND, PLATFORM_LEGAL_NAME } from '@core/config/s
 
 interface NavLinkDef {
   id: string;
-  key: 'navFeatures' | 'navProducts' | 'navPricing' | 'navFaq';
+  key: 'features' | 'how' | 'pricing' | 'faq';
 }
 
 const NAV_LINK_DEFS: NavLinkDef[] = [
-  { id: 'features', key: 'navFeatures' },
-  { id: 'products', key: 'navProducts' },
-  { id: 'pricing', key: 'navPricing' },
-  { id: 'faq', key: 'navFaq' },
+  { id: 'features', key: 'features' },
+  { id: 'how', key: 'how' },
+  { id: 'pricing', key: 'pricing' },
+  { id: 'faq', key: 'faq' },
 ];
 
 /** Altura del header sticky + aire, para que la sección no quede tapada al hacer scroll. */
-const HEADER_OFFSET = 80;
+const HEADER_OFFSET = 96;
 
 @Component({
   selector: 'app-navbar',
@@ -43,7 +44,7 @@ export class NavbarComponent implements AfterViewInit, OnDestroy {
   protected readonly legalName = PLATFORM_LEGAL_NAME;
 
   protected readonly translation = inject(TranslationStore);
-  protected readonly t = this.translation.t;
+  protected readonly t = this.translation.c;
   protected readonly lang = this.translation.lang;
   protected readonly siteConfig = SITE_CONFIG;
   /**
@@ -55,8 +56,14 @@ export class NavbarComponent implements AfterViewInit, OnDestroy {
 
   protected readonly mobileMenuOpen = signal(false);
 
+  /** Menú desplegable "Acceder" (Iniciar sesión / Ir a la app). */
+  protected readonly accessOpen = signal(false);
+
+  /** true al bajar del tope — la barra se compacta y gana desenfoque. */
+  protected readonly scrolled = signal(false);
+
   /** Enlaces del nav con su label ya traducido — se recalcula al cambiar de idioma. */
-  protected readonly navLinks = computed(() => NAV_LINK_DEFS.map((def) => ({ id: def.id, label: this.t()[def.key] })));
+  protected readonly navLinks = computed(() => NAV_LINK_DEFS.map((def) => ({ id: def.id, label: this.t().nav[def.key] })));
 
   /** Sección actualmente bajo el header, según scroll (scroll-spy). */
   protected readonly activeSection = signal<string | null>(null);
@@ -77,6 +84,7 @@ export class NavbarComponent implements AfterViewInit, OnDestroy {
     }
     this.tickingScroll = true;
     requestAnimationFrame(() => {
+      this.scrolled.set(window.scrollY > 24);
       this.pickActiveSection();
       this.tickingScroll = false;
     });
@@ -89,8 +97,9 @@ export class NavbarComponent implements AfterViewInit, OnDestroy {
     this.sections = NAV_LINK_DEFS.map((def) => document.getElementById(def.id)).filter(
       (el): el is HTMLElement => !!el,
     );
+    window.addEventListener('scroll', this.onScroll, { passive: true });
+    this.scrolled.set(window.scrollY > 24);
     if (this.sections.length) {
-      window.addEventListener('scroll', this.onScroll, { passive: true });
       this.pickActiveSection();
     }
     window.addEventListener('resize', this.onResize);
@@ -186,6 +195,21 @@ export class NavbarComponent implements AfterViewInit, OnDestroy {
     } else {
       performScroll();
     }
+  }
+
+  protected toggleAccess(event: Event): void {
+    event.stopPropagation();
+    this.accessOpen.update((open) => !open);
+  }
+
+  @HostListener('document:click')
+  protected closeAccess(): void {
+    this.accessOpen.set(false);
+  }
+
+  @HostListener('document:keydown.escape')
+  protected onEscape(): void {
+    this.accessOpen.set(false);
   }
 
   toggleMobileMenu(): void {

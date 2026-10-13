@@ -1,16 +1,22 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, CUSTOM_ELEMENTS_SCHEMA, inject } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { TranslationStore } from '@core/i18n/translation.store';
-import { SITE_CONFIG } from '@core/config/site-config';
-import { BookingModalComponent } from '@shared/ui/booking-modal/booking-modal.component';
+import { PLATFORM_BRAND, PLATFORM_LEGAL_NAME } from '@core/config/site-config';
+import { DemoBookingService } from '@landing/demo-booking.service';
 
+/** CTA final + pie de página con el wordmark gigante. */
 @Component({
   selector: 'app-cta',
-  imports: [BookingModalComponent],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
+  imports: [RouterLink],
   templateUrl: './cta.component.html',
-  styleUrl: './cta.component.css',
 })
 export class CtaComponent {
-  protected readonly t = inject(TranslationStore).t;
-  protected readonly bookingId = SITE_CONFIG.booking.cta;
-  protected readonly showBooking = signal(false);
+  /** Marca y razón social de la plataforma (site-config), nunca escritas en el template. */
+  protected readonly brand = PLATFORM_BRAND;
+  protected readonly legalName = PLATFORM_LEGAL_NAME;
+
+  protected readonly t = inject(TranslationStore).c;
+  protected readonly booking = inject(DemoBookingService);
+  protected readonly year = new Date().getFullYear();
 }

@@ -1,29 +1,23 @@
-import { Component, CUSTOM_ELEMENTS_SCHEMA, inject, signal } from '@angular/core';
+import { Component, CUSTOM_ELEMENTS_SCHEMA, inject } from '@angular/core';
 import { TranslationStore } from '@core/i18n/translation.store';
-import { SITE_CONFIG } from '@core/config/site-config';
-import { BookingModalComponent } from '@shared/ui/booking-modal/booking-modal.component';
-import { FeatureMarqueeComponent } from '@landing/ui/feature-marquee/feature-marquee.component';
+import { DemoBookingService } from '@landing/demo-booking.service';
 
 /**
- * Hero con fondo "amanecer" (índigo → morado de marca → el crema del resto
- * de la página) y una ventana de app flotante que calca el Dashboard real de
- * CRMTAXPROFRONTEND: header con el switch Módulos/Calendario y una grilla de
- * widgets (Estadísticas, Facturación, Clientes recientes) con sus mismos
- * colores de degradado suave — el contenido del mock es decorativo/estático,
- * no traducido, igual que el resto de las tarjetas del hero.
+ * Hero con la "historia": a la izquierda lo que hoy tiene una oficina
+ * (falta un documento, vence en 3 días…), una barra de luz al centro (Taxoffix)
+ * y a la derecha el mismo cliente ya resuelto. Los nombres y fotos son de ejemplo.
  */
 @Component({
   selector: 'app-hero',
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
-  imports: [BookingModalComponent, FeatureMarqueeComponent],
   templateUrl: './hero.component.html',
   styleUrl: './hero.component.css',
 })
 export class HeroComponent {
-  protected readonly t = inject(TranslationStore).t;
-  protected readonly bookingId = SITE_CONFIG.booking.hero;
-  protected readonly showBooking = signal(false);
+  protected readonly t = inject(TranslationStore).c;
+  protected readonly booking = inject(DemoBookingService);
 
-  /** Alturas (%) de las barras del widget de facturación — puramente decorativas. */
-  protected readonly invoiceBars = [45, 65, 40, 80, 55, 95, 70];
+  protected readonly before = ['img/a1.jpg', 'img/a2.jpg', 'img/a3.jpg', 'img/a4.jpg'];
+  protected readonly after = ['img/r1.jpg', 'img/r2.jpg', 'img/r3.jpg', 'img/r4.jpg'];
+  protected readonly rows = [0, 1, 2, 3];
 }

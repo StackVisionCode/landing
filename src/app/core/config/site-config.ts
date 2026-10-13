@@ -1,32 +1,26 @@
+import { apiBaseFor, platformRuntime } from './platform-runtime';
+
 /**
  * URLs de salida hacia el producto real y los IDs de calendario de
- * LeadConnector. Todo host público sale de PLATFORM_DOMAIN: cambiar de dominio
- * es cambiar esa línea, no buscar URLs sueltas por el código. La API no lleva
- * sufijo /api: las rutas cuelgan directo de la raíz (p.ej. GET /plans,
- * POST /auth/login). Los IDs de booking son placeholders — reemplazar por los
- * reales de la cuenta de LeadConnector antes de publicar.
+ * LeadConnector. Todo host público sale de PLATFORM_DOMAIN, que a su vez sale
+ * del host que sirve el landing (ver platform-runtime): cambiar de dominio no
+ * exige recompilar. La API no lleva sufijo /api: las rutas cuelgan directo de
+ * la raíz (p.ej. GET /plans, POST /auth/login). Los IDs de booking son
+ * placeholders — reemplazar por los reales de la cuenta de LeadConnector antes
+ * de publicar.
  */
-export const PLATFORM_DOMAIN = 'taxoffix.io';
+export const PLATFORM_DOMAIN = platformRuntime().domain;
 
-/** Nombre de la plataforma y su razón social. Igual que el dominio: un solo lugar, nunca escritos en un componente. */
-export const PLATFORM_BRAND = 'TaxOffix';
-export const PLATFORM_LEGAL_NAME = 'TaxOffix LLC';
-
-const productionApiUrl = `https://api.${PLATFORM_DOMAIN}`;
-const localApiUrl = 'http://localhost:5047';
-
-function resolveApiUrl(): string {
-  if (typeof window === 'undefined') {
-    return productionApiUrl;
-  }
-
-  return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? localApiUrl
-    : productionApiUrl;
-}
+/**
+ * Nombre de la plataforma y su razón social, publicados por PlatformSettings (Tenant). `main.ts` los
+ * lee antes de cargar la app, así que estas constantes ya nacen con la versión vigente. Nunca escritos
+ * en un componente.
+ */
+export const PLATFORM_BRAND = platformRuntime().brandName;
+export const PLATFORM_LEGAL_NAME = platformRuntime().legalName;
 
 export const SITE_CONFIG = {
-  apiUrl: resolveApiUrl(),
+  apiUrl: apiBaseFor(typeof window === 'undefined' ? null : window.location.hostname),
   websiteUrl: `https://${PLATFORM_DOMAIN}`,
   appUrl: `https://app.${PLATFORM_DOMAIN}`,
   clientPortalUrl: `https://client.${PLATFORM_DOMAIN}`,

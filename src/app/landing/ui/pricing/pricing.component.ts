@@ -20,7 +20,7 @@ import type { PlanResponse } from '@core/plans/plans.models';
 export class PricingComponent {
   private readonly plansService = inject(PlansService);
   private readonly translation = inject(TranslationStore);
-  protected readonly t = this.translation.t;
+  protected readonly t = this.translation.c;
   protected readonly lang = this.translation.lang;
   protected readonly isAnnual = signal(false);
 
@@ -67,8 +67,7 @@ export class PricingComponent {
   }
 
   featuresFor(plan: PlanResponse): string[] {
-    const isEn = this.lang() === 'en';
-    const usersLabel = isEn ? `Up to ${plan.maxUsers} users` : `Hasta ${plan.maxUsers} usuarios`;
+    const usersLabel = this.t().pricing.users(plan.maxUsers);
     const moduleLabels = plan.enabledModules.map((key) => moduleLabel(key, this.lang()));
     return [usersLabel, ...moduleLabels];
   }

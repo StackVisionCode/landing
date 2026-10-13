@@ -1,101 +1,71 @@
-import { Component, CUSTOM_ELEMENTS_SCHEMA, inject, signal } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  CUSTOM_ELEMENTS_SCHEMA,
+  ElementRef,
+  OnDestroy,
+  PLATFORM_ID,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { TranslationStore } from '@core/i18n/translation.store';
-import { ModalComponent } from '@shared/ui/modal/modal.component';
-import { OFFERED_MODULES, moduleIcon, moduleLabel } from '@core/plans/module-labels';
+import { DemoClientsComponent } from './demos/demo-clients.component';
+import { DemoTasksComponent } from './demos/demo-tasks.component';
+import { DemoSignatureComponent } from './demos/demo-signature.component';
+import { DemoVoiceComponent } from './demos/demo-voice.component';
+import { DemoUploadComponent } from './demos/demo-upload.component';
+import { DemoPayComponent } from './demos/demo-pay.component';
 
-const MODULE_DESCRIPTIONS: Record<string, { es: string; en: string }> = {
-  signatures: {
-    es: 'Envía documentos para firma y recibe una notificación apenas se completen, con validez legal.',
-    en: 'Send documents for signature and get notified as soon as they’re completed, with legal validity.',
-  },
-  documents: {
-    es: 'Organiza, sube y comparte los documentos de tus clientes desde un solo lugar.',
-    en: 'Organize, upload, and share your clients’ documents from one place.',
-  },
-  planner: {
-    es: 'Organiza vencimientos y tareas de tu equipo con recordatorios automáticos.',
-    en: 'Organize deadlines and your team’s tasks with automatic reminders.',
-  },
-  customers: {
-    es: 'Centraliza el historial completo de cada cliente: documentos, notas y comunicaciones.',
-    en: 'Centralize each client’s full history: documents, notes, and communications.',
-  },
-  email: {
-    es: 'Envía y recibe correos con tus clientes sin salir de la plataforma.',
-    en: 'Send and receive emails with your clients without leaving the platform.',
-  },
-  reports: {
-    es: 'Reportes personalizables con métricas de tu oficina en tiempo real.',
-    en: 'Customizable reports with real-time metrics for your office.',
-  },
-  campaigns: {
-    es: 'Crea y envía campañas para mantener a tus clientes informados.',
-    en: 'Create and send campaigns to keep your clients informed.',
-  },
-  comms: {
-    es: 'Chatea y llama a tus clientes en tiempo real, vinculado a su expediente.',
-    en: 'Chat and call your clients in real time, tied to their file.',
-  },
-  meetings: {
-    es: 'Reuniones por vídeo con tus clientes, con sala de espera e invitaciones.',
-    en: 'Video meetings with your clients, with a waiting room and invitations.',
-  },
-  marketing: {
-    es: 'Herramientas para promocionar tu oficina y atraer nuevos clientes.',
-    en: 'Tools to promote your office and attract new clients.',
-  },
-  miles: {
-    es: 'Registra el millaje de tus viajes de trabajo para deducciones fiscales.',
-    en: 'Track your work-trip mileage for tax deductions.',
-  },
-  builder: {
-    es: 'Crea formularios personalizados para recopilar información de tus clientes.',
-    en: 'Build custom forms to collect information from your clients.',
-  },
-  irs: {
-    es: 'Herramientas específicas para trámites y cumplimiento ante el IRS.',
-    en: 'Purpose-built tools for IRS filings and compliance.',
-  },
-};
-
-interface ModuleCard {
-  key: string;
-  icon: string;
-  label: string;
-  description: string;
-}
-
+/**
+ * Visor de funciones: lista a la izquierda y, a la derecha, una mini-demo interactiva de la función activa
+ * (inspiradas en los bloques de bencho.dev, reescritas en Angular sin framer-motion).
+ * Avanza solo (la barra de progreso de la función activa marca el ritmo) y se pausa al pasar el mouse
+ * o cuando la sección no está a la vista; elegir una función a mano reinicia el ciclo.
+ */
 @Component({
   selector: 'app-features-grid',
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
-  imports: [ModalComponent],
+  imports: [DemoClientsComponent, DemoTasksComponent, DemoSignatureComponent, DemoVoiceComponent, DemoUploadComponent, DemoPayComponent],
   templateUrl: './features-grid.component.html',
+  styleUrl: './features-grid.component.css',
 })
-export class FeaturesGridComponent {
-  private readonly translation = inject(TranslationStore);
-  protected readonly t = this.translation.t;
+export class FeaturesGridComponent implements AfterViewInit, OnDestroy {
+  protected readonly t = inject(TranslationStore).c;
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly platformId = inject(PLATFORM_ID);
 
-  /** Los módulos que se VENDEN (`OFFERED_MODULES`, no todo `MODULE_LABELS`: ese es un diccionario
-   *  y contiene también los que ya no se ofrecen, para poder nombrar snapshots viejos)
-   *  y Register) — "todo lo que ofrecemos", no una selección curada. */
-  protected get modules(): ModuleCard[] {
-    const lang = this.translation.lang();
-    return OFFERED_MODULES.map((key) => ({
-      key,
-      icon: moduleIcon(key),
-      label: moduleLabel(key, lang),
-      description: MODULE_DESCRIPTIONS[key]?.[lang] ?? '',
-    }));
+  protected readonly activeIndex = signal(0);
+  protected readonly active = computed(() => this.t().features.items[this.activeIndex()]);
+  protected readonly hovered = signal(false);
+  protected readonly inView = signal(false);
+  /** El visitante tocó una demo: el ciclo automático no la cambia por debajo hasta que elija otra función. */
+  protected readonly engaged = signal(false);
+  protected readonly playing = computed(() => this.inView() && !this.hovered() && !this.engaged());
+
+  private observer?: IntersectionObserver;
+
+  ngAfterViewInit(): void {
+    if (!isPlatformBrowser(this.platformId) || typeof IntersectionObserver === 'undefined') {
+      return;
+    }
+    this.observer = new IntersectionObserver(([entry]) => this.inView.set(entry.isIntersecting), { threshold: 0.35 });
+    this.observer.observe(this.host.nativeElement);
   }
 
-  /** Módulo abierto en el modal — null = cerrado. */
-  protected readonly selected = signal<ModuleCard | null>(null);
-
-  open(module: ModuleCard): void {
-    this.selected.set(module);
+  ngOnDestroy(): void {
+    this.observer?.disconnect();
   }
 
-  close(): void {
-    this.selected.set(null);
+  select(index: number): void {
+    this.engaged.set(false);
+    this.activeIndex.set(index);
+  }
+
+  /** Termina la barra de progreso → pasa a la siguiente función. */
+  protected next(): void {
+    this.engaged.set(false);
+    this.activeIndex.update((i) => (i + 1) % this.t().features.items.length);
   }
 }
