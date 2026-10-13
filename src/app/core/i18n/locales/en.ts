@@ -196,6 +196,12 @@ export const en: TranslationKeys = {
   regPanelHeadline: "Let's Get Started",
   regPanelBodyPrefix: 'Your',
   regPanelFootnote: 'Secure payment processed by an approved provider. Cancel anytime.',
+  regShellHeadline: "Your tax office, set up in four steps.",
+  regStepVerify: "Verify your email",
+  regStepDetails: "Your details",
+  regStepPayment: "Secure payment",
+  regStepOffice: "Name your office",
+  regStepCounter: "Step {n} of 4",
   regBackButton: 'Back',
 
   compLoadingTitle: 'Loading your invitation...',
