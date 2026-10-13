@@ -1,5 +1,6 @@
-import { Component, CUSTOM_ELEMENTS_SCHEMA, OnDestroy, OnInit, WritableSignal, inject, signal } from '@angular/core';
+import { Component, CUSTOM_ELEMENTS_SCHEMA, OnDestroy, OnInit, WritableSignal, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RegisterShellComponent } from '../register-shell/register-shell.component';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslationStore } from '@core/i18n/translation.store';
 import { OnboardingService } from '@core/onboarding/onboarding.service';
@@ -49,7 +50,7 @@ const RESEND_COOLDOWN_SECONDS = 60; // cooldown real del reenvío en Auth
  */
 @Component({
   selector: 'app-register',
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, RegisterShellComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: './register.component.html',
 })
@@ -116,6 +117,28 @@ export class RegisterComponent implements OnInit, OnDestroy {
 
   // El onboarding ya creado se reutiliza al reintentar el pago: repetir el POST crearía otro.
   private onboardingId: string | null = null;
+
+  /** Paso del marco: correo y código = 1, datos = 2, pago/errores = 3. */
+  protected readonly stepIndex = computed(() => {
+    switch (this.step()) {
+      case 'details':
+        return 2;
+      case 'processing':
+      case 'no-payment':
+      case 'error':
+        return 3;
+      default:
+        return 1;
+    }
+  });
+
+  /** Plan elegido, para el pie del panel: "Pro — $129/mes". */
+  protected readonly panelFootnote = computed(() => {
+    const p = this.plan();
+    if (!p) return '';
+    const cycle = this.cycle() === 'Yearly' ? this.t().annualLabel.toLowerCase() : this.t().monthlyLabel.toLowerCase();
+    return `${p.name} — $${this.planPrice}/${cycle}`;
+  });
 
   get otpTimerDisplay(): string {
     const seconds = this.otpSecondsLeft();

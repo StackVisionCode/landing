@@ -197,6 +197,12 @@ export const es: TranslationKeys = {
   regPanelHeadline: 'Empecemos',
   regPanelBodyPrefix: 'Tu plan',
   regPanelFootnote: 'Pago seguro procesado por un proveedor aprobado. Cancela cuando quieras.',
+  regShellHeadline: "Tu oficina de impuestos, lista en cuatro pasos.",
+  regStepVerify: "Verifica tu correo",
+  regStepDetails: "Tus datos",
+  regStepPayment: "Pago seguro",
+  regStepOffice: "Nombra tu oficina",
+  regStepCounter: "Paso {n} de 4",
   regBackButton: 'Volver',
 
   compLoadingTitle: 'Cargando tu invitación...',
