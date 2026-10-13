@@ -1,0 +1,40 @@
+<section id="benefits" class="bg-cream px-4 py-14 sm:px-8 sm:py-20 lg:px-16 lg:py-[88px]">
+  <div class="mx-auto flex max-w-3xl flex-col items-center text-center">
+    <span class="rounded-full border border-line bg-white px-3.5 py-1.5 text-xs font-medium text-muted">{{ t().benefits.badge }}</span>
+    <h2 class="mt-5 font-display text-3xl font-semibold leading-tight tracking-[-0.03em] text-twilight sm:text-5xl">
+      {{ t().benefits.titleA }}
+      <span class="inline-block rounded-lg bg-lime px-2 text-twilight">{{ t().benefits.titleB }}</span>
+    </h2>
+  </div>
+
+  <div class="mx-auto mt-10 grid max-w-[1280px] gap-4 sm:mt-14 md:grid-cols-3">
+    @for (card of t().benefits.cards; track card.title; let i = $index) {
+      <article class="flex flex-col gap-3 rounded-[20px] bg-white p-6">
+        @if (i === 2) {
+          <div class="flex h-[90px] items-end gap-2" aria-hidden="true">
+            @for (bar of bars; track $index) {
+              <span class="flex-1 rounded-t-md bg-azure" [class.bg-star]="$index === 5" [style.height.%]="bar"></span>
+            }
+          </div>
+        } @else {
+          <span class="flex h-11 w-11 items-center justify-center rounded-full text-twilight" [class.bg-azure]="i % 2 === 0" [class.bg-lime]="i % 2 === 1">
+            <ion-icon [name]="card.icon" class="text-xl"></ion-icon>
+          </span>
+        }
+        <h3 class="font-display text-lg font-bold text-twilight">{{ card.title }}</h3>
+        <p class="text-sm leading-relaxed text-muted">{{ card.desc }}</p>
+      </article>
+    }
+
+    <article class="flex flex-col justify-end gap-4 rounded-[20px] bg-gradient-to-br from-azure to-star p-6 text-white md:min-h-[200px]">
+      <h3 class="font-display text-xl font-bold leading-snug">{{ t().benefits.ctaTitle }}</h3>
+      <button
+        type="button"
+        (click)="booking.open('cta')"
+        class="w-fit rounded-full bg-twilight px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-black"
+      >
+        {{ t().scheduleDemo }}
+      </button>
+    </article>
+  </div>
+</section>

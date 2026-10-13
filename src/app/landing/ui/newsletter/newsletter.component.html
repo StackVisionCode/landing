@@ -1,0 +1,38 @@
+<section class="bg-cream px-4 py-14 sm:px-8 sm:py-20 lg:px-16 lg:py-[88px]">
+  <div class="mx-auto flex max-w-3xl flex-col items-center gap-5 text-center">
+    <span class="rounded-full border border-line bg-white px-3.5 py-1.5 text-xs font-medium text-muted">{{ t().newsletter.badge }}</span>
+    <h2 class="font-display text-3xl font-semibold leading-tight tracking-[-0.03em] text-twilight sm:text-5xl">
+      {{ t().newsletter.titleA }}
+      <span class="text-star">{{ t().newsletter.titleB }}</span>
+    </h2>
+    <p class="text-[15px] text-muted">{{ t().newsletter.subtitle }}</p>
+
+    @if (subscribed()) {
+      <p class="rounded-xl bg-lime px-5 py-3 text-sm font-semibold text-twilight" role="status">{{ t().newsletter.thanks }}</p>
+    } @else {
+      <form
+        (submit)="$event.preventDefault(); subscribe()"
+        class="flex w-full max-w-[540px] items-center gap-2 rounded-[14px] border border-line bg-white p-2 pl-5"
+      >
+        <input
+          type="email"
+          name="email"
+          required
+          [ngModel]="email()"
+          (ngModelChange)="email.set($event)"
+          [placeholder]="t().newsletter.placeholder"
+          [attr.aria-label]="t().newsletter.placeholder"
+          class="min-w-0 flex-1 bg-transparent text-sm text-twilight placeholder:text-muted focus:outline-none"
+        />
+        <button type="submit" class="shrink-0 rounded-[10px] bg-twilight px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-star">
+          {{ t().newsletter.button }}
+        </button>
+      </form>
+    }
+
+    <p class="text-[13px] text-muted">
+      {{ t().newsletter.legalA }}
+      <a routerLink="/privacy" class="font-medium text-star underline underline-offset-2">{{ t().newsletter.legalLink }}</a>.
+    </p>
+  </div>
+</section>

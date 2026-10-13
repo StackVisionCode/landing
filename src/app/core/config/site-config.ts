@@ -22,7 +22,7 @@ function resolveApiUrl(): string {
 
 export const SITE_CONFIG = {
   apiUrl: resolveApiUrl(),
-  appUrl: 'https://app.taxproffice.com',
+  appUrl: 'https://app.taxoffix.io',
   clientPortalUrl: 'https://client.taxproffice.com',
   booking: {
     hero: 'REPLACE_ME_HERO_BOOKING_ID',
@@ -31,7 +31,7 @@ export const SITE_CONFIG = {
   },
 } as const;
 
-/** Espacio de trabajo de una oficina: `https://<slug>.taxproffice.com`, derivado del dominio de appUrl. */
+/** Espacio de trabajo de una oficina: `https://<slug>.taxoffix.io`, derivado del dominio de appUrl. */
 export function officeWorkspaceUrl(slug: string): string {
   const { protocol, host } = new URL(SITE_CONFIG.appUrl);
   return `${protocol}//${slug}.${host.split(".").slice(1).join(".")}`;

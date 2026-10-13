@@ -1,189 +1,105 @@
-<section class="relative overflow-hidden bg-[linear-gradient(180deg,#0D0D0D_0%,#16334D_16%,#1E466B_34%,#3679AE_54%,#8CC7F5_74%,#DCEDFC_90%,#FAFAFA_100%)] px-4 pb-32 pt-24 sm:px-6 sm:pb-40 sm:pt-32 lg:px-8">
-  <div class="hero-cloud pointer-events-none absolute -top-16 left-[8%] h-72 w-72 rounded-full bg-white/10 blur-3xl"></div>
-  <div class="hero-cloud hero-cloud--b pointer-events-none absolute top-6 right-[10%] h-96 w-96 rounded-full bg-white/[0.08] blur-3xl"></div>
-  <div class="hero-cloud hero-cloud--c pointer-events-none absolute top-40 left-1/3 h-64 w-64 rounded-full bg-brand-300/25 blur-3xl"></div>
+<section class="overflow-hidden bg-cream pt-12 sm:pt-16">
+  <div class="mx-auto flex max-w-4xl flex-col items-center px-4 text-center sm:px-6">
+    <span class="hero-rise inline-flex items-center gap-2 rounded-full border border-line bg-white px-3.5 py-1.5 text-xs font-medium text-muted" style="--d: 0s">
+      <span class="h-1.5 w-1.5 rounded-full bg-star"></span>
+      {{ t().hero.eyebrow }}
+    </span>
 
-  <div class="relative mx-auto max-w-6xl">
-    <div class="grid grid-cols-1 items-end gap-8 text-center lg:grid-cols-12 lg:gap-20 lg:text-left">
-      <div class="lg:col-span-7">
-        <h1 class="text-4xl font-bold leading-[1.08] tracking-tight text-white sm:text-5xl lg:text-6xl">
-          {{ t().heroTitle }}
-        </h1>
+    <h1 class="mt-6 font-display text-[2.6rem] font-semibold leading-[1.05] tracking-[-0.04em] text-twilight sm:text-6xl lg:text-[4.5rem]">
+      <span class="inline-flex flex-wrap items-center justify-center gap-x-3 sm:gap-x-4">
+        <span class="hero-rise" style="--d: 0.1s">{{ t().hero.line1a }}</span>
+        <span class="hero-chip inline-flex h-10 w-10 items-center justify-center rounded-xl bg-star text-white sm:h-14 sm:w-14 sm:rounded-2xl" aria-hidden="true">
+          <ion-icon name="people-outline" class="text-2xl sm:text-3xl"></ion-icon>
+        </span>
+        <span class="hero-rise" style="--d: 0.2s">{{ t().hero.line1b }}</span>
+        <span class="hero-rise" style="--d: 0.3s">{{ t().hero.line1c }}</span>
+      </span>
+      <span class="hero-rise block" style="--d: 0.4s">{{ t().hero.line2 }}</span>
+    </h1>
+
+    <p class="hero-rise mt-6 max-w-2xl text-base leading-relaxed text-muted sm:text-lg" style="--d: 0.55s">{{ t().hero.subtitle }}</p>
+
+    <div class="hero-rise mt-8 flex flex-col items-center gap-3 sm:flex-row" style="--d: 0.7s">
+      <button
+        type="button"
+        (click)="booking.open('hero')"
+        class="rounded-full bg-twilight px-7 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-star"
+      >
+        {{ t().scheduleDemo }}
+      </button>
+      <a
+        href="#pricing"
+        class="inline-flex items-center gap-2 rounded-full border border-twilight/20 bg-white px-7 py-3.5 text-sm font-semibold text-twilight transition-colors hover:border-twilight"
+      >
+        {{ t().startNow }}
+        <ion-icon name="arrow-forward-outline"></ion-icon>
+      </a>
+    </div>
+    <p class="hero-rise mt-4 text-xs text-muted" style="--d: 0.85s">{{ t().hero.micro }}</p>
+  </div>
+
+  <!-- Historia: antes → Taxoffix → después -->
+  <div class="relative mx-auto mt-12 max-w-6xl px-4 sm:px-8" aria-hidden="false">
+    <div class="pointer-events-none absolute inset-x-0 top-1/2 h-72 -translate-y-1/2 bg-[radial-gradient(ellipse_at_center,rgba(77,216,255,0.25),transparent_65%)]"></div>
+
+    <div class="relative grid grid-cols-[1fr_20px_1fr] items-center gap-x-3 sm:grid-cols-[1fr_28px_1fr] sm:gap-x-6">
+      <!-- barra de luz central -->
+      <div
+        class="story-beam pointer-events-none relative col-start-2 row-span-4 row-start-1 h-full w-2.5 justify-self-center rounded-full bg-gradient-to-b from-azure to-star shadow-[0_0_34px_rgba(5,123,193,0.6)]"
+      >
+        <span class="absolute inset-0 overflow-hidden rounded-full"><span class="story-streak"></span></span>
       </div>
 
-      <div class="lg:col-span-5 lg:pb-2">
-        <p class="mx-auto max-w-md text-base leading-relaxed text-brand-100/90 sm:text-lg lg:mx-0">
-          {{ t().heroDescription }}
-        </p>
-
-        <div class="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row lg:justify-end">
-          <a
-            href="#pricing"
-            class="rounded-full bg-gray-900 px-7 py-3 text-sm font-semibold text-white transition-colors hover:bg-gray-700"
-          >
-            {{ t().heroCtaPrimary }}
-          </a>
-          <button
-            type="button"
-            (click)="showBooking.set(true)"
-            class="inline-flex items-center justify-center gap-1.5 rounded-full bg-white px-7 py-3 text-sm font-semibold text-gray-900 transition-colors hover:bg-gray-100"
-          >
-            {{ t().heroCtaSecondary }}
-            <ion-icon name="chevron-forward-outline"></ion-icon>
-          </button>
+      @for (i of rows; track i) {
+        <div class="story-left col-start-1 flex items-center gap-2 py-3 sm:gap-3" [style.grid-row-start]="i + 1" [style.--d]="0.9 + i * 0.15 + 's'">
+          <span class="relative shrink-0">
+            <span class="story-ring" [style.--f2]="i * 0.9 + 's'"></span>
+            <img [src]="before[i]" alt="" class="h-11 w-11 rounded-full border-[3px] border-white object-cover shadow-[0_8px_20px_rgba(8,54,69,0.25)] sm:h-14 sm:w-14" />
+          </span>
+          <span class="story-tag hidden rounded-[10px] bg-white px-3 py-1.5 text-left text-xs font-medium text-twilight shadow-[0_6px_14px_rgba(8,54,69,0.15)] sm:block" [class.rotate-2]="i % 2 === 0" [class.-rotate-2]="i % 2 === 1" [style.--f2]="i * 0.7 + 's'" [style.--fd]="4.4 + i * 0.6 + 's'">
+            <span class="story-status mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-star align-middle" [style.--f2]="i * 0.5 + 's'"></span>{{ t().hero.pending[i].name }} · {{ t().hero.pending[i].text }}
+          </span>
+          <span class="relative h-px flex-1 bg-gradient-to-r from-star/50 to-star/10">
+            <span class="flow-dot flow-dot--l" [style.--f]="2 + i * 0.75 + 's'"></span>
+          </span>
         </div>
-      </div>
+
+        <span
+          class="story-node pointer-events-none z-10 col-start-2 h-3.5 w-3.5 justify-self-center rounded-full border-[3px] border-white bg-lime"
+          [style.grid-row-start]="i + 1"
+          [style.--f]="2 + i * 0.75 + 's'"
+        ></span>
+
+        <div class="story-right col-start-3 flex items-center gap-2 py-3" [style.grid-row-start]="i + 1" [style.--d]="1.3 + i * 0.15 + 's'">
+          <span class="relative h-px w-4 bg-star/40 sm:w-8">
+            <span class="flow-dot flow-dot--r" [style.--f]="2 + i * 0.75 + 's'"></span>
+          </span>
+          <div class="story-card flex min-w-0 flex-1 items-center gap-2 rounded-full bg-white p-1.5 pr-3 shadow-[0_6px_16px_rgba(8,54,69,0.15)] sm:gap-3 sm:pr-4" [style.--f]="2 + i * 0.75 + 's'">
+            <img [src]="after[i]" alt="" class="h-9 w-9 shrink-0 rounded-full object-cover sm:h-11 sm:w-11" />
+            <div class="min-w-0 flex-1 text-left leading-tight">
+              <p class="truncate text-xs font-semibold text-twilight sm:text-sm">{{ t().hero.done[i].name }}</p>
+              <p class="truncate text-[11px] text-muted sm:text-xs">{{ t().hero.done[i].text }}</p>
+            </div>
+            <span class="check-pop relative flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-lime text-twilight" [style.--d]="1.9 + i * 0.15 + 's'">
+              <span class="check-ring" [style.--f]="2 + i * 0.75 + 's'"></span>
+              <ion-icon name="checkmark-outline" class="relative text-sm"></ion-icon>
+            </span>
+          </div>
+        </div>
+      }
     </div>
+  </div>
 
-    <!-- Loop infinito de tarjetas de features — reemplaza el espacio que
-         reservaba el mockup de Dashboard quitado "hasta nuevo aviso". -->
-    <div class="mx-auto mt-24 w-full max-w-5xl sm:mt-28">
-      <app-feature-marquee />
-    </div>
-
-    <!--
-      Ventana de app (mockup del Dashboard real) — quitada a pedido explícito
-      "hasta nuevo aviso". Queda comentada, no borrada, para restaurarla fácil
-      cuando se pida: sacar este bloque de comentario Angular completo (y
-      borrar el div espaciador de arriba).
-
-    <div class="relative mx-auto mt-16 w-full max-w-5xl sm:mt-20">
-      <div class="overflow-hidden rounded-[28px] border border-white/40 bg-white shadow-[0_32px_64px_rgba(22,51,77,0.28),0_8px_24px_rgba(22,51,77,0.14)]">
-        <div class="flex items-center gap-1.5 border-b border-gray-100 bg-gray-50/60 px-4 py-2.5">
-          <span class="h-2.5 w-2.5 rounded-full bg-red-400/70"></span>
-          <span class="h-2.5 w-2.5 rounded-full bg-amber-400/70"></span>
-          <span class="h-2.5 w-2.5 rounded-full bg-emerald-400/70"></span>
-        </div>
-
-        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 px-4 py-3 sm:px-5">
-          <div class="flex items-center gap-2">
-            <ion-icon name="grid-outline" class="text-lg text-blue-600"></ion-icon>
-            <p class="text-sm font-bold text-gray-800">Dashboard</p>
-          </div>
-          <div class="flex items-center gap-1 rounded-full bg-gray-100 p-1 text-[11px] font-semibold">
-            <span class="rounded-full bg-white px-3 py-1 text-blue-600 shadow-sm">Módulos</span>
-            <span class="px-3 py-1 text-gray-500">Calendario</span>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 gap-3 p-3 sm:p-4 md:grid-cols-2 lg:grid-cols-3">
-          <div class="rounded-2xl border border-gray-100 bg-white p-3.5">
-            <div class="mb-3 flex items-center gap-2">
-              <ion-icon name="stats-chart-outline" class="text-base text-blue-600"></ion-icon>
-              <p class="text-[11px] font-semibold text-gray-800">Estadísticas</p>
-            </div>
-            <div class="space-y-2">
-              <div class="flex items-center gap-2.5 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100/50 p-2.5">
-                <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-600">
-                  <ion-icon name="people-outline"></ion-icon>
-                </span>
-                <div class="min-w-0">
-                  <p class="text-[9px] font-semibold uppercase tracking-wide text-blue-600">Clientes totales</p>
-                  <p class="text-base font-bold text-gray-800">284</p>
-                </div>
-              </div>
-              <div class="flex items-center gap-2.5 rounded-xl bg-gradient-to-br from-amber-50 to-amber-100/50 p-2.5">
-                <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600">
-                  <ion-icon name="document-text-outline"></ion-icon>
-                </span>
-                <div class="min-w-0">
-                  <p class="text-[9px] font-semibold uppercase tracking-wide text-amber-600">Facturas pendientes</p>
-                  <p class="text-base font-bold text-gray-800">12</p>
-                </div>
-              </div>
-              <div class="flex items-center gap-2.5 rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100/50 p-2.5">
-                <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600">
-                  <ion-icon name="trending-up-outline"></ion-icon>
-                </span>
-                <div class="min-w-0">
-                  <p class="text-[9px] font-semibold uppercase tracking-wide text-emerald-600">Ingresos del mes</p>
-                  <p class="text-base font-bold text-gray-800">$48,204</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="hidden rounded-2xl border border-gray-100 bg-white p-3.5 md:block">
-            <div class="mb-2.5 flex items-center justify-between border-b border-gray-100 pb-2.5">
-              <div>
-                <p class="text-[11px] font-semibold text-gray-800">Facturación</p>
-                <p class="text-[9px] text-gray-500">Últimos 7 días</p>
-              </div>
-              <div class="text-right">
-                <p class="text-sm font-bold text-emerald-600">$12,480</p>
-                <p class="flex items-center justify-end gap-0.5 text-[9px] font-semibold text-emerald-600">
-                  <ion-icon name="trending-up-outline"></ion-icon>
-                  +18%
-                </p>
-              </div>
-            </div>
-            <div class="flex h-16 items-end gap-1.5">
-              @for (bar of invoiceBars; track $index) {
-                <div class="flex-1 rounded-t-md" [style.height.%]="bar" style="background: linear-gradient(180deg, #34d399 0%, #0d9488 100%)"></div>
-              }
-            </div>
-            <div class="mt-2.5 grid grid-cols-3 gap-1 border-t border-gray-100 pt-2.5 text-center">
-              <div>
-                <p class="text-[8px] font-medium text-gray-500">Total</p>
-                <p class="text-[11px] font-bold text-gray-800">86</p>
-              </div>
-              <div>
-                <p class="text-[8px] font-medium text-gray-500">Pagadas</p>
-                <p class="text-[11px] font-bold text-emerald-600">71</p>
-              </div>
-              <div>
-                <p class="text-[8px] font-medium text-gray-500">Pendientes</p>
-                <p class="text-[11px] font-bold text-orange-600">15</p>
-              </div>
-            </div>
-          </div>
-
-          <div class="hidden rounded-2xl border border-gray-100 bg-white p-3.5 lg:block">
-            <div class="mb-2.5 grid grid-cols-2 gap-2">
-              <div class="rounded-xl border border-teal-100 bg-gradient-to-br from-teal-50 to-cyan-50 p-2.5">
-                <p class="text-[9px] font-semibold uppercase tracking-wide text-teal-700">Esta semana</p>
-                <p class="text-lg font-bold text-teal-900">7</p>
-              </div>
-              <div class="rounded-xl border border-purple-100 bg-gradient-to-br from-purple-50 to-pink-50 p-2.5">
-                <p class="text-[9px] font-semibold uppercase tracking-wide text-purple-700">Este mes</p>
-                <p class="text-lg font-bold text-purple-900">24</p>
-              </div>
-            </div>
-
-            <p class="mb-1.5 text-[10px] font-semibold text-gray-700">Clientes recientes</p>
-            <div class="space-y-1.5">
-              <div class="flex items-center gap-2 rounded-lg bg-gray-50 p-2">
-                <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-teal-400 to-cyan-500 text-[9px] font-semibold text-white">MG</span>
-                <p class="min-w-0 flex-1 truncate text-[10px] font-medium text-gray-800">María González</p>
-                <span class="shrink-0 text-[9px] text-gray-400">2d</span>
-              </div>
-              <div class="flex items-center gap-2 rounded-lg bg-gray-50 p-2">
-                <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-teal-400 to-cyan-500 text-[9px] font-semibold text-white">CR</span>
-                <p class="min-w-0 flex-1 truncate text-[10px] font-medium text-gray-800">Carlos Ruiz</p>
-                <span class="shrink-0 text-[9px] text-gray-400">4d</span>
-              </div>
-              <div class="flex items-center gap-2 rounded-lg bg-gray-50 p-2">
-                <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-teal-400 to-cyan-500 text-[9px] font-semibold text-white">LF</span>
-                <p class="min-w-0 flex-1 truncate text-[10px] font-medium text-gray-800">Laura Fernández</p>
-                <span class="shrink-0 text-[9px] text-gray-400">6d</span>
-              </div>
-            </div>
-
-            <button type="button" class="mt-2.5 flex w-full items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-teal-500 to-cyan-600 py-1.5 text-[10px] font-semibold text-white">
-              <ion-icon name="people-outline"></ion-icon>
-              Ver todos
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-    -->
+  <!-- Franja de confianza -->
+  <div class="mt-10 border-t border-line px-4 py-6 sm:px-8">
+    <p class="mb-4 text-center text-xs font-medium uppercase tracking-wider text-muted">{{ t().trust.title }}</p>
+    <ul class="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-8 gap-y-3 text-xs font-medium text-twilight sm:text-[13px]">
+      @for (item of t().trust.items; track item) {
+        <li class="flex items-center gap-2">
+          <ion-icon name="shield-checkmark-outline" class="text-base text-star"></ion-icon>
+          {{ item }}
+        </li>
+      }
+    </ul>
   </div>
 </section>
-
-<app-booking-modal
-  [bookingId]="bookingId"
-  [isOpen]="showBooking()"
-  [heading]="t().heroCtaSecondary"
-  (closed)="showBooking.set(false)"
-/>

@@ -1,4 +1,19 @@
-import { CUSTOM_ELEMENTS_SCHEMA, Component, DestroyRef, OnDestroy, computed, inject, signal } from '@angular/core';
+import {
+  AfterViewInit,
+  CUSTOM_ELEMENTS_SCHEMA,
+  Component,
+  DestroyRef,
+  ElementRef,
+  OnDestroy,
+  PLATFORM_ID,
+  QueryList,
+  ViewChild,
+  ViewChildren,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { SITE_CONFIG } from '@core/config/site-config';
@@ -24,8 +39,9 @@ type Step = 'credentials' | 'office' | 'takeover';
   imports: [FormsModule, RouterLink],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: './account-sign-in.component.html',
+  styleUrl: './account-sign-in.component.css',
 })
-export class AccountSignInComponent implements OnDestroy {
+export class AccountSignInComponent implements AfterViewInit, OnDestroy {
   private readonly i18n = inject(TranslationStore);
   private readonly central = inject(CentralLoginService);
   private readonly session = inject(AccountSessionStore);
@@ -38,6 +54,31 @@ export class AccountSignInComponent implements OnDestroy {
   private takeoverTicket: string | null = null;
 
   readonly t = this.i18n.t;
+  /** Copy del landing (historia de la pantalla: pendientes → resueltos, línea de confianza). */
+  readonly c = this.i18n.c;
+  readonly lang = this.i18n.lang;
+  readonly story = computed(() => this.c().hero);
+  readonly before = ['img/a1.jpg', 'img/a2.jpg', 'img/a3.jpg', 'img/a4.jpg'];
+  readonly after = ['img/r1.jpg', 'img/r2.jpg', 'img/r3.jpg', 'img/r4.jpg'];
+  readonly rows = [0, 1, 2, 3];
+  /** Qué cliente va en cada posición de la columna derecha: distinto orden que la izquierda, para que los hilos se crucen. */
+  readonly rightOrder = [2, 0, 3, 1];
+
+  @ViewChild('stage') private stageRef?: ElementRef<HTMLElement>;
+  @ViewChildren('tagEl') private tagEls?: QueryList<ElementRef<HTMLElement>>;
+  @ViewChildren('rowEl') private rowEls?: QueryList<ElementRef<HTMLElement>>;
+  @ViewChildren('pillEl') private pillEls?: QueryList<ElementRef<HTMLElement>>;
+  private readonly platformId = inject(PLATFORM_ID);
+  private resizeObserver?: ResizeObserver;
+  private layoutTimer?: ReturnType<typeof setTimeout>;
+
+  /** Hilos medidos sobre el layout real: de la burbuja del pendiente a la tarjeta de su cliente resuelto. */
+  readonly threads = signal<{ i: number; d: string; delay: number }[]>([]);
+
+  /** Retardo del ciclo de cada hilo (s): escalonado para que atrapen uno tras otro. */
+  threadDelay(i: number): number {
+    return 2.4 + i * 1.5;
+  }
   readonly workspaceUrl = SITE_CONFIG.appUrl;
 
   readonly step = signal<Step>('credentials');
@@ -78,8 +119,49 @@ export class AccountSignInComponent implements OnDestroy {
     inject(DestroyRef).onDestroy(() => this.cooldown.stop());
   }
 
+  ngAfterViewInit(): void {
+    if (!isPlatformBrowser(this.platformId) || typeof ResizeObserver === 'undefined' || !this.stageRef) return;
+    // Las tarjetas entran con una animación: se mide cuando ya están en su sitio, y de nuevo si cambia el tamaño.
+    this.layoutTimer = setTimeout(() => this.measureThreads(), 1900);
+    this.resizeObserver = new ResizeObserver(() => this.measureThreads());
+    this.resizeObserver.observe(this.stageRef.nativeElement);
+  }
+
   ngOnDestroy(): void {
     this.cooldown.stop();
+    clearTimeout(this.layoutTimer);
+    this.resizeObserver?.disconnect();
+  }
+
+  private measureThreads(): void {
+    const stage = this.stageRef?.nativeElement;
+    const tags = this.tagEls?.toArray();
+    const rows = this.rowEls?.toArray();
+    const pills = this.pillEls?.toArray();
+    if (!stage || !tags || !rows || !pills || window.innerWidth < 1024) {
+      this.threads.set([]);
+      return;
+    }
+    const origin = stage.getBoundingClientRect();
+    const out: { i: number; d: string; delay: number }[] = [];
+    for (const i of this.rows) {
+      const slot = this.rightOrder.indexOf(i);
+      const row = rows[i]?.nativeElement.getBoundingClientRect();
+      const tag = tags[i]?.nativeElement.getBoundingClientRect();
+      const pill = pills[slot]?.nativeElement.getBoundingClientRect();
+      if (!row || !tag || !pill) continue;
+      const x1 = tag.right - origin.left + 4;
+      const y1 = row.top + row.height / 2 - origin.top;
+      const x2 = pill.left - origin.left - 4;
+      const y2 = pill.top + pill.height / 2 - origin.top;
+      const dx = (x2 - x1) / 2;
+      out.push({
+        i,
+        d: `M ${x1.toFixed(1)} ${y1.toFixed(1)} C ${(x1 + dx).toFixed(1)} ${y1.toFixed(1)}, ${(x2 - dx).toFixed(1)} ${y2.toFixed(1)}, ${x2.toFixed(1)} ${y2.toFixed(1)}`,
+        delay: this.threadDelay(i),
+      });
+    }
+    this.threads.set(out);
   }
 
   submitCredentials(): void {
@@ -106,6 +188,10 @@ export class AccountSignInComponent implements OnDestroy {
       },
       error: (err: unknown) => this.fail(this.messageFor(err, this.t().accSignInBadCredentials)),
     });
+  }
+
+  toggleLang(): void {
+    this.i18n.toggle();
   }
 
   togglePassword(): void {

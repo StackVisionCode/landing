@@ -1,0 +1,189 @@
+/* Acordeón: el ítem activo crece para llenar la columna (alto fijo = proporción constante de la foto). */
+.fx-item {
+  flex-grow: 0;
+  transition:
+    flex-grow 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 0.4s ease,
+    border-color 0.4s ease;
+}
+
+.fx-item--active {
+  flex-grow: 1;
+}
+
+.fx-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.4s ease;
+}
+
+.fx-item--active .fx-body {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transition-delay: 0.1s;
+}
+
+/* Barra de progreso del ciclo automático. */
+.fx-progress {
+  transform-origin: left;
+  animation: fx-progress 6s linear forwards;
+}
+
+.fx-progress--paused {
+  animation-play-state: paused;
+}
+
+@keyframes fx-progress {
+  from {
+    scale: 0 1;
+  }
+  to {
+    scale: 1 1;
+  }
+}
+
+/* Foto: zoom lento (Ken Burns) y brillo que cruza al cambiar de función. */
+.fx-photo {
+  animation: fx-kenburns 16s ease-in-out infinite alternate;
+}
+
+@keyframes fx-kenburns {
+  from {
+    scale: 1;
+    translate: 0 0;
+  }
+  to {
+    scale: 1.08;
+    translate: -1.5% -1%;
+  }
+}
+
+.fx-sweep {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.35) 50%, transparent 65%);
+  translate: -120% 0;
+  animation: fx-sweep 1s ease-out forwards;
+}
+
+@keyframes fx-sweep {
+  to {
+    translate: 120% 0;
+  }
+}
+
+/* Tarjetas flotantes: entran escalonadas, luego flotan suave. */
+.fx-card {
+  opacity: 0;
+  scale: 0.9;
+  animation:
+    fx-card-in 0.7s cubic-bezier(0.34, 1.4, 0.64, 1) forwards,
+    fx-card-float 5s ease-in-out infinite;
+  animation-delay: var(--d, 0s), calc(var(--d, 0s) + 0.7s);
+}
+
+@keyframes fx-card-in {
+  from {
+    opacity: 0;
+    scale: 0.88;
+    translate: 0 22px;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+    translate: 0 0;
+  }
+}
+
+@keyframes fx-card-float {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -6px;
+  }
+}
+
+.fx-bar {
+  transform-origin: left;
+  animation: fx-bar-fill 1.1s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(var(--d, 0s) + 0.5s);
+}
+
+@keyframes fx-bar-fill {
+  from {
+    scale: 0 1;
+  }
+  to {
+    scale: 1 1;
+  }
+}
+
+.fx-chip-icon {
+  animation: fx-chip-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes fx-chip-pulse {
+  0%,
+  100% {
+    scale: 1;
+  }
+  50% {
+    scale: 1.25;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fx-item,
+  .fx-body {
+    transition: none;
+  }
+
+  .fx-progress,
+  .fx-sweep {
+    display: none;
+  }
+
+  .fx-photo,
+  .fx-chip-icon {
+    animation: none;
+  }
+
+  .fx-card,
+  .fx-bar {
+    animation: none;
+    opacity: 1;
+    scale: 1;
+  }
+}
+
+/* Entrada de la demo al cambiar de función. */
+.fx-stage {
+  animation: fx-stage-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes fx-stage-in {
+  from {
+    opacity: 0;
+    scale: 0.94;
+    translate: 0 18px;
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+    translate: 0 0;
+    filter: blur(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fx-stage {
+    animation: none;
+  }
+}

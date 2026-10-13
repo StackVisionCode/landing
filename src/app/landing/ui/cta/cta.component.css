@@ -1,7 +1,0 @@
-/* Banner de cierre: gradiente diagonal oscuro (Jet Black → Bold Blue de
-   marca) con textura sutil de franjas. */
-.cta-banner-bg {
-  background:
-    repeating-linear-gradient(115deg, rgba(255, 255, 255, 0.06) 0 18px, rgba(255, 255, 255, 0) 18px 42px),
-    linear-gradient(120deg, #0d0d0d 0%, #16334d 35%, #1e466b 65%, #0d0d0d 100%);
-}
