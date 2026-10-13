@@ -1,5 +1,6 @@
-import { Component, CUSTOM_ELEMENTS_SCHEMA, HostListener, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Component, CUSTOM_ELEMENTS_SCHEMA, HostListener, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RegisterShellComponent } from '../register-shell/register-shell.component';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslationStore } from '@core/i18n/translation.store';
 import { OnboardingService } from '@core/onboarding/onboarding.service';
@@ -47,7 +48,7 @@ const TERMINAL_FAILURE_STATUSES: OnboardingStatusValue[] = [
  */
 @Component({
   selector: 'app-register-complete',
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, RegisterShellComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: './register-complete.component.html',
 })
@@ -62,6 +63,10 @@ export class RegisterCompleteComponent implements OnInit, OnDestroy {
   protected readonly t = this.translation.t;
 
   protected readonly step = signal<CompleteStep>('loading');
+  /** Pie del panel: dónde vivirá la oficina. */
+  protected readonly panelFootnote = computed(() =>
+    `${this.t().compPanelFootnotePrefix} ${this.subdomain()}${this.subdomainSuffix}`,
+  );
   protected readonly invalidReason = signal<InvalidReason>('generic');
   protected readonly appUrl = SITE_CONFIG.appUrl;
   protected readonly subdomainSuffix = SITE_CONFIG.subdomainSuffix;

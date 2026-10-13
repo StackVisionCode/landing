@@ -1,5 +1,6 @@
 import { Component, CUSTOM_ELEMENTS_SCHEMA, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { RegisterShellComponent } from '../register-shell/register-shell.component';
 import { TranslationStore } from '@core/i18n/translation.store';
 import { OnboardingService } from '@core/onboarding/onboarding.service';
 import type { OnboardingStatusValue, ReconcileOnboardingPaymentResponse } from '@core/onboarding/onboarding.models';
@@ -28,7 +29,7 @@ const FAILURE_STATUSES: OnboardingStatusValue[] = ['PaymentFailed', 'Cancelled',
 
 @Component({
   selector: 'app-register-payment-received',
-  imports: [RouterLink],
+  imports: [RouterLink, RegisterShellComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: './register-payment-received.component.html',
   styleUrl: './register-payment-received.component.css',

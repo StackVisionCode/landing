@@ -204,6 +204,12 @@ export interface TranslationKeys {
   regPanelHeadline: string;
   regPanelBodyPrefix: string;
   regPanelFootnote: string;
+  regShellHeadline: string;
+  regStepVerify: string;
+  regStepDetails: string;
+  regStepPayment: string;
+  regStepOffice: string;
+  regStepCounter: string;
   regBackButton: string;
 
   // Registro / onboarding — página /register/complete
