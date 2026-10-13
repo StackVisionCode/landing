@@ -1,7 +1,7 @@
 import { CUSTOM_ELEMENTS_SCHEMA, Component, DestroyRef, OnDestroy, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { SITE_CONFIG } from '@core/config/site-config';
+import { SITE_CONFIG, PLATFORM_BRAND, PLATFORM_LEGAL_NAME } from '@core/config/site-config';
 import { TranslationStore } from '@core/i18n/translation.store';
 import { apiErrorCode } from '@core/http/api-error';
 import { ActionCooldown } from '@core/http/action-cooldown';
@@ -26,6 +26,10 @@ type Step = 'credentials' | 'office' | 'takeover';
   templateUrl: './account-sign-in.component.html',
 })
 export class AccountSignInComponent implements OnDestroy {
+  /** Marca y razón social de la plataforma (site-config), nunca escritas en el template. */
+  protected readonly brand = PLATFORM_BRAND;
+  protected readonly legalName = PLATFORM_LEGAL_NAME;
+
   private readonly i18n = inject(TranslationStore);
   private readonly central = inject(CentralLoginService);
   private readonly session = inject(AccountSessionStore);

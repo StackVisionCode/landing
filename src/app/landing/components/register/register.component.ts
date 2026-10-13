@@ -1,6 +1,7 @@
 import { Component, CUSTOM_ELEMENTS_SCHEMA, OnDestroy, OnInit, WritableSignal, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { SITE_CONFIG, PLATFORM_BRAND, PLATFORM_LEGAL_NAME } from '@core/config/site-config';
 import { TranslationStore } from '@core/i18n/translation.store';
 import { OnboardingService } from '@core/onboarding/onboarding.service';
 import {
@@ -54,6 +55,10 @@ const RESEND_COOLDOWN_SECONDS = 60; // cooldown real del reenvío en Auth
   templateUrl: './register.component.html',
 })
 export class RegisterComponent implements OnInit, OnDestroy {
+  /** Marca y razón social de la plataforma (site-config), nunca escritas en el template. */
+  protected readonly brand = PLATFORM_BRAND;
+  protected readonly legalName = PLATFORM_LEGAL_NAME;
+
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly onboarding = inject(OnboardingService);
@@ -180,7 +185,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
     this.step.set('processing');
     this.processingMessage.set(this.t().regPreparingPayment);
     const params = this.route.snapshot.queryParamMap;
-    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://taxproffice.com';
+    const origin = typeof window !== 'undefined' ? window.location.origin : SITE_CONFIG.websiteUrl;
     const cancelUrl = `${origin}/register?plan=${params.get('plan') ?? ''}&cycle=${this.cycle()}&cancelled=1`;
 
     this.onboarding
@@ -388,7 +393,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
     this.isSubmittingDetails.set(false);
     this.step.set('processing');
     this.processingMessage.set(this.t().regPreparingPayment);
-    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://taxproffice.com';
+    const origin = typeof window !== 'undefined' ? window.location.origin : SITE_CONFIG.websiteUrl;
     const plan = this.plan();
     const paymentOption = this.selectedPaymentOption();
 

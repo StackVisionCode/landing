@@ -1,13 +1,18 @@
 /**
  * URLs de salida hacia el producto real y los IDs de calendario de
- * LeadConnector. El dominio real en producción es taxproffice.com (no
- * stacktaxvision.com, que no resuelve) — confirmado pegándole directo a cada
- * subdominio. La API tampoco lleva sufijo /api: las rutas cuelgan directo de
- * la raíz (p.ej. GET /plans, POST /auth/login). Los IDs de booking son
- * placeholders — reemplazar por los reales de la cuenta de LeadConnector
- * antes de publicar.
+ * LeadConnector. Todo host público sale de PLATFORM_DOMAIN: cambiar de dominio
+ * es cambiar esa línea, no buscar URLs sueltas por el código. La API no lleva
+ * sufijo /api: las rutas cuelgan directo de la raíz (p.ej. GET /plans,
+ * POST /auth/login). Los IDs de booking son placeholders — reemplazar por los
+ * reales de la cuenta de LeadConnector antes de publicar.
  */
-const productionApiUrl = 'https://api.taxproffice.com';
+export const PLATFORM_DOMAIN = 'taxoffix.io';
+
+/** Nombre de la plataforma y su razón social. Igual que el dominio: un solo lugar, nunca escritos en un componente. */
+export const PLATFORM_BRAND = 'TaxOffix';
+export const PLATFORM_LEGAL_NAME = 'TaxOffix LLC';
+
+const productionApiUrl = `https://api.${PLATFORM_DOMAIN}`;
 const localApiUrl = 'http://localhost:5047';
 
 function resolveApiUrl(): string {
@@ -22,8 +27,11 @@ function resolveApiUrl(): string {
 
 export const SITE_CONFIG = {
   apiUrl: resolveApiUrl(),
-  appUrl: 'https://app.taxproffice.com',
-  clientPortalUrl: 'https://client.taxproffice.com',
+  websiteUrl: `https://${PLATFORM_DOMAIN}`,
+  appUrl: `https://app.${PLATFORM_DOMAIN}`,
+  clientPortalUrl: `https://client.${PLATFORM_DOMAIN}`,
+  /** Lo que sigue al slug en el host de una oficina (`.<dominio>`). */
+  subdomainSuffix: `.${PLATFORM_DOMAIN}`,
   booking: {
     hero: 'REPLACE_ME_HERO_BOOKING_ID',
     cta: 'REPLACE_ME_CTA_BOOKING_ID',
@@ -31,9 +39,7 @@ export const SITE_CONFIG = {
   },
 } as const;
 
-/** Espacio de trabajo de una oficina: `https://<slug>.taxproffice.com`, derivado del dominio de appUrl. */
+/** Espacio de trabajo de una oficina: `https://<slug>.<dominio>`. */
 export function officeWorkspaceUrl(slug: string): string {
-  const { protocol, host } = new URL(SITE_CONFIG.appUrl);
-  return `${protocol}//${slug}.${host.split(".").slice(1).join(".")}`;
+  return `https://${slug}${SITE_CONFIG.subdomainSuffix}`;
 }
-

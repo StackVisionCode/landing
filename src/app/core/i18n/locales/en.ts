@@ -1,4 +1,5 @@
 import type { TranslationKeys } from '../translation.model';
+import { PLATFORM_BRAND } from '@core/config/site-config';
 
 export const en: TranslationKeys = {
   navFeatures: 'Features',
@@ -80,7 +81,7 @@ export const en: TranslationKeys = {
 
   faqSidebarTitleHtml: 'Frequently Asked <span class="highlight">Questions</span>',
   helpCenterButton: 'Help Center',
-  faqQuestion1: 'Is TaxPro Office compatible with other tax software?',
+  faqQuestion1: `Is ${PLATFORM_BRAND} compatible with other tax software?`,
   faqAnswer1:
     'Yes, our platform is designed to integrate seamlessly with the leading tax software providers on the market. You can easily export and import data to keep your workflow uninterrupted.',
   faqQuestion3: 'Is my data secure in the cloud?',
@@ -90,7 +91,7 @@ export const en: TranslationKeys = {
   faqAnswer4: 'Of course! We offer live training sessions, an extensive library of tutorial videos, and weekly webinars.',
 
   ctaMainTitleHtml: 'Ready to transform your <span class="highlight">office</span>?',
-  ctaMainSubtitle: 'Join thousands of professionals who are already scaling their businesses with TaxPro Office.',
+  ctaMainSubtitle: `Join thousands of professionals who are already scaling their businesses with ${PLATFORM_BRAND}.`,
   startNowButton: 'Start Now',
   scheduleDemoButton: 'Schedule Demo',
 
@@ -186,7 +187,7 @@ export const en: TranslationKeys = {
   payReceivedRetryPayment: 'Retry payment',
   payReceivedRetryError: 'We could not start the payment again. Please try once more.',
   payReceivedWelcomeEyebrow: 'Welcome!',
-  payReceivedWelcomeHeadline: 'Thanks for joining TaxPro Office',
+  payReceivedWelcomeHeadline: `Thanks for joining ${PLATFORM_BRAND}`,
   regHaveCodeToggle: 'Have a referral, promo, or gift code?',
   regReferralCodeLabel: 'Referral code (optional)',
   regPromoCodeLabel: 'Promo code (optional)',
@@ -211,7 +212,6 @@ export const en: TranslationKeys = {
   compOfficeNameLabel: 'Your office name',
   compOfficeNamePlaceholder: 'My Tax Office',
   compSubdomainLabel: 'Choose your subdomain',
-  compSubdomainSuffix: '.taxproffice.com',
   compSubdomainChecking: 'Checking availability...',
   compSubdomainAvailable: 'Available!',
   compSubdomainTaken: 'That subdomain is already taken',

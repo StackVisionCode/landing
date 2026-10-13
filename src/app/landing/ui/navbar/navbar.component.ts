@@ -14,7 +14,7 @@ import {
 import { isPlatformBrowser } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { TranslationStore } from '@core/i18n/translation.store';
-import { SITE_CONFIG } from '@core/config/site-config';
+import { SITE_CONFIG, PLATFORM_BRAND, PLATFORM_LEGAL_NAME } from '@core/config/site-config';
 
 interface NavLinkDef {
   id: string;
@@ -38,6 +38,10 @@ const HEADER_OFFSET = 80;
   templateUrl: './navbar.component.html',
 })
 export class NavbarComponent implements AfterViewInit, OnDestroy {
+  /** Marca y razón social de la plataforma (site-config), nunca escritas en el template. */
+  protected readonly brand = PLATFORM_BRAND;
+  protected readonly legalName = PLATFORM_LEGAL_NAME;
+
   protected readonly translation = inject(TranslationStore);
   protected readonly t = this.translation.t;
   protected readonly lang = this.translation.lang;
