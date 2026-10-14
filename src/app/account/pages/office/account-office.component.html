@@ -7,8 +7,8 @@
       <article class="overflow-hidden rounded-xl border border-line bg-white">
         <h2 class="px-6 py-4 text-sm font-semibold text-twilight">{{ t().accOfficeSectionOffice }}</h2>
 
-        <div class="flex items-center border-t border-line px-6 py-4">
-          <span class="w-56 shrink-0 text-[13px] text-muted">{{ t().accOfficeLogoAlt }}</span>
+        <div class="flex flex-col items-start gap-1 border-t border-line px-4 py-4 sm:flex-row sm:items-center sm:gap-0 sm:px-6">
+          <span class="shrink-0 text-[13px] text-muted sm:w-56">{{ t().accOfficeLogoAlt }}</span>
           @if (logoUrl(); as logo) {
             <img [src]="logo" [alt]="t().accOfficeLogoAlt"
               class="h-10 w-10 rounded-lg border border-line object-contain" />
@@ -18,12 +18,12 @@
             </span>
           }
         </div>
-        <div class="flex items-center border-t border-line px-6 py-4">
-          <span class="w-56 shrink-0 text-[13px] text-muted">{{ t().accOfficeNameLabel }}</span>
+        <div class="flex flex-col items-start gap-1 border-t border-line px-4 py-4 sm:flex-row sm:items-center sm:gap-0 sm:px-6">
+          <span class="shrink-0 text-[13px] text-muted sm:w-56">{{ t().accOfficeNameLabel }}</span>
           <span class="min-w-0 text-sm font-medium text-twilight">{{ profile.tenant.name }}</span>
         </div>
-        <div class="flex items-center border-t border-line px-6 py-4">
-          <span class="w-56 shrink-0 text-[13px] text-muted">{{ t().accOfficeAddressLabel }}</span>
+        <div class="flex flex-col items-start gap-1 border-t border-line px-4 py-4 sm:flex-row sm:items-center sm:gap-0 sm:px-6">
+          <span class="shrink-0 text-[13px] text-muted sm:w-56">{{ t().accOfficeAddressLabel }}</span>
           <span class="min-w-0 text-sm font-medium text-twilight">
             @if (workspaceUrl(); as url) {
               <a [href]="url" class="break-all text-star hover:underline">{{ url }}</a>
@@ -35,12 +35,12 @@
       <article class="overflow-hidden rounded-xl border border-line bg-white">
         <h2 class="px-6 py-4 text-sm font-semibold text-twilight">{{ t().accOfficeSectionAdmin }}</h2>
 
-        <div class="flex items-center border-t border-line px-6 py-4">
-          <span class="w-56 shrink-0 text-[13px] text-muted">{{ t().accOfficeAdminNameLabel }}</span>
+        <div class="flex flex-col items-start gap-1 border-t border-line px-4 py-4 sm:flex-row sm:items-center sm:gap-0 sm:px-6">
+          <span class="shrink-0 text-[13px] text-muted sm:w-56">{{ t().accOfficeAdminNameLabel }}</span>
           <span class="min-w-0 text-sm font-medium text-twilight">{{ adminName() }}</span>
         </div>
-        <div class="flex items-center border-t border-line px-6 py-4">
-          <span class="w-56 shrink-0 text-[13px] text-muted">{{ t().accOfficeAdminEmailLabel }}</span>
+        <div class="flex flex-col items-start gap-1 border-t border-line px-4 py-4 sm:flex-row sm:items-center sm:gap-0 sm:px-6">
+          <span class="shrink-0 text-[13px] text-muted sm:w-56">{{ t().accOfficeAdminEmailLabel }}</span>
           <span class="min-w-0 break-all text-sm font-medium text-twilight">{{ profile.email }}</span>
         </div>
       </article>

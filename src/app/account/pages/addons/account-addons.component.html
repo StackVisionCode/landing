@@ -49,7 +49,7 @@
                 <p class="text-xs text-muted">{{ priceLabel(addOn) }}</p>
               </div>
               <button type="button" (click)="buy(addOn)" [disabled]="buyingCode() !== null || waiting()"
-                class="rounded-lg bg-twilight px-4 py-2 text-[13px] font-semibold text-white hover:bg-star disabled:opacity-60">
+                class="w-full rounded-lg bg-twilight sm:w-auto px-4 py-2 text-[13px] font-semibold text-white hover:bg-star disabled:opacity-60">
                 {{ buyingCode() === addOn.code ? t().accAddOnBuying : t().accAddOnBuy }}
               </button>
             </li>
