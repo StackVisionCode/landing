@@ -260,6 +260,11 @@ export interface TranslationKeys {
   accEyebrow: string;
   accNavOverview: string;
   accNavOffice: string;
+  accNavGroupSubscription: string;
+  accNavGroupBilling: string;
+  accNavGroupOffice: string;
+  accOvStatusLabel: string;
+  accOvNextChargeLabel: string;
   accNavMenu: string;
   accSignOut: string;
   accBackToWorkspace: string;

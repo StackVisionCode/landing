@@ -1,95 +1,100 @@
 <section>
-  <h1 class="text-2xl font-bold text-ink sm:text-3xl">{{ t().accAddOnsTitle }}</h1>
-  <p class="mt-1 text-sm text-gray-500">{{ t().accAddOnsSubtitle }}</p>
+  <h1 class="text-2xl font-semibold tracking-tight text-twilight">{{ t().accAddOnsTitle }}</h1>
+  <p class="mt-1 text-[13px] text-muted">{{ t().accAddOnsSubtitle }}</p>
 
   @if (outcome() === 'paid') {
-    <div role="status" class="mt-4 rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
+    <div role="status" class="mt-4 rounded-xl border border-line bg-sand px-4 py-3 text-sm text-twilight">
       <p class="font-semibold">{{ t().accAddOnPaidTitle }}</p>
       <p class="mt-0.5">{{ t().accAddOnPaidBody }}</p>
     </div>
   } @else if (outcome() === 'done') {
-    <p role="status" class="mt-4 rounded-2xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{{ t().accAddOnDoneTitle }}</p>
+    <p role="status" class="mt-4 rounded-xl bg-azure/20 px-4 py-3 text-sm text-twilight">{{ t().accAddOnDoneTitle }}</p>
   } @else if (outcome() === 'cancelled') {
-    <p role="status" class="mt-4 rounded-2xl bg-gray-100 px-4 py-3 text-sm text-gray-600">{{ t().accSeatsCancelled }}</p>
+    <p role="status" class="mt-4 rounded-xl border border-line bg-white px-4 py-3 text-sm text-muted">{{ t().accSeatsCancelled }}</p>
   }
 
   @if (buyError(); as error) {
-    <p role="alert" class="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{{ error }}</p>
+    <p role="alert" class="mt-4 rounded-xl border border-twilight/40 bg-sand px-4 py-3 text-sm text-twilight">{{ error }}</p>
   }
   @if (waiting()) {
-    <p role="status" class="mt-2 text-xs font-medium text-amber-700">{{ waitLabel() }}</p>
+    <p role="status" class="mt-2 text-xs font-medium text-muted">{{ waitLabel() }}</p>
   }
 
   @if (loading()) {
-    <div class="mt-6 h-40 animate-pulse rounded-3xl bg-gray-100" role="status" [attr.aria-label]="t().accLoading"></div>
+    <div class="mt-6 h-40 animate-pulse rounded-xl bg-sand" role="status" [attr.aria-label]="t().accLoading"></div>
   } @else if (failed()) {
-    <div class="mt-6 rounded-3xl border border-gray-200 bg-white p-8 text-center">
-      <p class="text-sm text-gray-500">{{ t().accLoadError }}</p>
+    <div class="mt-6 rounded-xl border border-line bg-white p-8 text-center">
+      <p class="text-sm text-muted">{{ t().accLoadError }}</p>
       <button type="button" (click)="load()"
-        class="mt-4 rounded-full bg-brand-800 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-900">
+        class="mt-4 rounded-lg bg-twilight px-4 py-2 text-[13px] font-semibold text-white hover:bg-star">
         {{ t().accRetry }}
       </button>
     </div>
   } @else if (isEmpty()) {
-    <p class="mt-6 rounded-3xl border border-dashed border-gray-300 bg-white p-8 text-center text-sm text-gray-500">
+    <p class="mt-6 rounded-xl border border-dashed border-line bg-white p-8 text-center text-sm text-muted">
       {{ t().accAddOnsEmpty }}
     </p>
   } @else {
-    <div class="mt-6 space-y-4">
+    <article class="mt-6 overflow-hidden rounded-xl border border-line bg-white">
       @if (available().length) {
-        <article class="rounded-3xl border border-gray-200 bg-white p-6">
-          <h2 class="text-xs font-semibold uppercase tracking-[0.18em] text-gray-400">{{ t().accAddOnsAvailableGroup }}</h2>
-          <ul class="mt-3 divide-y divide-gray-100">
-            @for (addOn of available(); track addOn.code) {
-              <li class="flex flex-wrap items-center justify-between gap-3 py-3">
-                <div class="min-w-0">
-                  <p class="text-sm font-medium text-ink">{{ displayName(addOn) }}</p>
-                  <p class="text-xs text-gray-500">{{ priceLabel(addOn) }}</p>
-                </div>
-                <button type="button" (click)="buy(addOn)" [disabled]="buyingCode() !== null || waiting()"
-                  class="rounded-full btn-brand-gradient px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
-                  {{ buyingCode() === addOn.code ? t().accAddOnBuying : t().accAddOnBuy }}
-                </button>
-              </li>
-            }
-          </ul>
-        </article>
+        <h2 class="bg-cream px-5 py-2.5 text-xs font-semibold text-muted">{{ t().accAddOnsAvailableGroup }}</h2>
+        <ul class="divide-y divide-line">
+          @for (addOn of available(); track addOn.code) {
+            <li class="flex flex-wrap items-center gap-3 px-5 py-3.5">
+              <span class="grid h-10 w-10 shrink-0 place-items-center rounded-[10px] bg-sand text-star">
+                  <ion-icon name="extension-puzzle-outline" class="text-lg"></ion-icon>
+                </span>
+              <div class="min-w-0 flex-1">
+                <p class="text-sm font-semibold text-twilight">{{ displayName(addOn) }}</p>
+                <p class="text-xs text-muted">{{ priceLabel(addOn) }}</p>
+              </div>
+              <button type="button" (click)="buy(addOn)" [disabled]="buyingCode() !== null || waiting()"
+                class="w-full rounded-lg bg-twilight sm:w-auto px-4 py-2 text-[13px] font-semibold text-white hover:bg-star disabled:opacity-60">
+                {{ buyingCode() === addOn.code ? t().accAddOnBuying : t().accAddOnBuy }}
+              </button>
+            </li>
+          }
+        </ul>
       }
 
       @if (active().length) {
-        <article class="rounded-3xl border border-gray-200 bg-white p-6">
-          <h2 class="text-xs font-semibold uppercase tracking-[0.18em] text-gray-400">{{ t().accAddOnsActiveGroup }}</h2>
-          <ul class="mt-3 divide-y divide-gray-100">
-            @for (addOn of active(); track addOn.code) {
-              <li class="flex flex-wrap items-center justify-between gap-3 py-3">
-                <div class="min-w-0">
-                  <p class="text-sm font-medium text-ink">{{ displayName(addOn) }}</p>
-                  @if (activeDetail(addOn); as detail) {
-                    <p class="text-xs text-gray-500">{{ detail }}</p>
-                  }
-                </div>
-                <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-                  {{ t().accOvAddOnActive }}
+        <h2 class="bg-cream px-5 py-2.5 text-xs font-semibold text-muted" [class.border-t]="available().length" [class.border-line]="available().length">{{ t().accAddOnsActiveGroup }}</h2>
+        <ul class="divide-y divide-line">
+          @for (addOn of active(); track addOn.code) {
+            <li class="flex flex-wrap items-center gap-3 px-5 py-3.5">
+              <span class="grid h-10 w-10 shrink-0 place-items-center rounded-[10px] bg-sand text-star">
+                  <ion-icon name="extension-puzzle-outline" class="text-lg"></ion-icon>
                 </span>
-              </li>
-            }
-          </ul>
-        </article>
+              <div class="min-w-0 flex-1">
+                <p class="text-sm font-semibold text-twilight">{{ displayName(addOn) }}</p>
+                @if (activeDetail(addOn); as detail) {
+                  <p class="text-xs text-muted">{{ detail }}</p>
+                }
+              </div>
+              <span class="inline-flex items-center gap-1.5 rounded-full bg-azure/20 px-2.5 py-0.5 text-xs font-semibold text-twilight">
+                <span class="h-1.5 w-1.5 rounded-full bg-star"></span>
+                {{ t().accOvAddOnActive }}
+              </span>
+            </li>
+          }
+        </ul>
       }
 
       @if (included().length) {
-        <article class="rounded-3xl border border-gray-200 bg-white p-6">
-          <h2 class="text-xs font-semibold uppercase tracking-[0.18em] text-gray-400">{{ t().accAddOnsIncludedGroup }}</h2>
-          <ul class="mt-3 divide-y divide-gray-100">
-            @for (addOn of included(); track addOn.code) {
-              <li class="py-3">
-                <p class="text-sm font-medium text-ink">{{ displayName(addOn) }}</p>
-              </li>
-            }
-          </ul>
-          <p class="mt-4 text-xs text-gray-400">{{ t().accAddOnsIncludedHint }}</p>
-        </article>
+        <h2 class="bg-cream px-5 py-2.5 text-xs font-semibold text-muted" [class.border-t]="available().length || active().length" [class.border-line]="available().length || active().length">{{ t().accAddOnsIncludedGroup }}</h2>
+        <ul class="divide-y divide-line">
+          @for (addOn of included(); track addOn.code) {
+            <li class="flex flex-wrap items-center gap-3 px-5 py-3.5">
+              <span class="grid h-10 w-10 shrink-0 place-items-center rounded-[10px] bg-sand text-star">
+                  <ion-icon name="extension-puzzle-outline" class="text-lg"></ion-icon>
+                </span>
+              <p class="min-w-0 flex-1 text-sm font-semibold text-twilight">{{ displayName(addOn) }}</p>
+              <span class="rounded-full bg-sand px-2.5 py-0.5 text-xs font-semibold text-twilight">{{ t().accAddOnsIncludedGroup }}</span>
+            </li>
+          }
+        </ul>
+        <p class="border-t border-line px-5 py-3 text-xs text-muted">{{ t().accAddOnsIncludedHint }}</p>
       }
-    </div>
+    </article>
   }
 </section>

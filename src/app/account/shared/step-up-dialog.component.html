@@ -1,36 +1,36 @@
-<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4" role="dialog" aria-modal="true"
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-twilight/40 px-4" role="dialog" aria-modal="true"
   [attr.aria-label]="t().accStepUpTitle">
-  <div class="w-full max-w-md rounded-3xl bg-white p-6 shadow-xl">
-    <h2 class="text-lg font-bold text-ink">{{ t().accStepUpTitle }}</h2>
-    <p class="mt-1 text-sm text-gray-500">{{ t().accStepUpSubtitle }}</p>
+  <div class="w-full max-w-md rounded-2xl border border-line bg-white p-6 shadow-xl">
+    <h2 class="text-lg font-semibold text-twilight">{{ t().accStepUpTitle }}</h2>
+    <p class="mt-1 text-[13px] text-muted">{{ t().accStepUpSubtitle }}</p>
 
     <form class="mt-5 space-y-4" (ngSubmit)="submit()">
       <div>
-        <label for="stepUpPassword" class="block text-sm font-medium text-ink">{{ t().accStepUpPassword }}</label>
+        <label for="stepUpPassword" class="block text-[13px] font-semibold text-twilight">{{ t().accStepUpPassword }}</label>
         <input id="stepUpPassword" type="password" name="password" autocomplete="current-password" required
           [ngModel]="password()" (ngModelChange)="password.set($event)"
-          class="mt-1 w-full rounded-2xl border border-gray-300 px-4 py-2.5 text-sm focus:border-brand-800 focus:outline-none" />
+          class="mt-1 w-full rounded-lg border border-line bg-cream px-3.5 py-2.5 text-sm text-twilight focus:border-star focus:outline-none focus:ring-2 focus:ring-star/25" />
       </div>
 
       <div>
-        <label for="stepUpCode" class="block text-sm font-medium text-ink">{{ t().accStepUpCode }}</label>
+        <label for="stepUpCode" class="block text-[13px] font-semibold text-twilight">{{ t().accStepUpCode }}</label>
         <input id="stepUpCode" type="text" name="code" inputmode="numeric" autocomplete="one-time-code"
           [ngModel]="code()" (ngModelChange)="code.set($event)"
-          class="mt-1 w-full rounded-2xl border border-gray-300 px-4 py-2.5 text-sm focus:border-brand-800 focus:outline-none" />
-        <p class="mt-1 text-xs text-gray-400">{{ t().accStepUpCodeHint }}</p>
+          class="mt-1 w-full rounded-lg border border-line bg-cream px-3.5 py-2.5 text-sm text-twilight focus:border-star focus:outline-none focus:ring-2 focus:ring-star/25" />
+        <p class="mt-1 text-xs text-muted">{{ t().accStepUpCodeHint }}</p>
       </div>
 
       @if (error(); as message) {
-        <p role="alert" class="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{{ message }}</p>
+        <p role="alert" class="rounded-lg border border-twilight/40 bg-sand px-4 py-3 text-sm text-twilight">{{ message }}</p>
       }
 
       <div class="flex justify-end gap-3 pt-1">
         <button type="button" (click)="dismiss()"
-          class="rounded-full px-4 py-2 text-sm font-semibold text-gray-500 transition-colors hover:text-ink">
+          class="rounded-lg border border-line bg-white px-4 py-2 text-[13px] font-semibold text-twilight hover:bg-cream">
           {{ t().accStepUpCancel }}
         </button>
         <button type="submit" [disabled]="submitting() || !password()"
-          class="rounded-full btn-brand-gradient px-5 py-2 text-sm font-semibold text-white disabled:opacity-60">
+          class="rounded-lg bg-twilight px-4 py-2 text-[13px] font-semibold text-white hover:bg-star disabled:opacity-60">
           {{ submitting() ? t().accStepUpConfirming : t().accStepUpConfirm }}
         </button>
       </div>

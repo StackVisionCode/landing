@@ -1,3 +1,4 @@
+import { InfinityLoaderComponent } from '@shared/infinity-loader/infinity-loader.component';
 import { Component, CUSTOM_ELEMENTS_SCHEMA, ElementRef, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
@@ -24,7 +25,7 @@ const ACTIVE_HIT_CLASS = 'legal-search-hit--active';
  */
 @Component({
   selector: 'app-legal-page',
-  imports: [RouterLink, DatePipe],
+  imports: [RouterLink, DatePipe, InfinityLoaderComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: './legal-page.component.html',
 })

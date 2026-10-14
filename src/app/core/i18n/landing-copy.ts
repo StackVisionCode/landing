@@ -23,18 +23,18 @@ const es = {
     subtitle:
       'Clientes, documentos, firmas electrónicas y cobros en un solo lugar, para que veas qué vence y qué falta antes de que sea tarde.',
     micro: 'Demo sin compromiso · Cancela cuando quieras',
-    pending: [
-      { name: 'María', text: 'falta un documento' },
-      { name: 'Carlos', text: 'vence en 3 días' },
-      { name: 'Laura', text: 'factura sin pagar' },
-      { name: 'Ana', text: 'contrato sin firmar' },
-    ],
-    done: [
-      { name: 'María', text: 'Declaración presentada' },
-      { name: 'Carlos', text: 'Plazo cumplido' },
-      { name: 'Laura', text: 'Pago recibido' },
-      { name: 'Ana', text: 'Contrato firmado' },
-    ],
+    story: {
+      pendingTitle: 'Hoy en tu oficina',
+      doneTitle: 'Resuelto',
+      idle: 'Tu oficina, en orden',
+      resolved: 'resueltos',
+      items: [
+        { name: 'María', pending: 'Falta el W-2', action: 'Documento solicitado', done: 'Declaración presentada' },
+        { name: 'Carlos', pending: 'Vence en 3 días', action: 'Recordatorio enviado', done: 'Plazo cumplido' },
+        { name: 'Laura', pending: 'Factura sin pagar', action: 'Enlace de pago enviado', done: 'Pago recibido' },
+        { name: 'Ana', pending: 'Contrato sin firmar', action: 'Enviado a firmar', done: 'Contrato firmado' },
+      ],
+    },
   },
 
   trust: {
@@ -289,7 +289,7 @@ const en: LandingCopy = {
   startNow: 'Get Started',
 
   hero: {
-    eyebrow: 'For tax offices',
+    eyebrow: 'For tax professionals’ offices',
     line1a: 'Every',
     line1b: 'Client.',
     line1c: 'Every Deadline.',
@@ -297,18 +297,18 @@ const en: LandingCopy = {
     subtitle:
       'Clients, documents, e-signatures and payments in one place, so you can see what is due and what is missing before it is too late.',
     micro: 'No-commitment demo · Cancel anytime',
-    pending: [
-      { name: 'María', text: 'missing a document' },
-      { name: 'Carlos', text: 'due in 3 days' },
-      { name: 'Laura', text: 'unpaid invoice' },
-      { name: 'Ana', text: 'unsigned contract' },
-    ],
-    done: [
-      { name: 'María', text: 'Return filed' },
-      { name: 'Carlos', text: 'Deadline met' },
-      { name: 'Laura', text: 'Payment received' },
-      { name: 'Ana', text: 'Contract signed' },
-    ],
+    story: {
+      pendingTitle: 'Today at your office',
+      doneTitle: 'Resolved',
+      idle: 'Your office, in order',
+      resolved: 'resolved',
+      items: [
+        { name: 'María', pending: 'W-2 missing', action: 'Document requested', done: 'Return filed' },
+        { name: 'Carlos', pending: 'Due in 3 days', action: 'Reminder sent', done: 'Deadline met' },
+        { name: 'Laura', pending: 'Unpaid invoice', action: 'Payment link sent', done: 'Payment received' },
+        { name: 'Ana', pending: 'Unsigned contract', action: 'Sent for signature', done: 'Contract signed' },
+      ],
+    },
   },
 
   trust: {

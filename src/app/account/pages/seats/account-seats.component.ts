@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { CUSTOM_ELEMENTS_SCHEMA, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { catchError, forkJoin, of } from 'rxjs';
@@ -31,6 +31,7 @@ const MAX_POLLS = 20;
 @Component({
   selector: 'app-account-seats',
   imports: [FormsModule],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: './account-seats.component.html',
 })
 export class AccountSeatsComponent {
@@ -79,6 +80,21 @@ export class AccountSeatsComponent {
       ? this.t().accOvSeatsTotal.replace('{total}', String(total))
       : this.t().accOvSeatsUsed.replace('{used}', String(used)).replace('{total}', String(total));
   });
+
+  /** Presentational: stepper buttons, same effect as typing in the input. */
+  step(delta: number): void {
+    this.quantity.set(Math.min(500, Math.max(1, (Number(this.quantity()) || 1) + delta)));
+    this.quote.set(null);
+  }
+
+  /** Presentational numbers for the metrics card. */
+  readonly usedCount = computed(() => this.limits()?.activeUsers ?? 0);
+  readonly totalCount = computed(() => this.subscription()?.seats.total ?? 0);
+  readonly purchasedCount = computed(() => this.subscription()?.seats.purchased ?? 0);
+  readonly unassignedCount = computed(() => Math.max(0, this.totalCount() - this.usedCount()));
+  readonly usagePercent = computed(() =>
+    this.totalCount() > 0 ? Math.min(100, Math.round((this.usedCount() / this.totalCount()) * 100)) : 0
+  );
 
   readonly breakdownLabel = computed(() => {
     const seats = this.subscription()?.seats;

@@ -1,56 +1,60 @@
 <section>
-  <h1 class="text-2xl font-bold text-ink sm:text-3xl">{{ t().accOfficeTitle }}</h1>
-  <p class="mt-1 text-sm text-gray-500">{{ t().accOfficeSubtitle }}</p>
+  <h1 class="text-2xl font-semibold tracking-tight text-twilight">{{ t().accOfficeTitle }}</h1>
+  <p class="mt-1 text-[13px] text-muted">{{ t().accOfficeSubtitle }}</p>
 
   @if (me(); as profile) {
-    <div class="mt-6 grid gap-4 lg:grid-cols-2">
-      <article class="rounded-3xl border border-gray-200 bg-white p-6">
-        <h2 class="text-xs font-semibold uppercase tracking-[0.18em] text-gray-400">{{ t().accOfficeSectionOffice }}</h2>
+    <div class="mt-6 space-y-4">
+      <article class="overflow-hidden rounded-xl border border-line bg-white">
+        <h2 class="px-6 py-4 text-sm font-semibold text-twilight">{{ t().accOfficeSectionOffice }}</h2>
 
-        <div class="mt-4 flex items-center gap-4">
+        <div class="flex flex-col items-start gap-1 border-t border-line px-4 py-4 sm:flex-row sm:items-center sm:gap-0 sm:px-6">
+          <span class="shrink-0 text-[13px] text-muted sm:w-56">{{ t().accOfficeLogoAlt }}</span>
           @if (logoUrl(); as logo) {
             <img [src]="logo" [alt]="t().accOfficeLogoAlt"
-              class="h-12 w-12 rounded-2xl border border-gray-100 object-contain" />
+              class="h-10 w-10 rounded-lg border border-line object-contain" />
           } @else {
-            <span class="grid h-12 w-12 place-items-center rounded-2xl bg-brand-50 text-sm font-bold text-brand-800">
+            <span class="grid h-10 w-10 place-items-center rounded-lg bg-twilight text-xs font-semibold text-white">
               {{ initials() }}
             </span>
           }
-          <p class="min-w-0 text-base font-semibold text-ink">{{ profile.tenant.name }}</p>
         </div>
-
-        <dl class="mt-5 space-y-3 text-sm">
-          <div class="flex flex-wrap items-baseline justify-between gap-2">
-            <dt class="text-gray-500">{{ t().accOfficeNameLabel }}</dt>
-            <dd class="font-medium text-ink">{{ profile.tenant.name }}</dd>
-          </div>
-          <div class="flex flex-wrap items-baseline justify-between gap-2">
-            <dt class="text-gray-500">{{ t().accOfficeAddressLabel }}</dt>
-            <dd class="min-w-0 font-medium text-ink">
-              @if (workspaceUrl(); as url) {
-                <a [href]="url" class="break-all text-brand-700 underline-offset-2 hover:underline">{{ url }}</a>
-              }
-            </dd>
-          </div>
-        </dl>
-
-        <p class="mt-5 text-xs text-gray-400">{{ t().accOfficeEditHint }}</p>
+        <div class="flex flex-col items-start gap-1 border-t border-line px-4 py-4 sm:flex-row sm:items-center sm:gap-0 sm:px-6">
+          <span class="shrink-0 text-[13px] text-muted sm:w-56">{{ t().accOfficeNameLabel }}</span>
+          <span class="min-w-0 text-sm font-medium text-twilight">{{ profile.tenant.name }}</span>
+        </div>
+        <div class="flex flex-col items-start gap-1 border-t border-line px-4 py-4 sm:flex-row sm:items-center sm:gap-0 sm:px-6">
+          <span class="shrink-0 text-[13px] text-muted sm:w-56">{{ t().accOfficeAddressLabel }}</span>
+          <span class="min-w-0 text-sm font-medium text-twilight">
+            @if (workspaceUrl(); as url) {
+              <a [href]="url" class="break-all text-star hover:underline">{{ url }}</a>
+            }
+          </span>
+        </div>
       </article>
 
-      <article class="rounded-3xl border border-gray-200 bg-white p-6">
-        <h2 class="text-xs font-semibold uppercase tracking-[0.18em] text-gray-400">{{ t().accOfficeSectionAdmin }}</h2>
+      <article class="overflow-hidden rounded-xl border border-line bg-white">
+        <h2 class="px-6 py-4 text-sm font-semibold text-twilight">{{ t().accOfficeSectionAdmin }}</h2>
 
-        <dl class="mt-4 space-y-3 text-sm">
-          <div class="flex flex-wrap items-baseline justify-between gap-2">
-            <dt class="text-gray-500">{{ t().accOfficeAdminNameLabel }}</dt>
-            <dd class="font-medium text-ink">{{ adminName() }}</dd>
-          </div>
-          <div class="flex flex-wrap items-baseline justify-between gap-2">
-            <dt class="text-gray-500">{{ t().accOfficeAdminEmailLabel }}</dt>
-            <dd class="min-w-0 break-all font-medium text-ink">{{ profile.email }}</dd>
-          </div>
-        </dl>
+        <div class="flex flex-col items-start gap-1 border-t border-line px-4 py-4 sm:flex-row sm:items-center sm:gap-0 sm:px-6">
+          <span class="shrink-0 text-[13px] text-muted sm:w-56">{{ t().accOfficeAdminNameLabel }}</span>
+          <span class="min-w-0 text-sm font-medium text-twilight">{{ adminName() }}</span>
+        </div>
+        <div class="flex flex-col items-start gap-1 border-t border-line px-4 py-4 sm:flex-row sm:items-center sm:gap-0 sm:px-6">
+          <span class="shrink-0 text-[13px] text-muted sm:w-56">{{ t().accOfficeAdminEmailLabel }}</span>
+          <span class="min-w-0 break-all text-sm font-medium text-twilight">{{ profile.email }}</span>
+        </div>
       </article>
+
+      <div class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-white px-5 py-3">
+        <p class="text-[13px] text-muted">
+          {{ t().accOfficeEditHint }}
+        </p>
+        @if (workspaceUrl(); as url) {
+          <a [href]="url" class="rounded-lg bg-twilight px-4 py-2 text-[13px] font-semibold text-white hover:bg-star">
+            {{ t().accOfficeAddressLabel }}
+          </a>
+        }
+      </div>
     </div>
   }
 </section>

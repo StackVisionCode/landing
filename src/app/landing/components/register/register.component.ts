@@ -1,3 +1,4 @@
+import { InfinityLoaderComponent } from '@shared/infinity-loader/infinity-loader.component';
 import { Component, CUSTOM_ELEMENTS_SCHEMA, OnDestroy, OnInit, WritableSignal, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RegisterShellComponent } from '../register-shell/register-shell.component';
@@ -51,7 +52,7 @@ const RESEND_COOLDOWN_SECONDS = 60; // cooldown real del reenvío en Auth
  */
 @Component({
   selector: 'app-register',
-  imports: [FormsModule, RouterLink, RegisterShellComponent],
+  imports: [FormsModule, RouterLink, RegisterShellComponent, InfinityLoaderComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: './register.component.html',
 })

@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { CUSTOM_ELEMENTS_SCHEMA, Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { AccountAddOn, AccountSubscription } from '@core/account/account-subscription.models';
 import { AccountSubscriptionService } from '@core/account/account-subscription.service';
@@ -26,6 +26,7 @@ const MAX_POLLS = 20;
 @Component({
   selector: 'app-account-addons',
   templateUrl: './account-addons.component.html',
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class AccountAddOnsComponent {
   private readonly api = inject(AccountSubscriptionService);

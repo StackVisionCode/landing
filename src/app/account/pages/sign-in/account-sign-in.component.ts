@@ -60,7 +60,7 @@ export class AccountSignInComponent implements AfterViewInit, OnDestroy {
   /** Copy del landing (historia de la pantalla: pendientes → resueltos, línea de confianza). */
   readonly c = this.i18n.c;
   readonly lang = this.i18n.lang;
-  readonly story = computed(() => this.c().hero);
+  readonly story = computed(() => this.c().hero.story);
   readonly before = ['img/a1.jpg', 'img/a2.jpg', 'img/a3.jpg', 'img/a4.jpg'];
   readonly after = ['img/r1.jpg', 'img/r2.jpg', 'img/r3.jpg', 'img/r4.jpg'];
   readonly rows = [0, 1, 2, 3];

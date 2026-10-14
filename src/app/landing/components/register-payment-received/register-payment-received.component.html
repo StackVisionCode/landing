@@ -18,7 +18,7 @@
         @switch (step()) {
           @case ('checking') {
             <div class="mx-auto mt-4 flex h-16 w-16 items-center justify-center rounded-full bg-sand">
-              <ion-icon name="sync-outline" class="payment-spin text-3xl text-star"></ion-icon>
+              <app-infinity-loader size="md" />
             </div>
             <h2 class="mt-6 font-display text-[28px] font-semibold tracking-tight text-twilight">{{ t().payReceivedCheckingTitle }}</h2>
             <p class="mt-2 text-sm text-muted">{{ t().payReceivedCheckingBody }}</p>
@@ -26,7 +26,7 @@
 
           @case ('processing') {
             <div class="mx-auto mt-4 flex h-16 w-16 items-center justify-center rounded-full bg-sand">
-              <ion-icon name="sync-outline" class="payment-spin text-3xl text-star"></ion-icon>
+              <app-infinity-loader size="md" />
             </div>
             <h2 class="mt-6 font-display text-[28px] font-semibold tracking-tight text-twilight">{{ t().payReceivedProcessingTitle }}</h2>
             <p class="mt-2 text-sm text-muted">{{ t().payReceivedProcessingBody }}</p>
@@ -61,7 +61,7 @@
                 class="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-lime py-3 text-center text-sm font-bold text-twilight transition hover:brightness-95 disabled:opacity-60"
               >
                 @if (isRetrying()) {
-                  <ion-icon name="sync-outline" class="payment-spin text-base"></ion-icon>
+                  <app-infinity-loader size="xs" />
                 }
                 {{ retryCooldown.active() ? waitLabel() : t().payReceivedRetryPayment }}
               </button>

@@ -1,3 +1,4 @@
+import { InfinityLoaderComponent } from '@shared/infinity-loader/infinity-loader.component';
 import { Component, CUSTOM_ELEMENTS_SCHEMA, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { RegisterShellComponent } from '../register-shell/register-shell.component';
@@ -29,7 +30,7 @@ const FAILURE_STATUSES: OnboardingStatusValue[] = ['PaymentFailed', 'Cancelled',
 
 @Component({
   selector: 'app-register-payment-received',
-  imports: [RouterLink, RegisterShellComponent],
+  imports: [RouterLink, RegisterShellComponent, InfinityLoaderComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: './register-payment-received.component.html',
   styleUrl: './register-payment-received.component.css',
