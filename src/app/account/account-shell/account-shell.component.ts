@@ -42,6 +42,13 @@ export class AccountShellComponent {
     { path: 'office', exact: false, icon: 'business-outline', label: () => this.t().accNavOffice },
   ];
 
+  /** Los mismos enlaces agrupados por sección (SUBSCRIPTION / BILLING / OFFICE) para el menú lateral. */
+  readonly groups = computed(() => [
+    { id: 'subscription', label: () => this.t().accNavGroupSubscription, links: this.links.slice(0, 4) },
+    { id: 'billing', label: () => this.t().accNavGroupBilling, links: this.links.slice(4, 5) },
+    { id: 'office', label: () => this.t().accNavGroupOffice, links: this.links.slice(5) },
+  ]);
+
   constructor() {
     this.branding.load();
     // Si la sesión muere en otro lado, que se note sin tener que recargar.

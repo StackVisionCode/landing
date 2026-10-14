@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { CUSTOM_ELEMENTS_SCHEMA, Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { catchError, forkJoin, of } from 'rxjs';
 import {
@@ -30,6 +30,7 @@ type CheckoutOutcome = 'none' | 'paid' | 'cancelled';
   selector: 'app-account-plan',
   imports: [StepUpDialogComponent],
   templateUrl: './account-plan.component.html',
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class AccountPlanComponent {
   private readonly api = inject(AccountSubscriptionService);
@@ -286,6 +287,30 @@ export class AccountPlanComponent {
 
   featuresOf(plan: PlanResponse): string[] {
     return plan.enabledModules.map(module => moduleLabel(module, this.i18n.lang()));
+  }
+
+  /** Presentational: every module offered by any plan, as comparison rows. */
+  readonly moduleRows = computed(() => {
+    const codes: string[] = [];
+    for (const plan of this.plans()) {
+      for (const code of plan.enabledModules) {
+        if (!codes.includes(code)) {
+          codes.push(code);
+        }
+      }
+    }
+    return codes.map(code => ({ code, label: moduleLabel(code, this.i18n.lang()) }));
+  });
+
+  hasModule(plan: PlanResponse, code: string): boolean {
+    return plan.enabledModules.includes(code);
+  }
+
+  readonly storageRowLabel = computed(() => (this.i18n.lang() === 'es' ? 'Almacenamiento' : 'Storage'));
+
+  storageLabel(plan: PlanResponse): string {
+    const gb = plan.storageQuotaBytes / 1024 ** 3;
+    return gb >= 1 ? `${Math.round(gb * 10) / 10} GB` : `${Math.round(plan.storageQuotaBytes / 1024 ** 2)} MB`;
   }
 
   isCurrent(plan: PlanResponse): boolean {

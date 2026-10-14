@@ -109,14 +109,14 @@ export class AccountBillingComponent {
     return labels[`accBillingStatus${row.status}`] ?? row.status;
   }
 
-  /** Verde solo lo cobrado; rojo lo que falló; gris el resto, que todavía no es nada. */
+  /** Azure solo lo cobrado; sand con borde lo que falló; outline el resto, que todavía no es nada. */
   statusTone(row: SaaSPaymentRow): string {
     if (row.status === 'Succeeded') {
-      return 'bg-emerald-50 text-emerald-700';
+      return 'bg-azure/20 text-twilight';
     }
     return row.status === 'Failed' || row.status === 'ChargedBack'
-      ? 'bg-red-50 text-red-700'
-      : 'bg-gray-100 text-gray-600';
+      ? 'bg-sand text-twilight border border-twilight/40'
+      : 'border border-line text-muted';
   }
 
   refundLabel(row: SaaSPaymentRow): string {

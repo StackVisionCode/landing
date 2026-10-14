@@ -1,3 +1,4 @@
+import { InfinityLoaderComponent } from '@shared/infinity-loader/infinity-loader.component';
 import { Component, CUSTOM_ELEMENTS_SCHEMA, HostListener, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RegisterShellComponent } from '../register-shell/register-shell.component';
@@ -48,7 +49,7 @@ const TERMINAL_FAILURE_STATUSES: OnboardingStatusValue[] = [
  */
 @Component({
   selector: 'app-register-complete',
-  imports: [FormsModule, RouterLink, RegisterShellComponent],
+  imports: [FormsModule, RouterLink, RegisterShellComponent, InfinityLoaderComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: './register-complete.component.html',
 })

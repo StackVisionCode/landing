@@ -3,6 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { safeAccountReturnUrl } from '@core/auth/account-return-url';
 import { AccountSessionStore } from '@core/auth/account-session.store';
 import { SITE_CONFIG } from '@core/config/site-config';
+import { InfinityLoaderComponent } from '@shared/infinity-loader/infinity-loader.component';
 import { TranslationStore } from '@core/i18n/translation.store';
 
 /**
@@ -11,6 +12,7 @@ import { TranslationStore } from '@core/i18n/translation.store';
  */
 @Component({
   selector: 'app-account-continue',
+  imports: [InfinityLoaderComponent],
   templateUrl: './account-continue.component.html',
 })
 export class AccountContinueComponent {

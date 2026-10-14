@@ -38,52 +38,88 @@
     <p class="hero-rise mt-4 text-xs text-muted" style="--d: 0.85s">{{ t().hero.micro }}</p>
   </div>
 
-  <!-- Historia: antes → Taxoffix → después -->
-  <div class="relative mx-auto mt-12 max-w-6xl px-4 sm:px-8" aria-hidden="false">
-    <div class="pointer-events-none absolute inset-x-0 top-1/2 h-72 -translate-y-1/2 bg-[radial-gradient(ellipse_at_center,rgba(77,216,255,0.25),transparent_65%)]"></div>
+  <!-- Historia: los pendientes entran al motor Taxoffix y los resultados salen flotando (ciclo CSS de 19 s). -->
+  <div class="relative mx-auto mt-12 max-w-6xl px-4 sm:px-8">
+    <div class="pointer-events-none absolute inset-x-0 top-1/2 h-72 -translate-y-1/2 bg-[radial-gradient(ellipse_at_center,rgba(77,216,255,0.22),transparent_65%)]"></div>
 
-    <div class="relative grid grid-cols-[1fr_20px_1fr] items-center gap-x-3 sm:grid-cols-[1fr_28px_1fr] sm:gap-x-6">
-      <!-- barra de luz central -->
-      <div
-        class="story-beam pointer-events-none relative col-start-2 row-span-4 row-start-1 h-full w-2.5 justify-self-center rounded-full bg-gradient-to-b from-azure to-star shadow-[0_0_34px_rgba(5,123,193,0.6)]"
-      >
-        <span class="absolute inset-0 overflow-hidden rounded-full"><span class="story-streak"></span></span>
-      </div>
+    <div class="story story-in relative" style="--d: 0.6s">
+      <p class="story-head story-head--l"><span class="h-1.5 w-1.5 rounded-full bg-star"></span>{{ t().hero.story.pendingTitle }}</p>
 
-      @for (i of rows; track i) {
-        <div class="story-left col-start-1 flex items-center gap-2 py-3 sm:gap-3" [style.grid-row-start]="i + 1" [style.--d]="0.9 + i * 0.15 + 's'">
-          <span class="relative shrink-0">
-            <span class="story-ring" [style.--f2]="i * 0.9 + 's'"></span>
-            <img [src]="before[i]" alt="" class="h-11 w-11 rounded-full border-[3px] border-white object-cover shadow-[0_8px_20px_rgba(8,54,69,0.25)] sm:h-14 sm:w-14" />
-          </span>
-          <span class="story-tag hidden rounded-[10px] bg-white px-3 py-1.5 text-left text-xs font-medium text-twilight shadow-[0_6px_14px_rgba(8,54,69,0.15)] sm:block" [class.rotate-2]="i % 2 === 0" [class.-rotate-2]="i % 2 === 1" [style.--f2]="i * 0.7 + 's'" [style.--fd]="4.4 + i * 0.6 + 's'">
-            <span class="story-status mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-star align-middle" [style.--f2]="i * 0.5 + 's'"></span>{{ t().hero.pending[i].name }} · {{ t().hero.pending[i].text }}
-          </span>
-          <span class="relative h-px flex-1 bg-gradient-to-r from-star/50 to-star/10">
-            <span class="flow-dot flow-dot--l" [style.--f]="2 + i * 0.75 + 's'"></span>
+      @for (i of items; track i) {
+        <div [class]="'pend pend-' + i" class="flex items-center gap-3 rounded-2xl bg-white p-2 pr-3" [style.--r]="i + 2" [style.--dy]="(4 - i) * 64 + 'px'">
+          <img [src]="avatars[i]" alt="" class="h-10 w-10 shrink-0 rounded-full object-cover" />
+          <div class="min-w-0 flex-1 text-left leading-tight">
+            <p class="truncate text-[13px] font-semibold text-twilight">{{ t().hero.story.items[i].name }}</p>
+            <p class="flex items-center gap-1.5 truncate text-xs text-muted">
+              <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-star"></span>{{ t().hero.story.items[i].pending }}
+            </p>
+          </div>
+          <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sand text-star" aria-hidden="true">
+            <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path [attr.d]="pendingIcons[i]" /></svg>
           </span>
         </div>
+      }
 
-        <span
-          class="story-node pointer-events-none z-10 col-start-2 h-3.5 w-3.5 justify-self-center rounded-full border-[3px] border-white bg-lime"
-          [style.grid-row-start]="i + 1"
-          [style.--f]="2 + i * 0.75 + 's'"
-        ></span>
+      @for (i of items; track i) {
+        <span class="line line--l" [class]="'pend-' + i" [style.--r]="i + 2" aria-hidden="true"></span>
+      }
 
-        <div class="story-right col-start-3 flex items-center gap-2 py-3" [style.grid-row-start]="i + 1" [style.--d]="1.3 + i * 0.15 + 's'">
-          <span class="relative h-px w-4 bg-star/40 sm:w-8">
-            <span class="flow-dot flow-dot--r" [style.--f]="2 + i * 0.75 + 's'"></span>
-          </span>
-          <div class="story-card flex min-w-0 flex-1 items-center gap-2 rounded-full bg-white p-1.5 pr-3 shadow-[0_6px_16px_rgba(8,54,69,0.15)] sm:gap-3 sm:pr-4" [style.--f]="2 + i * 0.75 + 's'">
-            <img [src]="after[i]" alt="" class="h-9 w-9 shrink-0 rounded-full object-cover sm:h-11 sm:w-11" />
-            <div class="min-w-0 flex-1 text-left leading-tight">
-              <p class="truncate text-xs font-semibold text-twilight sm:text-sm">{{ t().hero.done[i].name }}</p>
-              <p class="truncate text-[11px] text-muted sm:text-xs">{{ t().hero.done[i].text }}</p>
-            </div>
-            <span class="check-pop relative flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-lime text-twilight" [style.--d]="1.9 + i * 0.15 + 's'">
-              <span class="check-ring" [style.--f]="2 + i * 0.75 + 's'"></span>
-              <ion-icon name="checkmark-outline" class="relative text-sm"></ion-icon>
+      <div class="story-panel">
+        <div class="flex items-center gap-2">
+          <img src="img/logo-mark.png" alt="" class="h-6 w-auto" />
+          <span class="font-display text-base font-bold tracking-tight text-white">Tax<span class="text-azure">offix</span></span>
+        </div>
+        <svg class="core" viewBox="0 0 48 48" aria-hidden="true">
+          <circle class="c1" cx="24" cy="24" r="20" />
+          <circle class="c2" cx="24" cy="24" r="13" />
+          <circle class="c3" cx="24" cy="24" r="3.5" />
+        </svg>
+        <div class="panel-action">
+          <span class="lbl lbl-idle">{{ t().hero.story.idle }}</span>
+          @for (i of items; track i) {
+            <span [class]="'lbl lbl-' + i" class="lbl">
+              <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path [attr.d]="actionIcons[i]" /></svg>{{ t().hero.story.items[i].action }}
             </span>
+          }
+        </div>
+        <p class="flex items-baseline gap-1.5 text-xs text-azure">
+          <span class="cnt-wrap font-display text-2xl font-bold leading-none text-lime">
+            @for (n of counts; track n) {
+              <span [class]="'cnt cnt-' + n" class="cnt">{{ n }}</span>
+            }
+          </span>
+          <span class="font-semibold text-white/80">/ 4</span>
+          <span>{{ t().hero.story.resolved }}</span>
+        </p>
+        <span class="bar" aria-hidden="true"><i></i></span>
+      </div>
+
+      @for (i of items; track i) {
+        <span class="line line--r" [class]="'done-' + i" [style.--r]="i + 2" aria-hidden="true"></span>
+      }
+
+      <p class="story-head story-head--r"><span class="h-1.5 w-1.5 rounded-full bg-lime ring-2 ring-lime/40"></span>{{ t().hero.story.doneTitle }}</p>
+
+      @for (i of items; track i) {
+        <div [class]="'done done-' + i" class="done" [style.--r]="i + 2" [style.--dy2]="-(i * 66 + 84) + 'px'" [style.--bd]="i * 0.7 + 's'">
+          <div class="ghost" aria-hidden="true">
+            <img [src]="avatars[i]" alt="" class="h-10 w-10 shrink-0 rounded-full object-cover grayscale" />
+            <div class="min-w-0 flex-1 text-left leading-tight">
+              <p class="truncate text-[13px] font-semibold text-twilight">{{ t().hero.story.items[i].name }}</p>
+              <p class="truncate text-xs text-muted">{{ t().hero.story.items[i].done }}</p>
+            </div>
+          </div>
+          <div class="done-card">
+            <div class="done-bob">
+              <img [src]="avatars[i]" alt="" class="h-10 w-10 shrink-0 rounded-full object-cover" />
+              <div class="min-w-0 flex-1 text-left leading-tight">
+                <p class="truncate text-[13px] font-semibold text-twilight">{{ t().hero.story.items[i].name }}</p>
+                <p class="truncate text-xs text-muted">{{ t().hero.story.items[i].done }}</p>
+              </div>
+              <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-lime text-twilight" aria-hidden="true">
+                <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"><path [attr.d]="checkIcon" /></svg>
+              </span>
+            </div>
           </div>
         </div>
       }

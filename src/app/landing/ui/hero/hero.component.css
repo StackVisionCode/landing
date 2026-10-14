@@ -8,58 +8,21 @@
   animation-delay: var(--d, 0s);
 }
 
-.story-left {
+.story-in {
   opacity: 0;
-  translate: -28px 0;
-  animation: story-in-left 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-  animation-delay: var(--d, 0s);
-}
-
-.story-right {
-  opacity: 0;
-  translate: 28px 0;
-  animation: story-in-right 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  translate: 0 14px;
+  animation: hero-rise 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
   animation-delay: var(--d, 0s);
 }
 
 .hero-chip {
   opacity: 0;
   scale: 0.4;
-  animation:
-    chip-pop 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) 0.35s forwards,
-    chip-wiggle 5s ease-in-out 2.5s infinite;
+  animation: chip-pop 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) 0.35s forwards;
 }
 
-/* La barra de luz "crece" y luego respira. */
-.story-beam {
-  transform-origin: top;
-  scale: 1 0;
-  animation:
-    beam-grow 1.1s cubic-bezier(0.22, 1, 0.36, 1) 0.6s forwards,
-    beam-pulse 3.2s ease-in-out 1.8s infinite;
-}
-
-.check-pop {
-  scale: 0;
-  animation: check-pop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-  animation-delay: var(--d, 0s);
-}
 
 @keyframes hero-rise {
-  to {
-    opacity: 1;
-    translate: 0 0;
-  }
-}
-
-@keyframes story-in-left {
-  to {
-    opacity: 1;
-    translate: 0 0;
-  }
-}
-
-@keyframes story-in-right {
   to {
     opacity: 1;
     translate: 0 0;
@@ -73,296 +36,107 @@
   }
 }
 
-@keyframes chip-wiggle {
-  0%,
-  90%,
-  100% {
-    rotate: 0deg;
-  }
-  93% {
-    rotate: -8deg;
-  }
-  96% {
-    rotate: 6deg;
-  }
+
+/* ===== La historia: motor Taxoffix =====
+   Móvil: columna (pendientes → motor → resueltos). Desde md: tres zonas con el motor al centro y
+   rieles de conexión. Los pendientes viajan hacia el motor (--tx/--ty) y los resultados salen de él. */
+.story{display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
+.story-head{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#3e5f6b}
+.line{display:none}
+.pend,.done{--tx:0px;--ty:var(--dy);--to:50% 100%;--tx2:0px;--ty2:var(--dy2);--to2:50% 0%}
+.pend{position:relative;z-index:1;opacity:calc(1 - var(--p));scale:calc(1 - .85 * var(--p));translate:calc(var(--tx) * var(--p)) calc(var(--ty) * var(--p));transform-origin:var(--to);box-shadow:0 6px 16px rgba(8,54,69,.12),0 0 0 5px rgba(77,216,255,calc(.35 * var(--a))),0 10px 26px rgba(5,123,193,calc(.3 * var(--a)))}
+.done{position:relative;height:58px;border:1px dashed rgba(8,54,69,.25);border-radius:16px}
+.ghost,.done-bob{display:flex;align-items:center;gap:12px;height:100%;padding:0 12px 0 8px}
+.ghost{opacity:.45}
+.done-card{position:absolute;inset:-1px;z-index:1;border-radius:16px;background:#fff;opacity:var(--q);scale:calc(.2 + .8 * var(--q));translate:calc(var(--tx2) * (1 - var(--q))) calc(var(--ty2) * (1 - var(--q)));transform-origin:var(--to2);box-shadow:0 6px 16px rgba(8,54,69,.15),0 10px 28px rgba(5,123,193,calc(.35 * var(--f)))}
+.done-bob{animation:bob 4.6s ease-in-out var(--bd,0s) infinite}
+@keyframes bob{50%{translate:0 -4px;rotate:.4deg}}
+.story-panel{position:relative;z-index:2;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px;margin:6px 0;padding:14px 16px;border-radius:20px;background:#083645;animation:panel-glow 19s linear infinite}
+.core{width:28px;height:28px;opacity:calc(.5 + .5 * var(--w))}
+.core circle{fill:none;stroke-width:2.2;stroke-linecap:round;transform-origin:center;transform-box:fill-box}
+.c1{stroke:#4dd8ff;stroke-dasharray:9 7;animation:spin 6s linear infinite}
+.c2{stroke:#e3ff00;stroke-dasharray:4 8;animation:spin 4s linear infinite reverse}
+.core .c3{fill:#e3ff00;stroke:none}
+@keyframes spin{to{rotate:360deg}}
+.panel-action{display:grid;flex:1 1 140px;min-height:2.6em;align-items:center}
+.lbl{grid-area:1 / 1;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;line-height:1.3;color:#fff;opacity:0;translate:0 6px}
+.lbl svg{flex:none;color:#e3ff00}
+.cnt-wrap{display:inline-grid}
+.cnt{grid-area:1 / 1;opacity:0}
+.bar{order:9;flex:1 0 100%;height:3px;overflow:hidden;border-radius:2px;background:rgba(255,255,255,.15)}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,#4dd8ff,#e3ff00);transform-origin:left;scale:0 1;animation:bar 19s linear infinite}
+@media (min-width:768px){
+.story{grid-template-columns:minmax(0,1fr) 40px 184px 40px minmax(0,1fr);grid-template-rows:auto repeat(4,auto);row-gap:12px;align-items:center}
+.story-head--l{grid-column:1;grid-row:1}
+.story-head--r{grid-column:5;grid-row:1}
+.pend{grid-column:1;grid-row:var(--r);--tx:132px;--ty:0px;--to:100% 50%}
+.done{grid-column:5;grid-row:var(--r);--tx2:-132px;--ty2:0px;--to2:0% 50%}
+.line{display:block;grid-row:var(--r);height:2px;background:linear-gradient(90deg,rgba(5,123,193,.1),rgba(5,123,193,.4))}
+.line--l{grid-column:2;opacity:calc(1 - var(--p))}
+.line--r{grid-column:4;opacity:calc(1 - var(--q));background:linear-gradient(90deg,rgba(5,123,193,.4),rgba(5,123,193,.1))}
+.story-panel{grid-column:3;grid-row:2 / span 4;flex-direction:column;align-items:flex-start;justify-content:space-between;align-self:stretch;margin:0;padding:18px 16px;border-radius:24px}
+.core{width:60px;height:60px;align-self:center}
+.panel-action{flex:none;width:100%}
 }
 
-@keyframes beam-grow {
-  to {
-    scale: 1 1;
-  }
-}
+/* Línea de tiempo (19 s): cliente i empieza en 1.8 + 4i. Atención → entra al motor → proceso (etiqueta, barra) → sale flotando → cuenta. Todo se reinicia a los 18.3 s. Generado. */
+@property --p{syntax:'<number>';inherits:true;initial-value:0}
+@property --a{syntax:'<number>';inherits:true;initial-value:0}
+@property --q{syntax:'<number>';inherits:true;initial-value:0}
+@property --f{syntax:'<number>';inherits:true;initial-value:0}
+@property --w{syntax:'<number>';inherits:true;initial-value:0}
+.pend-0{animation:pend-0 19s ease-in-out infinite}
+@keyframes pend-0{0%{--p:0;--a:0}9.4%{--a:0}11.5%{--a:1;--p:0}15.7%{--a:0;--p:1}96.3%{--p:1}99.4%{--p:0}100%{--p:0;--a:0}}
 
-@keyframes beam-pulse {
-  0%,
-  100% {
-    filter: brightness(1);
-    box-shadow: 0 0 28px rgba(5, 123, 193, 0.5);
-  }
-  50% {
-    filter: brightness(1.2);
-    box-shadow: 0 0 46px rgba(77, 216, 255, 0.85);
-  }
-}
+.done-0{animation:done-0 19s ease-out infinite}
+@keyframes done-0{0%{--q:0;--f:0}24.2%{--q:0;--f:0}28.9%{--q:1;--f:1}31.5%{--f:0}96.3%{--q:1}99.4%{--q:0}100%{--q:0;--f:0}}
 
-@keyframes check-pop {
-  to {
-    scale: 1;
-  }
-}
+.lbl-0{animation:lbl 19s ease-out 3.0s infinite}
+.pend-1{animation:pend-1 19s ease-in-out infinite}
+@keyframes pend-1{0%{--p:0;--a:0}30.5%{--a:0}32.6%{--a:1;--p:0}36.8%{--a:0;--p:1}96.3%{--p:1}99.4%{--p:0}100%{--p:0;--a:0}}
 
-@media (prefers-reduced-motion: reduce) {
-  .hero-rise,
-  .story-left,
-  .story-right,
-  .hero-chip,
-  .check-pop {
-    animation: none;
-    opacity: 1;
-    translate: 0 0;
-    scale: 1;
-  }
+.done-1{animation:done-1 19s ease-out infinite}
+@keyframes done-1{0%{--q:0;--f:0}45.2%{--q:0;--f:0}50%{--q:1;--f:1}52.6%{--f:0}96.3%{--q:1}99.4%{--q:0}100%{--q:0;--f:0}}
 
-  .story-beam {
-    animation: none;
-    scale: 1 1;
-  }
+.lbl-1{animation:lbl 19s ease-out 7.0s infinite}
+.pend-2{animation:pend-2 19s ease-in-out infinite}
+@keyframes pend-2{0%{--p:0;--a:0}51.5%{--a:0}53.6%{--a:1;--p:0}57.8%{--a:0;--p:1}96.3%{--p:1}99.4%{--p:0}100%{--p:0;--a:0}}
 
-  .story-tag,
-  .story-ring,
-  .story-card,
-  .story-node,
-  .check-ring,
-  .story-streak {
-    animation: none;
-  }
+.done-2{animation:done-2 19s ease-out infinite}
+@keyframes done-2{0%{--q:0;--f:0}66.3%{--q:0;--f:0}71%{--q:1;--f:1}73.6%{--f:0}96.3%{--q:1}99.4%{--q:0}100%{--q:0;--f:0}}
 
-  .flow-dot,
-  .story-ring,
-  .check-ring,
-  .story-streak {
-    display: none;
-  }
-}
+.lbl-2{animation:lbl 19s ease-out 11.0s infinite}
+.pend-3{animation:pend-3 19s ease-in-out infinite}
+@keyframes pend-3{0%{--p:0;--a:0}72.6%{--a:0}74.7%{--a:1;--p:0}78.9%{--a:0;--p:1}96.3%{--p:1}99.4%{--p:0}100%{--p:0;--a:0}}
 
-/* ===== Ciclo de 6 s por fila: el paquete viaja al centro (nodo), cruza y resuelve la tarjeta. ===== */
-.flow-dot {
-  position: absolute;
-  top: 50%;
-  left: 0;
-  width: 34px;
-  height: 3px;
-  margin-top: -1.5px;
-  border-radius: 9999px;
-  background: linear-gradient(90deg, rgba(5, 123, 193, 0), #057bc1 70%, #4dd8ff);
-  box-shadow: 0 0 12px 2px rgba(77, 216, 255, 0.75);
-  opacity: 0;
-}
+.done-3{animation:done-3 19s ease-out infinite}
+@keyframes done-3{0%{--q:0;--f:0}87.3%{--q:0;--f:0}92.1%{--q:1;--f:1}94.7%{--f:0}96.3%{--q:1}99.4%{--q:0}100%{--q:0;--f:0}}
 
-.flow-dot--l {
-  animation: flow-left 6s ease-in-out infinite;
-  animation-delay: var(--f, 0s);
-}
+.lbl-3{animation:lbl 19s ease-out 15.0s infinite}
+@keyframes panel-glow{0%{box-shadow:0 0 0 0 rgba(77,216,255,0);--w:0}15.2%{box-shadow:0 0 0 0 rgba(77,216,255,0);--w:0}16.3%{box-shadow:0 0 0 6px rgba(77,216,255,.3),0 0 48px rgba(77,216,255,.5);--w:1}24.2%{box-shadow:0 0 0 6px rgba(77,216,255,.3),0 0 48px rgba(77,216,255,.5);--w:1}25.7%{box-shadow:0 0 0 0 rgba(77,216,255,0);--w:0}36.3%{box-shadow:0 0 0 0 rgba(77,216,255,0);--w:0}37.3%{box-shadow:0 0 0 6px rgba(77,216,255,.3),0 0 48px rgba(77,216,255,.5);--w:1}45.2%{box-shadow:0 0 0 6px rgba(77,216,255,.3),0 0 48px rgba(77,216,255,.5);--w:1}46.8%{box-shadow:0 0 0 0 rgba(77,216,255,0);--w:0}57.3%{box-shadow:0 0 0 0 rgba(77,216,255,0);--w:0}58.4%{box-shadow:0 0 0 6px rgba(77,216,255,.3),0 0 48px rgba(77,216,255,.5);--w:1}66.3%{box-shadow:0 0 0 6px rgba(77,216,255,.3),0 0 48px rgba(77,216,255,.5);--w:1}67.8%{box-shadow:0 0 0 0 rgba(77,216,255,0);--w:0}78.4%{box-shadow:0 0 0 0 rgba(77,216,255,0);--w:0}79.4%{box-shadow:0 0 0 6px rgba(77,216,255,.3),0 0 48px rgba(77,216,255,.5);--w:1}87.3%{box-shadow:0 0 0 6px rgba(77,216,255,.3),0 0 48px rgba(77,216,255,.5);--w:1}88.9%{box-shadow:0 0 0 0 rgba(77,216,255,0);--w:0}100%{box-shadow:0 0 0 0 rgba(77,216,255,0);--w:0}}
 
-.flow-dot--r {
-  animation: flow-right 6s ease-in-out infinite;
-  animation-delay: var(--f, 0s);
-}
+@keyframes bar{0%{scale:0 1}15.7%{scale:0 1}25.2%{scale:1 1}25.4%{scale:0 1}36.8%{scale:0 1}46.3%{scale:1 1}46.5%{scale:0 1}57.8%{scale:0 1}67.3%{scale:1 1}67.5%{scale:0 1}78.9%{scale:0 1}88.4%{scale:1 1}88.6%{scale:0 1}100%{scale:0 1}}
 
-@keyframes flow-left {
-  0% {
-    left: 0;
-    opacity: 0;
-  }
-  4% {
-    opacity: 1;
-  }
-  26% {
-    left: calc(100% - 34px);
-    opacity: 1;
-  }
-  29%,
-  100% {
-    left: calc(100% - 34px);
-    opacity: 0;
-  }
-}
+@keyframes lbl{0%{opacity:0;translate:0 6px}1.5%{opacity:1;translate:0 0}10.5%{opacity:1;translate:0 0}12.1%{opacity:0;translate:0 -6px}100%{opacity:0;translate:0 -6px}}
 
-@keyframes flow-right {
-  0%,
-  28% {
-    left: 0;
-    opacity: 0;
-  }
-  31% {
-    opacity: 1;
-  }
-  46% {
-    left: calc(100% - 34px);
-    opacity: 1;
-  }
-  49%,
-  100% {
-    left: calc(100% - 34px);
-    opacity: 0;
-  }
-}
+.lbl-idle{animation:lbl-idle 19s ease-out infinite}
+@keyframes lbl-idle{0%{opacity:1;translate:0 0}14.4%{opacity:1;translate:0 0}15.7%{opacity:0;translate:0 -6px}91.5%{opacity:0;translate:0 6px}93.1%{opacity:1;translate:0 0}100%{opacity:1;translate:0 0}}
 
-/* Nodo sobre la barra: destella cuando llega el paquete. */
-.story-node {
-  animation: node-flash 6s ease-out infinite;
-  animation-delay: var(--f, 0s);
-}
+.cnt-0{animation:cnt-0 19s step-end infinite}
+@keyframes cnt-0{0%{opacity:1}27.3%{opacity:0}97.8%{opacity:1}100%{opacity:1}}
 
-@keyframes node-flash {
-  0%,
-  24%,
-  100% {
-    scale: 1;
-    box-shadow: 0 0 0 0 rgba(227, 255, 0, 0);
-  }
-  28% {
-    scale: 1.7;
-    box-shadow: 0 0 0 8px rgba(227, 255, 0, 0.45);
-  }
-  40% {
-    scale: 1;
-    box-shadow: 0 0 0 14px rgba(227, 255, 0, 0);
-  }
-}
+.cnt-1{animation:cnt 19s step-end 5.2s infinite}
+.cnt-2{animation:cnt 19s step-end 9.2s infinite}
+.cnt-3{animation:cnt 19s step-end 13.2s infinite}
+@keyframes cnt{0%{opacity:1}21%{opacity:0}100%{opacity:0}}
 
-/* La tarjeta de resultado "responde" al llegar el paquete. */
-.story-card {
-  animation: card-hit 6s ease-out infinite;
-  animation-delay: var(--f, 0s);
-}
+.cnt-4{animation:cnt-4 19s step-end infinite}
+@keyframes cnt-4{0%{opacity:0}90.5%{opacity:1}97.8%{opacity:0}100%{opacity:0}}
 
-@keyframes card-hit {
-  0%,
-  45%,
-  100% {
-    box-shadow: 0 6px 16px rgba(8, 54, 69, 0.15);
-    transform: translateY(0);
-  }
-  52% {
-    box-shadow: 0 10px 28px rgba(5, 123, 193, 0.35);
-    transform: translateY(-3px);
-  }
-  66% {
-    box-shadow: 0 6px 16px rgba(8, 54, 69, 0.15);
-    transform: translateY(0);
-  }
-}
-
-.check-ring {
-  position: absolute;
-  inset: 0;
-  border-radius: 9999px;
-  background: #e3ff00;
-  opacity: 0;
-  animation: check-ring 6s ease-out infinite;
-  animation-delay: var(--f, 0s);
-}
-
-@keyframes check-ring {
-  0%,
-  47%,
-  100% {
-    opacity: 0;
-    scale: 1;
-  }
-  50% {
-    opacity: 0.7;
-    scale: 1;
-  }
-  66% {
-    opacity: 0;
-    scale: 2.4;
-  }
-}
-
-/* Burbujas flotantes: vaivén en X/Y con leve giro, cada una a su ritmo. */
-.story-tag {
-  animation: tag-float var(--fd, 5s) ease-in-out infinite;
-  animation-delay: var(--f2, 0s);
-}
-
-@keyframes tag-float {
-  0%,
-  100% {
-    translate: 0 0;
-    rotate: 0deg;
-  }
-  25% {
-    translate: 4px -6px;
-    rotate: 1.2deg;
-  }
-  50% {
-    translate: 0 -9px;
-    rotate: 0deg;
-  }
-  75% {
-    translate: -4px -4px;
-    rotate: -1.2deg;
-  }
-}
-
-.story-status {
-  animation: status-blink 1.8s ease-in-out infinite;
-  animation-delay: var(--f2, 0s);
-}
-
-@keyframes status-blink {
-  0%,
-  100% {
-    opacity: 1;
-    scale: 1;
-  }
-  50% {
-    opacity: 0.35;
-    scale: 0.7;
-  }
-}
-
-/* Anillo que se expande desde cada avatar del lado del problema. */
-.story-ring {
-  position: absolute;
-  inset: 0;
-  border-radius: 9999px;
-  border: 2px solid rgba(5, 123, 193, 0.55);
-  opacity: 0;
-  animation: ring-ping 3.6s ease-out infinite;
-  animation-delay: var(--f2, 0s);
-}
-
-@keyframes ring-ping {
-  0% {
-    opacity: 0.7;
-    scale: 1;
-  }
-  70%,
-  100% {
-    opacity: 0;
-    scale: 1.7;
-  }
-}
-
-/* Destello de luz que baja por la barra. */
-.story-streak {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  height: 22%;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0));
-  animation: streak-down 3.4s ease-in-out infinite;
-}
-
-@keyframes streak-down {
-  0% {
-    translate: 0 -100%;
-  }
-  100% {
-    translate: 0 560%;
-  }
+@media (prefers-reduced-motion:reduce){
+.hero-rise,.story-in,.hero-chip{animation:none;opacity:1;translate:0 0;scale:1}
+.pend,.pend-0,.pend-1,.pend-2,.pend-3,.done,.done-0,.done-1,.done-2,.done-3,.done-bob,.story-panel,.c1,.c2,.bar i,.lbl,.cnt{animation:none}
+.pend{--p:0;--a:0}
+.done{--q:1;--f:0}
+.lbl-idle,.cnt-4{opacity:1;translate:0 0}
 }

@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { CUSTOM_ELEMENTS_SCHEMA, Component, computed, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { SITE_CONFIG } from '@core/config/site-config';
 import { TranslationStore } from '@core/i18n/translation.store';
@@ -9,6 +9,7 @@ export type AccountNoticeKind = 'no-access' | 'session-ended';
 @Component({
   selector: 'app-account-notice',
   templateUrl: './account-notice.component.html',
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class AccountNoticeComponent {
   private readonly i18n = inject(TranslationStore);
