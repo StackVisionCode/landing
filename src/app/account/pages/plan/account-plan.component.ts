@@ -55,6 +55,9 @@ export class AccountPlanComponent {
   readonly cancelStage = signal<CancelStage>('idle');
   readonly cancelReason = signal('');
   readonly cancelError = signal<string | null>(null);
+  readonly cancellingUpgrade = signal(false);
+  /** Mensaje efímero de la cancelación del upgrade: éxito / idempotente / error. */
+  readonly upgradeCancelNotice = signal<{ kind: 'ok' | 'already' | 'error' } | null>(null);
   /** Qué acción reintentar cuando el usuario confirme su contraseña. */
   private readonly pendingAction = signal<'change' | 'cancel'>('change');
   /** Un 429 bloquea el botón con la espera real del backend en vez de contarse como fallo. */
@@ -170,6 +173,29 @@ export class AccountPlanComponent {
           return;
         }
         this.error.set(this.messageFor(err));
+      },
+    });
+  }
+
+  /** Cierra el upgrade AwaitingPayment: libera el intent y permite elegir otro plan sin cobro extra. */
+  cancelUpgrade(): void {
+    if (this.cancellingUpgrade()) {
+      return;
+    }
+    if (!window.confirm(this.t().accPlanCancelUpgradeConfirm)) {
+      return;
+    }
+    this.cancellingUpgrade.set(true);
+    this.upgradeCancelNotice.set(null);
+    this.api.cancelPendingUpgrade().subscribe({
+      next: response => {
+        this.cancellingUpgrade.set(false);
+        this.upgradeCancelNotice.set({ kind: response.alreadyCancelled ? 'already' : 'ok' });
+        this.load();
+      },
+      error: () => {
+        this.cancellingUpgrade.set(false);
+        this.upgradeCancelNotice.set({ kind: 'error' });
       },
     });
   }

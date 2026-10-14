@@ -63,6 +63,7 @@ function subscription(): AccountSubscription {
     seats: { includedInPlan: 10, purchased: 0, total: 10 },
     addOns: [],
     openSeatCheckout: null,
+    openAddOnCheckouts: null,
   };
 }
 
@@ -317,5 +318,106 @@ describe('AccountPlanComponent', () => {
 
     expect(api.planChangePreview).not.toHaveBeenCalled();
     expect(component.error()).toBe("That's the plan you already have.");
+  });
+
+  describe('cancelar un upgrade pending', () => {
+    const pendingUpgrade = {
+      kind: 'Upgrade' as const,
+      id: 'r1',
+      fromPlanCode: 'starter',
+      toPlanCode: 'pro',
+      toBillingCycle: null,
+      status: 'AwaitingPayment',
+      requestedAtUtc: '2026-09-25T00:00:00Z',
+      effectiveAtUtc: null,
+      chargeAmountCents: 4900,
+      chargeCurrency: 'USD',
+      checkoutUrl: 'https://pay/resume',
+    };
+    const pendingDowngrade = {
+      kind: 'Downgrade' as const,
+      id: 'r2',
+      fromPlanCode: 'pro',
+      toPlanCode: 'starter',
+      toBillingCycle: null,
+      status: 'Scheduled',
+      requestedAtUtc: '2026-09-25T00:00:00Z',
+      effectiveAtUtc: '2026-10-01T00:00:00Z',
+      chargeAmountCents: null,
+      chargeCurrency: null,
+      // Un downgrade no abre cobro, así que no hay checkoutUrl.
+      checkoutUrl: null,
+    };
+    function withPending(p: typeof pendingUpgrade | typeof pendingDowngrade): AccountSubscription {
+      return { ...subscription(), pendingPlanChange: p };
+    }
+
+    it('muestra Cancel upgrade cuando hay un upgrade AwaitingPayment', () => {
+      const { page } = create({ get: vi.fn(() => of(withPending(pendingUpgrade))) });
+
+      expect(page.textContent).toContain('Cancel upgrade');
+    });
+
+    it('un downgrade no ofrece Cancel upgrade (tiene su propio undo)', () => {
+      const { page } = create({ get: vi.fn(() => of(withPending(pendingDowngrade))) });
+
+      expect(page.textContent).not.toContain('Cancel upgrade');
+    });
+
+    it('si el usuario rechaza el confirm, no se llama al endpoint', () => {
+      const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+      const cancelPendingUpgrade = vi.fn(() => of({ alreadyCancelled: false, intentId: 'r1' }));
+      const { component } = create({
+        get: vi.fn(() => of(withPending(pendingUpgrade))),
+        cancelPendingUpgrade,
+      });
+
+      component.cancelUpgrade();
+
+      expect(cancelPendingUpgrade).not.toHaveBeenCalled();
+      expect(component.upgradeCancelNotice()).toBeNull();
+      confirmSpy.mockRestore();
+    });
+
+    it('cancelar llama al endpoint, muestra el toast y recarga', () => {
+      const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+      const cancelPendingUpgrade = vi.fn(() => of({ alreadyCancelled: false, intentId: 'r1' }));
+      const get = vi.fn(() => of(withPending(pendingUpgrade)));
+      const { component } = create({ get, cancelPendingUpgrade });
+
+      component.cancelUpgrade();
+
+      expect(cancelPendingUpgrade).toHaveBeenCalledOnce();
+      expect(component.upgradeCancelNotice()).toEqual({ kind: 'ok' });
+      expect(get).toHaveBeenCalledTimes(2); // recarga para reflejar el cierre del intent
+      confirmSpy.mockRestore();
+    });
+
+    it('si el intent ya estaba cerrado, mensaje idempotente', () => {
+      const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+      const { component } = create({
+        get: vi.fn(() => of(withPending(pendingUpgrade))),
+        cancelPendingUpgrade: vi.fn(() => of({ alreadyCancelled: true, intentId: 'r1' })),
+      });
+
+      component.cancelUpgrade();
+
+      expect(component.upgradeCancelNotice()).toEqual({ kind: 'already' });
+      confirmSpy.mockRestore();
+    });
+
+    it('fallo del service → toast de error y vuelve a habilitar el botón', () => {
+      const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+      const { component } = create({
+        get: vi.fn(() => of(withPending(pendingUpgrade))),
+        cancelPendingUpgrade: vi.fn(() => throwError(() => new HttpErrorResponse({ status: 500 }))),
+      });
+
+      component.cancelUpgrade();
+
+      expect(component.upgradeCancelNotice()).toEqual({ kind: 'error' });
+      expect(component.cancellingUpgrade()).toBe(false);
+      confirmSpy.mockRestore();
+    });
   });
 });

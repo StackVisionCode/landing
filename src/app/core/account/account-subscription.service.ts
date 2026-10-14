@@ -8,6 +8,7 @@ import {
   StartRenewCheckoutResponse,
   AccountSubscription,
   AddOnCheckoutStatus,
+  CancelCheckoutResponse,
   ChangePlanRequest,
   ChangePlanResponse,
   PlanChangePreview,
@@ -118,5 +119,25 @@ export class AccountSubscriptionService {
   /** Deshace un downgrade agendado. Un upgrade no se cancela: se resuelve solo con el cobro. */
   cancelPendingPlanChange(): Observable<void> {
     return this.http.post<void>(`${this.base}/subscriptions/plan-change/cancel`, {});
+  }
+
+  /** Cierra un seat checkout Pending antes de pagar: libera el guard de doble cobro. Idempotente. */
+  cancelPendingSeatCheckout(intentId: string): Observable<CancelCheckoutResponse> {
+    return this.http.post<CancelCheckoutResponse>(`${this.base}/seats/checkout/${intentId}/cancel`, {});
+  }
+
+  /** Cierra un add-on checkout Pending antes de pagar: libera el guard por add-on. Idempotente. */
+  cancelPendingAddOnCheckout(intentId: string): Observable<CancelCheckoutResponse> {
+    return this.http.post<CancelCheckoutResponse>(`${this.base}/addons/checkout/${intentId}/cancel`, {});
+  }
+
+  /** Cierra una renovación Pending antes de pagar. Idempotente. */
+  cancelPendingRenewalCheckout(intentId: string): Observable<CancelCheckoutResponse> {
+    return this.http.post<CancelCheckoutResponse>(`${this.base}/subscriptions/me/renew-checkout/${intentId}/cancel`, {});
+  }
+
+  /** Cancela el upgrade AwaitingPayment del tenant (único por tenant, sin id). Idempotente. */
+  cancelPendingUpgrade(): Observable<CancelCheckoutResponse> {
+    return this.http.post<CancelCheckoutResponse>(`${this.base}/subscriptions/plan-change/upgrade/cancel`, {});
   }
 }

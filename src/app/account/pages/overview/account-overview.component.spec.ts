@@ -44,6 +44,7 @@ function subscription(overrides: Partial<AccountSubscription> = {}): AccountSubs
     seats: { includedInPlan: 5, purchased: 5, total: 10 },
     addOns: [],
     openSeatCheckout: null,
+    openAddOnCheckouts: null,
     ...overrides,
   };
 }

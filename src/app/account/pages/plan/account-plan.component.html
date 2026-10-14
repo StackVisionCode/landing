@@ -27,11 +27,27 @@
     <article class="mt-4 rounded-xl border border-line bg-sand p-5">
       <h2 class="text-sm font-semibold text-twilight">{{ t().accPlanPendingTitle }}</h2>
       <p class="mt-1 text-[13px] text-muted">{{ pendingLabel() }}</p>
-      <a [href]="resumeUrl"
-        class="mt-4 inline-block rounded-lg bg-twilight px-4 py-2 text-[13px] font-semibold text-white hover:bg-star">
-        {{ t().accPlanPendingResume }}
-      </a>
+      <div class="mt-4 flex flex-wrap gap-3">
+        <a [href]="resumeUrl"
+          class="inline-block rounded-lg bg-twilight px-4 py-2 text-[13px] font-semibold text-white hover:bg-star">
+          {{ t().accPlanPendingResume }}
+        </a>
+        <button type="button" (click)="cancelUpgrade()" [disabled]="cancellingUpgrade()"
+          class="rounded-lg border border-line bg-white px-4 py-2 text-[13px] font-semibold text-twilight hover:bg-cream disabled:opacity-60">
+          {{ cancellingUpgrade() ? t().accPlanCancelUpgradeWorking : t().accPlanCancelUpgrade }}
+        </button>
+      </div>
     </article>
+  }
+  @if (upgradeCancelNotice(); as notice) {
+    <p role="status"
+      [class]="notice.kind === 'error'
+        ? 'mt-2 rounded-lg border border-twilight/30 bg-sand px-3 py-2 text-[13px] font-medium text-twilight'
+        : 'mt-2 rounded-lg border border-line bg-sand px-3 py-2 text-[13px] text-twilight'">
+      @if (notice.kind === 'ok') { {{ t().accPlanCancelUpgradeDone }} }
+      @else if (notice.kind === 'already') { {{ t().accPlanCancelUpgradeAlready }} }
+      @else { {{ t().accPlanCancelUpgradeError }} }
+    </p>
   }
 
   @if (outcome(); as message) {

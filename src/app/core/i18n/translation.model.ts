@@ -173,6 +173,9 @@ export interface TranslationKeys {
   regCreatingAccount: string;
   regPreparingPayment: string;
   regRedirectingPayment: string;
+  regProcessingCancelButton: string;
+  regProcessingSafeToClose: string;
+  regProcessingStartedAgo: string;
   regPaymentMethodLabel: string;
   regPaymentMethodUnavailable: string;
   regNoPaymentTitle: string;
@@ -193,6 +196,12 @@ export interface TranslationKeys {
   payReceivedRetryButton: string;
   payReceivedRetryPayment: string;
   payReceivedRetryError: string;
+  payReceivedCancelledTitle: string;
+  payReceivedCancelledBody: string;
+  payReceivedExpiredTitle: string;
+  payReceivedExpiredBody: string;
+  payReceivedStartOver: string;
+  payReceivedCancelAndStartOver: string;
   payReceivedWelcomeEyebrow: string;
   payReceivedWelcomeHeadline: string;
   regHaveCodeToggle: string;
@@ -407,6 +416,12 @@ export interface TranslationKeys {
   accSeatsPaidBody: string;
   accSeatsDoneTitle: string;
   accSeatsCancelled: string;
+  accSeatsCancelPending: string;
+  accSeatsCancelConfirm: string;
+  accSeatsCancelling: string;
+  accSeatsCancelledToast: string;
+  accSeatsCancelAlready: string;
+  accSeatsCancelErrorToast: string;
 
   // Account — Add-ons
   accNavAddOns: string;
@@ -432,6 +447,13 @@ export interface TranslationKeys {
   accAddOnPaidBody: string;
   accAddOnDoneTitle: string;
   accAddOnInProgressError: string;
+  accAddOnResume: string;
+  accAddOnsCancelPending: string;
+  accAddOnsCancelConfirm: string;
+  accAddOnsCancelling: string;
+  accAddOnsCancelledToast: string;
+  accAddOnsCancelAlready: string;
+  accAddOnsCancelErrorToast: string;
 
   // Account — confirmación de contraseña
   accStepUpTitle: string;
@@ -487,6 +509,12 @@ export interface TranslationKeys {
   accPlanPendingTitle: string;
   accPlanPendingBody: string;
   accPlanPendingResume: string;
+  accPlanCancelUpgrade: string;
+  accPlanCancelUpgradeConfirm: string;
+  accPlanCancelUpgradeWorking: string;
+  accPlanCancelUpgradeDone: string;
+  accPlanCancelUpgradeAlready: string;
+  accPlanCancelUpgradeError: string;
   accPlanPaidTitle: string;
   accPlanPaidBody: string;
   accPlanCancelled: string;

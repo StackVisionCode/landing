@@ -40,6 +40,36 @@
             <p class="mt-2 text-sm text-muted">{{ t().payReceivedRedirectingBody }}</p>
           }
 
+          @case ('cancelled') {
+            <div class="mx-auto mt-4 flex h-16 w-16 items-center justify-center rounded-full bg-sand">
+              <ion-icon name="close-circle-outline" class="text-3xl text-muted"></ion-icon>
+            </div>
+            <h2 class="mt-6 font-display text-[28px] font-semibold tracking-tight text-twilight">{{ t().payReceivedCancelledTitle }}</h2>
+            <p class="mt-2 text-sm text-muted">{{ t().payReceivedCancelledBody }}</p>
+            <a
+              routerLink="/"
+              fragment="pricing"
+              class="mt-6 block w-full rounded-xl bg-lime py-3 text-center text-sm font-bold text-twilight transition hover:brightness-95"
+            >
+              {{ t().payReceivedStartOver }}
+            </a>
+          }
+
+          @case ('expired') {
+            <div class="mx-auto mt-4 flex h-16 w-16 items-center justify-center rounded-full bg-sand">
+              <ion-icon name="time-outline" class="text-3xl text-muted"></ion-icon>
+            </div>
+            <h2 class="mt-6 font-display text-[28px] font-semibold tracking-tight text-twilight">{{ t().payReceivedExpiredTitle }}</h2>
+            <p class="mt-2 text-sm text-muted">{{ t().payReceivedExpiredBody }}</p>
+            <a
+              routerLink="/"
+              fragment="pricing"
+              class="mt-6 block w-full rounded-xl bg-lime py-3 text-center text-sm font-bold text-twilight transition hover:brightness-95"
+            >
+              {{ t().payReceivedStartOver }}
+            </a>
+          }
+
           @case ('failed') {
             <div class="mx-auto mt-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-50">
               <ion-icon name="close-circle-outline" class="text-3xl text-red-600"></ion-icon>

@@ -61,11 +61,27 @@
           <p class="mt-1 text-[13px] text-muted">
             {{ pendingLabel() }}
           </p>
-          <a [href]="pending.checkoutUrl"
-            class="mt-4 inline-block rounded-lg bg-twilight px-4 py-2 text-[13px] font-semibold text-white hover:bg-star">
-            {{ t().accSeatsPendingResume }}
-          </a>
+          <div class="mt-4 flex flex-wrap gap-3">
+            <a [href]="pending.checkoutUrl"
+              class="inline-block rounded-lg bg-twilight px-4 py-2 text-[13px] font-semibold text-white hover:bg-star">
+              {{ t().accSeatsPendingResume }}
+            </a>
+            <button type="button" (click)="cancelPending()" [disabled]="cancelling()"
+              class="rounded-lg border border-line bg-white px-4 py-2 text-[13px] font-semibold text-twilight hover:bg-cream disabled:opacity-60">
+              {{ cancelling() ? t().accSeatsCancelling : t().accSeatsCancelPending }}
+            </button>
+          </div>
         </article>
+      }
+      @if (cancelNotice(); as notice) {
+        <p role="status"
+          [class]="notice.kind === 'error'
+            ? 'mt-2 rounded-lg border border-twilight/30 bg-sand px-3 py-2 text-[13px] font-medium text-twilight'
+            : 'mt-2 rounded-lg border border-line bg-sand px-3 py-2 text-[13px] text-twilight'">
+          @if (notice.kind === 'ok') { {{ t().accSeatsCancelledToast }} }
+          @else if (notice.kind === 'already') { {{ t().accSeatsCancelAlready }} }
+          @else { {{ t().accSeatsCancelErrorToast }} }
+        </p>
       }
 
       <div class="grid gap-4 lg:grid-cols-2">

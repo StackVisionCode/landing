@@ -124,6 +124,14 @@ export class RegisterComponent implements OnInit, OnDestroy {
   // El onboarding ya creado se reutiliza al reintentar el pago: repetir el POST crearía otro.
   private onboardingId: string | null = null;
 
+  // Edad del processing para mostrar "Started Xmin ago. Expires in Ymin." y empuñar la ventana del sweeper (30min TTL del backend).
+  private checkoutStartedAt: number | null = null;
+  protected readonly processingClockTick = signal(0);
+  private processingClockTimer: ReturnType<typeof setInterval> | null = null;
+  protected readonly isCancellingOnboarding = signal(false);
+  // bfcache: restaurar la pestaña (back del browser desde el provider) no vuelve a disparar ngOnInit.
+  private readonly onPageShow = (event: PageTransitionEvent) => this.handlePageShow(event);
+
   /** Paso del marco: correo y código = 1, datos = 2, pago/errores = 3. */
   protected readonly stepIndex = computed(() => {
     switch (this.step()) {
@@ -167,6 +175,9 @@ export class RegisterComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    if (typeof window !== 'undefined') {
+      window.addEventListener('pageshow', this.onPageShow);
+    }
     const params = this.route.snapshot.queryParamMap;
 
     // El link real del correo de registro apunta a "{RegistrationUrlBase}/register?token=..."
@@ -262,8 +273,12 @@ export class RegisterComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.stopOtpTimer();
+    this.stopProcessingClock();
     for (const cooldown of [this.sendCodeCooldown, this.resendCooldown, this.verifyCooldown, this.submitCooldown]) {
       cooldown.stop();
+    }
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('pageshow', this.onPageShow);
     }
   }
 
@@ -417,6 +432,8 @@ export class RegisterComponent implements OnInit, OnDestroy {
     this.isSubmittingDetails.set(false);
     this.step.set('processing');
     this.processingMessage.set(this.t().regPreparingPayment);
+    this.checkoutStartedAt = Date.now();
+    this.startProcessingClock();
     const origin = typeof window !== 'undefined' ? window.location.origin : SITE_CONFIG.websiteUrl;
     const plan = this.plan();
     const paymentOption = this.selectedPaymentOption();
@@ -556,5 +573,77 @@ export class RegisterComponent implements OnInit, OnDestroy {
 
   private isValidEmail(email: string): boolean {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
+
+  // TTL alineado con el sweeper del backend (OnboardingExpirationOptions.TtlMinutes).
+  private static readonly PROCESSING_TTL_SECONDS = 30 * 60;
+
+  protected canCancelProcessing(): boolean {
+    return !!this.onboardingId && !this.isCancellingOnboarding();
+  }
+
+  cancelOnboarding(): void {
+    if (!this.onboardingId || this.isCancellingOnboarding()) return;
+    this.isCancellingOnboarding.set(true);
+    this.onboarding.cancelOnboarding(this.onboardingId).subscribe({
+      next: () => this.redirectToCancelledNotice(),
+      // Un error acá no debe atrapar al buyer en processing: igual lo devolvemos al inicio.
+      error: () => this.redirectToCancelledNotice(),
+    });
+  }
+
+  private redirectToCancelledNotice(): void {
+    this.stopProcessingClock();
+    this.isCancellingOnboarding.set(false);
+    this.onboardingId = null;
+    const plan = this.plan();
+    this.router.navigate(['/register'], {
+      queryParams: { plan: plan?.id ?? '', cycle: this.cycle(), cancelled: '1' },
+      replaceUrl: true,
+    });
+  }
+
+  protected processingAgeLabel(): string | null {
+    if (!this.checkoutStartedAt) return null;
+    void this.processingClockTick();
+    const elapsed = Math.max(0, Math.floor((Date.now() - this.checkoutStartedAt) / 1000));
+    const remaining = Math.max(0, RegisterComponent.PROCESSING_TTL_SECONDS - elapsed);
+    return this.t()
+      .regProcessingStartedAgo
+      .replace('{ago}', this.formatMinutes(elapsed))
+      .replace('{remaining}', this.formatMinutes(remaining));
+  }
+
+  private formatMinutes(totalSeconds: number): string {
+    const minutes = Math.floor(totalSeconds / 60);
+    if (minutes <= 0) return '< 1 min';
+    return minutes === 1 ? '1 min' : `${minutes} min`;
+  }
+
+  private startProcessingClock(): void {
+    this.stopProcessingClock();
+    this.processingClockTick.set(0);
+    this.processingClockTimer = setInterval(() => {
+      this.processingClockTick.set(this.processingClockTick() + 1);
+    }, 15000);
+  }
+
+  private stopProcessingClock(): void {
+    if (this.processingClockTimer !== null) {
+      clearInterval(this.processingClockTimer);
+      this.processingClockTimer = null;
+    }
+  }
+
+  // bfcache: Safari/Firefox restauran la pestaña con el DOM intacto al apretar "atrás" desde el provider.
+  // Si no tenemos onboardingId en memoria (reinicio real), volvemos al paso del email.
+  private handlePageShow(event: PageTransitionEvent): void {
+    if (!event.persisted) return;
+    if (this.step() !== 'processing') return;
+    if (!this.onboardingId) {
+      this.stopProcessingClock();
+      this.checkoutStartedAt = null;
+      this.step.set('email');
+    }
   }
 }

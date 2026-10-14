@@ -52,6 +52,9 @@ export class AccountSeatsComponent {
   readonly quoting = signal(false);
   readonly buying = signal(false);
   readonly buyError = signal<string | null>(null);
+  readonly cancelling = signal(false);
+  /** Mensaje efímero de la cancelación: éxito / idempotente / error. */
+  readonly cancelNotice = signal<{ kind: 'ok' | 'already' | 'error' } | null>(null);
   /** Un 429 bloquea el botón con la espera real del backend en vez de contarse como fallo. */
   protected readonly cooldown = new ActionCooldown();
   readonly waiting = this.cooldown.active;
@@ -183,6 +186,30 @@ export class AccountSeatsComponent {
           this.load();
         },
       });
+  }
+
+  /** Cierra el intent pending: libera el guard y permite empezar una compra nueva. */
+  cancelPending(): void {
+    const pending = this.openCheckout();
+    if (!pending || this.cancelling()) {
+      return;
+    }
+    if (!window.confirm(this.t().accSeatsCancelConfirm)) {
+      return;
+    }
+    this.cancelling.set(true);
+    this.cancelNotice.set(null);
+    this.api.cancelPendingSeatCheckout(pending.intentId).subscribe({
+      next: response => {
+        this.cancelling.set(false);
+        this.cancelNotice.set({ kind: response.alreadyCancelled ? 'already' : 'ok' });
+        this.load();
+      },
+      error: () => {
+        this.cancelling.set(false);
+        this.cancelNotice.set({ kind: 'error' });
+      },
+    });
   }
 
   /**

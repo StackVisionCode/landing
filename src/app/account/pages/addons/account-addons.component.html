@@ -20,6 +20,40 @@
     <p role="status" class="mt-2 text-xs font-medium text-muted">{{ waitLabel() }}</p>
   }
 
+  @for (checkout of openCheckouts(); track checkout.intentId) {
+    <article class="mt-4 rounded-xl border border-line bg-sand p-5">
+      <h2 class="text-sm font-semibold text-twilight">
+        @if (checkout.addOnDisplayName) {
+          {{ checkout.addOnDisplayName }} — {{ t().accAddOnInProgressError }}
+        } @else {
+          {{ t().accAddOnInProgressError }}
+        }
+      </h2>
+      <div class="mt-3 flex flex-wrap gap-2">
+        @if (checkout.checkoutUrl) {
+          <button type="button" (click)="resumeCheckout(checkout)" [disabled]="cancellingId() !== null"
+            class="rounded-lg bg-twilight px-4 py-2 text-[13px] font-semibold text-white hover:bg-star disabled:opacity-60">
+            {{ t().accAddOnResume }}
+          </button>
+        }
+        <button type="button" (click)="cancelPending(checkout.intentId)" [disabled]="cancellingId() !== null"
+          class="rounded-lg border border-line bg-white px-4 py-2 text-[13px] font-semibold text-twilight hover:bg-cream disabled:opacity-60">
+          {{ cancellingId() === checkout.intentId ? t().accAddOnsCancelling : t().accAddOnsCancelPending }}
+        </button>
+      </div>
+    </article>
+  }
+  @if (cancelNotice(); as notice) {
+    <p role="status"
+      [class]="notice.kind === 'error'
+        ? 'mt-2 rounded-lg border border-twilight/30 bg-sand px-3 py-2 text-[13px] font-medium text-twilight'
+        : 'mt-2 rounded-lg border border-line bg-sand px-3 py-2 text-[13px] text-twilight'">
+      @if (notice.kind === 'ok') { {{ t().accAddOnsCancelledToast }} }
+      @else if (notice.kind === 'already') { {{ t().accAddOnsCancelAlready }} }
+      @else { {{ t().accAddOnsCancelErrorToast }} }
+    </p>
+  }
+
   @if (loading()) {
     <div class="mt-6 h-40 animate-pulse rounded-xl bg-sand" role="status" [attr.aria-label]="t().accLoading"></div>
   } @else if (failed()) {
