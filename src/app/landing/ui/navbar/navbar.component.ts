@@ -75,7 +75,13 @@ export class NavbarComponent implements AfterViewInit, OnDestroy {
   @ViewChildren('navLink') private navLinkEls?: QueryList<ElementRef<HTMLAnchorElement>>;
 
   private sections: HTMLElement[] = [];
-  private readonly onResize = () => this.updateSlider();
+  private readonly onResize = () => {
+    // Al pasar a escritorio el menú móvil no tiene sentido abierto: quedaría "pegado" al volver a achicar.
+    if (window.innerWidth >= 768 && this.mobileMenuOpen()) {
+      this.closeMobileMenu();
+    }
+    this.updateSlider();
+  };
 
   private tickingScroll = false;
   private readonly onScroll = () => {
@@ -210,6 +216,7 @@ export class NavbarComponent implements AfterViewInit, OnDestroy {
   @HostListener('document:keydown.escape')
   protected onEscape(): void {
     this.accessOpen.set(false);
+    this.closeMobileMenu();
   }
 
   toggleMobileMenu(): void {
