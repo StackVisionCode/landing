@@ -185,6 +185,12 @@ export interface TranslationKeys {
   regTryAgainButton: string;
   payReceivedTitle: string;
   payReceivedBody: string;
+  payReceivedResendButton: string;
+  payReceivedResendSending: string;
+  payReceivedResendSuccess: string;
+  payReceivedResendCooldown: string;
+  payReceivedResendError: string;
+  payReceivedResendUnavailable: string;
   payReceivedCheckingTitle: string;
   payReceivedCheckingBody: string;
   payReceivedProcessingTitle: string;

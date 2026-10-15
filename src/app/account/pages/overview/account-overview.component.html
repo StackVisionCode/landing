@@ -70,10 +70,16 @@
             <ion-icon name="hourglass-outline" class="mt-0.5 shrink-0 text-lg text-star"></ion-icon>
             <p class="min-w-0 text-[13px] text-twilight">{{ openSeatCheckoutLabel() }}</p>
           </div>
-          <a [href]="pendingSeats.checkoutUrl"
-            class="shrink-0 rounded-lg bg-twilight px-3 py-1.5 text-[13px] font-semibold text-white hover:bg-star">
-            {{ t().accOvFinishPayment }}
-          </a>
+          <div class="flex shrink-0 flex-wrap gap-2">
+            <a [href]="pendingSeats.checkoutUrl"
+              class="rounded-lg bg-twilight px-3 py-1.5 text-[13px] font-semibold text-white hover:bg-star">
+              {{ t().accOvFinishPayment }}
+            </a>
+            <a routerLink="/account/seats"
+              class="rounded-lg border border-line bg-white px-3 py-1.5 text-[13px] font-semibold text-twilight hover:bg-cream">
+              {{ t().accSeatsCancelPending }}
+            </a>
+          </div>
         </div>
       }
 
