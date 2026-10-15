@@ -214,6 +214,13 @@ export const en: TranslationKeys = {
   regStepCounter: "Step {n} of 4",
   regBackButton: 'Back',
 
+  signupBillingPrefTitle: 'Billing preference',
+  signupBillingPrefAutomatic:
+    'Automatic renewal — I authorize {brand} to charge {amount} every {cadence} until I cancel.',
+  signupBillingPrefManual:
+    "Manual renewal — email me a reminder; I'll pay myself each cycle.",
+  signupBillingPrefRequired: 'Please choose a billing preference to continue.',
+
   compLoadingTitle: 'Loading your invitation...',
   compInvalidTitle: 'This link is no longer valid',
   compInvalidBody: "We couldn't verify this link. Pick your plan again to get a new one.",
@@ -338,7 +345,6 @@ export const en: TranslationKeys = {
   accOvStatusActive: "Active",
   accOvStatusTrialing: "Trial",
   accOvStatusPastDue: "Payment failed",
-  accOvStatusGracePeriod: "Payment pending",
   accOvStatusSuspended: "Suspended",
   accOvStatusCancelled: "Cancelled",
   accOvStatusExpired: "Expired",
@@ -410,6 +416,8 @@ export const en: TranslationKeys = {
   accSeatsCancelled: "Payment cancelled. Nothing was charged.",
   accSeatsCancelPending: "Cancel & start over",
   accSeatsCancelConfirm: "Cancel this pending payment? You can start a new purchase after.",
+  accSeatsCancelConfirmTitle: "Cancel pending payment",
+  accSeatsKeep: "Keep it",
   accSeatsCancelling: "Cancelling...",
   accSeatsCancelledToast: "The pending payment was cancelled.",
   accSeatsCancelAlready: "The payment was already cancelled.",
@@ -442,6 +450,8 @@ export const en: TranslationKeys = {
   accAddOnResume: "Resume payment",
   accAddOnsCancelPending: "Cancel pending purchase",
   accAddOnsCancelConfirm: "Cancel this pending add-on purchase? You can start a new one after.",
+  accAddOnsCancelConfirmTitle: "Cancel pending add-on",
+  accAddOnsKeep: "Keep it",
   accAddOnsCancelling: "Cancelling...",
   accAddOnsCancelledToast: "The pending add-on purchase was cancelled.",
   accAddOnsCancelAlready: "The purchase was already cancelled.",
@@ -503,6 +513,8 @@ export const en: TranslationKeys = {
   accPlanPendingResume: "Finish payment",
   accPlanCancelUpgrade: "Cancel upgrade",
   accPlanCancelUpgradeConfirm: "Cancel this pending upgrade? Your plan stays as it is and no new charge will be attempted.",
+  accPlanCancelUpgradeConfirmTitle: "Cancel pending upgrade",
+  accPlanCancelUpgradeKeep: "Keep it",
   accPlanCancelUpgradeWorking: "Cancelling...",
   accPlanCancelUpgradeDone: "The pending upgrade was cancelled.",
   accPlanCancelUpgradeAlready: "The upgrade was already cancelled.",
@@ -527,6 +539,26 @@ export const en: TranslationKeys = {
   accResuming: "Restoring...",
   accResumeDone: "Your subscription continues as normal.",
   accResumeError: "We couldn't restore it. Please try again.",
+
+  accBillingPrefHeading: 'Billing',
+  accBillingPrefAutomatic: 'Automatic renewal',
+  accBillingPrefManual: 'Manual renewal',
+  accBillingPrefManualHint: "We'll remind you before {date}; you pay yourself.",
+  accBillingPrefSwitchToAutomatic: 'Switch to automatic renewal',
+  accBillingPrefSwitchToManual: 'Switch to manual renewal',
+  accBillingPrefSwitchToAutomaticConfirm:
+    'By continuing you authorize us to charge your card automatically on each renewal date. You can switch back to manual any time.',
+  accBillingPrefSwitchToManualConfirm:
+    "You'll pay yourself at each renewal. We'll email you a reminder beforehand.",
+  accBillingPrefSwitchToAutomaticTitle: 'Switch to automatic renewal',
+  accBillingPrefSwitchToManualTitle: 'Switch to manual renewal',
+  accBillingPrefSwitching: 'Saving...',
+  accBillingPrefSwitchError: "We couldn't save your billing preference. Please try again.",
+  accBillingPrefUpdateCard: 'Update card',
+  accBillingPrefNextCharge: 'Next charge',
+  accBillingPrefExpires: 'expires',
+  accBillingPrefNoCard: 'No card on file yet. Adding one activates automatic renewal.',
+  accBillingPrefProviderManagedCard: 'Manage your payment method directly in your {provider} account.',
 
   // Account — historial de pagos
   accNavBilling: "Billing history",

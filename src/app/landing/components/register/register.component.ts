@@ -16,6 +16,23 @@ import { ActionCooldown } from '@core/http/action-cooldown';
 import { formatClock, readThrottle, type ThrottleKind } from '@core/http/throttling';
 import type { PlanResponse } from '@core/plans/plans.models';
 import type { BillingCycle, OnboardingPaymentOption } from '@core/onboarding/onboarding.models';
+import {
+  BILLING_PREFERENCE_CONSENT_VERSION,
+  type BillingPreferenceMode,
+} from '@core/account/billing-preference.service';
+
+/** Clave en sessionStorage: la preferencia + consent exacto que el usuario vio al firmar en /register.
+ *  Se conserva durante el redirect al provider y hasta /register/complete, donde recién hay sesión
+ *  autenticada para persistirla en el backend contra el tenant recién provisionado. */
+export const BILLING_PREF_CONSENT_STORAGE_KEY = 'tv.onboarding.billingPreferenceConsent';
+
+export interface PendingBillingPreferenceConsent {
+  mode: BillingPreferenceMode;
+  providerCode: string;
+  consentText: string;
+  consentTextVersion: string;
+  capturedAtUtc: string;
+}
 
 type RegisterStep =
   | 'loading'
@@ -98,6 +115,9 @@ export class RegisterComponent implements OnInit, OnDestroy {
   protected readonly detailsError = signal('');
   protected readonly paymentOptions = signal<OnboardingPaymentOption[]>([]);
   protected readonly selectedPaymentOption = signal<OnboardingPaymentOption | null>(null);
+  // Elección obligatoria entre Automatic (card-on-file) y Manual (aviso por email, pago manual).
+  // Null hasta que el usuario tilde una de las dos opciones; sin eso el botón de pagar sigue deshabilitado.
+  protected readonly billingPreferenceMode = signal<BillingPreferenceMode | null>(null);
 
   protected readonly showCodeFields = signal(false);
   protected readonly referralCode = signal('');
@@ -399,6 +419,11 @@ export class RegisterComponent implements OnInit, OnDestroy {
       this.detailsError.set(this.t().regPaymentMethodUnavailable);
       return;
     }
+    if (!this.billingPreferenceMode()) {
+      this.detailsError.set(this.t().signupBillingPrefRequired);
+      return;
+    }
+    this.persistBillingPreferenceConsent();
 
     this.isSubmittingDetails.set(true);
     if (this.onboardingId) {
@@ -449,6 +474,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
         referralCode: this.referralCode().trim() || undefined,
         promoCode: this.promoCode().trim() || undefined,
         giftCode: this.giftCode().trim() || undefined,
+        storeMethodForOffSession: this.billingPreferenceMode() === 'Automatic',
       })
       .subscribe({
         next: (res) => {
@@ -632,6 +658,58 @@ export class RegisterComponent implements OnInit, OnDestroy {
     if (this.processingClockTimer !== null) {
       clearInterval(this.processingClockTimer);
       this.processingClockTimer = null;
+    }
+  }
+
+  /** Texto EXACTO del radio Automatic con los valores que el usuario ve en pantalla. Es lo que se guarda
+   *  como `consentText` al llamar al backend — mismo string que mostró la UI, no una copia inventada. */
+  protected automaticConsentText(): string {
+    return this.t()
+      .signupBillingPrefAutomatic.replace('{brand}', this.brand)
+      .replace('{amount}', this.formattedAmount())
+      .replace('{cadence}', this.formattedCadence());
+  }
+
+  protected manualConsentText(): string {
+    return this.t().signupBillingPrefManual;
+  }
+
+  private formattedAmount(): string {
+    const price = this.planPrice;
+    try {
+      return new Intl.NumberFormat(this.translation.lang(), {
+        style: 'currency',
+        currency: 'USD',
+      }).format(price);
+    } catch {
+      return `$${price}`;
+    }
+  }
+
+  private formattedCadence(): string {
+    return this.cycle() === 'Yearly'
+      ? this.t().annualLabel.toLowerCase()
+      : this.t().monthlyLabel.toLowerCase();
+  }
+
+  /** Guarda la elección + texto exacto que vio el usuario en sessionStorage: ni el register, ni el
+   *  payment-received, tienen una sesión autenticada para hablar con Subscription — pero /register/complete
+   *  sí la crea al terminar. Ahí se consume este breadcrumb para hacer POST /subscriptions/me/billing-preference. */
+  private persistBillingPreferenceConsent(): void {
+    const mode = this.billingPreferenceMode();
+    if (!mode || typeof window === 'undefined') return;
+    const consent: PendingBillingPreferenceConsent = {
+      mode,
+      providerCode: 'stripe',
+      consentText: mode === 'Automatic' ? this.automaticConsentText() : this.manualConsentText(),
+      consentTextVersion: BILLING_PREFERENCE_CONSENT_VERSION,
+      capturedAtUtc: new Date().toISOString(),
+    };
+    try {
+      window.sessionStorage.setItem(BILLING_PREF_CONSENT_STORAGE_KEY, JSON.stringify(consent));
+    } catch {
+      // sessionStorage puede estar bloqueado (modo privado); el flujo sigue, el POST igual se intentará
+      // cuando el usuario ya tenga sesión, con los defaults mínimos.
     }
   }
 

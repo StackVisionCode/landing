@@ -36,7 +36,6 @@ function subscription(overrides: Partial<AccountSubscription> = {}): AccountSubs
       currentPeriodEndUtc: '2026-10-01T00:00:00Z',
       nextRenewalAtUtc: '2026-10-01T00:00:00Z',
       trialEndsAtUtc: null,
-      gracePeriodEndsAtUtc: null,
       cancelAtPeriodEnd: false,
       cancelledAtUtc: null,
     },

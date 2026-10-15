@@ -8,6 +8,7 @@ import { AccountSubscriptionService } from '@core/account/account-subscription.s
 import { AccountSessionStore } from '@core/auth/account-session.store';
 import { PlanResponse } from '@core/plans/plans.models';
 import { PlansService } from '@core/plans/plans.service';
+import { BillingPreferenceService } from '@core/account/billing-preference.service';
 import { AccountPlanComponent } from './account-plan.component';
 
 const me = {
@@ -55,7 +56,6 @@ function subscription(): AccountSubscription {
       currentPeriodEndUtc: '2026-10-01T00:00:00Z',
       nextRenewalAtUtc: '2026-10-01T00:00:00Z',
       trialEndsAtUtc: null,
-      gracePeriodEndsAtUtc: null,
       cancelAtPeriodEnd: false,
       cancelledAtUtc: null,
     },
@@ -97,11 +97,21 @@ describe('AccountPlanComponent', () => {
       ...overrides,
     };
     const plansApi = { getPlans: vi.fn(() => of([plan('pro', 49, 10), plan('starter', 19, 3)])) };
+    const billingPref = {
+      get: vi.fn(() =>
+        of({
+          mode: 'Manual',
+          hasActiveMandate: false,
+        }),
+      ),
+      set: vi.fn(),
+    };
     TestBed.configureTestingModule({
       imports: [AccountPlanComponent],
       providers: [
         { provide: AccountSubscriptionService, useValue: api },
         { provide: PlansService, useValue: plansApi },
+        { provide: BillingPreferenceService, useValue: billingPref },
         { provide: AccountSessionStore, useValue: { me: signal(me) } },
         { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: { get: () => queryParam } } } },
       ],

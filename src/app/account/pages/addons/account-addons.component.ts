@@ -10,6 +10,7 @@ import { TranslationStore } from '@core/i18n/translation.store';
 import { ActionCooldown } from '@core/http/action-cooldown';
 import { formatClock } from '@core/http/throttling';
 import { throttleNotice } from '@account/shared/account-throttle';
+import { ConfirmDialogComponent } from '@account/shared/confirm-dialog.component';
 
 /** Lo que pasó con el pago al volver del proveedor. */
 type CheckoutOutcome = 'none' | 'paid' | 'done' | 'cancelled';
@@ -25,6 +26,7 @@ const MAX_POLLS = 20;
 
 @Component({
   selector: 'app-account-addons',
+  imports: [ConfirmDialogComponent],
   templateUrl: './account-addons.component.html',
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
@@ -156,12 +158,23 @@ export class AccountAddOnsComponent {
       });
   }
 
+  /** Intent que el usuario está por confirmar cancelar. */
+  readonly cancelConfirmIntentId = signal<string | null>(null);
+
+  openCancelConfirm(intentId: string): void {
+    if (!intentId || this.cancellingId() !== null) return;
+    this.cancelConfirmIntentId.set(intentId);
+  }
+
+  dismissCancelConfirm(): void {
+    this.cancelConfirmIntentId.set(null);
+  }
+
   /** Cierra el intent pending del snapshot (o el del storage, cuando el snapshot aún no lo trae). */
-  cancelPending(intentId: string): void {
+  cancelPending(): void {
+    const intentId = this.cancelConfirmIntentId();
+    this.cancelConfirmIntentId.set(null);
     if (!intentId || this.cancellingId() !== null) {
-      return;
-    }
-    if (!window.confirm(this.t().accAddOnsCancelConfirm)) {
       return;
     }
     this.cancellingId.set(intentId);

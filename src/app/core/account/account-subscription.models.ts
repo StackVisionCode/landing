@@ -17,7 +17,6 @@ export interface AccountPeriod {
   currentPeriodEndUtc: string;
   nextRenewalAtUtc: string | null;
   trialEndsAtUtc: string | null;
-  gracePeriodEndsAtUtc: string | null;
   /** Cancelación programada: el acceso llega hasta `currentPeriodEndUtc` y se puede deshacer. */
   cancelAtPeriodEnd: boolean;
   cancelledAtUtc: string | null;

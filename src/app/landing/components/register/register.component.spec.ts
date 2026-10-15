@@ -55,6 +55,7 @@ describe('RegisterComponent', () => {
     component.verifyOtp();
     component.firstName.set('Ada');
     component.lastName.set('Lovelace');
+    component.billingPreferenceMode.set('Manual');
   }
 
   function onboardingMock(overrides: Record<string, unknown> = {}) {

@@ -215,6 +215,13 @@ export const es: TranslationKeys = {
   regStepCounter: "Paso {n} de 4",
   regBackButton: 'Volver',
 
+  signupBillingPrefTitle: 'Preferencia de facturación',
+  signupBillingPrefAutomatic:
+    'Renovación automática — autorizo a {brand} a cobrar {amount} cada {cadence} hasta cancelar.',
+  signupBillingPrefManual:
+    'Renovación manual — recibo un recordatorio por email y pago yo mismo cada ciclo.',
+  signupBillingPrefRequired: 'Elige una preferencia de facturación para continuar.',
+
   compLoadingTitle: 'Cargando tu invitación...',
   compInvalidTitle: 'Este enlace ya no es válido',
   compInvalidBody: 'No pudimos verificar este enlace. Elige tu plan de nuevo para recibir uno nuevo.',
@@ -339,7 +346,6 @@ export const es: TranslationKeys = {
   accOvStatusActive: "Activa",
   accOvStatusTrialing: "Prueba",
   accOvStatusPastDue: "Pago fallido",
-  accOvStatusGracePeriod: "Pago pendiente",
   accOvStatusSuspended: "Suspendida",
   accOvStatusCancelled: "Cancelada",
   accOvStatusExpired: "Vencida",
@@ -411,6 +417,8 @@ export const es: TranslationKeys = {
   accSeatsCancelled: "Pago cancelado. No se cobró nada.",
   accSeatsCancelPending: "Cancelar y empezar de nuevo",
   accSeatsCancelConfirm: "¿Cancelar este pago pendiente? Después podrás empezar una compra nueva.",
+  accSeatsCancelConfirmTitle: "Cancelar pago pendiente",
+  accSeatsKeep: "Mantenerlo",
   accSeatsCancelling: "Cancelando...",
   accSeatsCancelledToast: "El pago pendiente se canceló.",
   accSeatsCancelAlready: "El pago ya estaba cancelado.",
@@ -443,6 +451,8 @@ export const es: TranslationKeys = {
   accAddOnResume: "Reanudar pago",
   accAddOnsCancelPending: "Cancelar compra pendiente",
   accAddOnsCancelConfirm: "¿Cancelar esta compra pendiente de complemento? Después podrás empezar otra.",
+  accAddOnsCancelConfirmTitle: "Cancelar add-on pendiente",
+  accAddOnsKeep: "Mantenerlo",
   accAddOnsCancelling: "Cancelando...",
   accAddOnsCancelledToast: "La compra pendiente se canceló.",
   accAddOnsCancelAlready: "La compra ya estaba cancelada.",
@@ -504,6 +514,8 @@ export const es: TranslationKeys = {
   accPlanPendingResume: "Terminar el pago",
   accPlanCancelUpgrade: "Cancelar mejora",
   accPlanCancelUpgradeConfirm: "¿Cancelar esta mejora pendiente? Tu plan sigue igual y no se intentará otro cobro.",
+  accPlanCancelUpgradeConfirmTitle: "Cancelar mejora pendiente",
+  accPlanCancelUpgradeKeep: "Mantenerla",
   accPlanCancelUpgradeWorking: "Cancelando...",
   accPlanCancelUpgradeDone: "La mejora pendiente se canceló.",
   accPlanCancelUpgradeAlready: "La mejora ya estaba cancelada.",
@@ -528,6 +540,26 @@ export const es: TranslationKeys = {
   accResuming: "Restaurando...",
   accResumeDone: "Tu suscripci\u00f3n sigue con normalidad.",
   accResumeError: "No pudimos restaurarla. Int\u00e9ntalo de nuevo.",
+
+  accBillingPrefHeading: 'Facturaci\u00f3n',
+  accBillingPrefAutomatic: 'Renovaci\u00f3n autom\u00e1tica',
+  accBillingPrefManual: 'Renovaci\u00f3n manual',
+  accBillingPrefManualHint: 'Te avisaremos antes del {date}; t\u00fa haces el pago.',
+  accBillingPrefSwitchToAutomatic: 'Cambiar a renovaci\u00f3n autom\u00e1tica',
+  accBillingPrefSwitchToManual: 'Cambiar a renovaci\u00f3n manual',
+  accBillingPrefSwitchToAutomaticConfirm:
+    'Al continuar autorizas cargos autom\u00e1ticos en cada fecha de renovaci\u00f3n. Puedes volver a manual cuando quieras.',
+  accBillingPrefSwitchToManualConfirm:
+    'Pagar\u00e1s t\u00fa mismo en cada renovaci\u00f3n. Te avisaremos por email antes.',
+  accBillingPrefSwitchToAutomaticTitle: 'Cambiar a renovaci\u00f3n autom\u00e1tica',
+  accBillingPrefSwitchToManualTitle: 'Cambiar a renovaci\u00f3n manual',
+  accBillingPrefSwitching: 'Guardando...',
+  accBillingPrefSwitchError: 'No pudimos guardar tu preferencia. Int\u00e9ntalo de nuevo.',
+  accBillingPrefUpdateCard: 'Actualizar tarjeta',
+  accBillingPrefNextCharge: 'Pr\u00f3ximo cargo',
+  accBillingPrefExpires: 'expira',
+  accBillingPrefNoCard: 'Sin tarjeta guardada. Agregar una activa la renovaci\u00f3n autom\u00e1tica.',
+  accBillingPrefProviderManagedCard: 'Administra tu m\u00e9todo de pago directamente desde tu cuenta de {provider}.',
 
   // Account — historial de pagos
   accNavBilling: "Historial de pagos",

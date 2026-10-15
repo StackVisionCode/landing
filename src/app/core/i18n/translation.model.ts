@@ -221,6 +221,12 @@ export interface TranslationKeys {
   regStepCounter: string;
   regBackButton: string;
 
+  // Registro — preferencia de facturación
+  signupBillingPrefTitle: string;
+  signupBillingPrefAutomatic: string;
+  signupBillingPrefManual: string;
+  signupBillingPrefRequired: string;
+
   // Registro / onboarding — página /register/complete
   compLoadingTitle: string;
   compInvalidTitle: string;
@@ -346,7 +352,6 @@ export interface TranslationKeys {
   accOvStatusActive: string;
   accOvStatusTrialing: string;
   accOvStatusPastDue: string;
-  accOvStatusGracePeriod: string;
   accOvStatusSuspended: string;
   accOvStatusCancelled: string;
   accOvStatusExpired: string;
@@ -418,6 +423,8 @@ export interface TranslationKeys {
   accSeatsCancelled: string;
   accSeatsCancelPending: string;
   accSeatsCancelConfirm: string;
+  accSeatsCancelConfirmTitle: string;
+  accSeatsKeep: string;
   accSeatsCancelling: string;
   accSeatsCancelledToast: string;
   accSeatsCancelAlready: string;
@@ -450,6 +457,8 @@ export interface TranslationKeys {
   accAddOnResume: string;
   accAddOnsCancelPending: string;
   accAddOnsCancelConfirm: string;
+  accAddOnsCancelConfirmTitle: string;
+  accAddOnsKeep: string;
   accAddOnsCancelling: string;
   accAddOnsCancelledToast: string;
   accAddOnsCancelAlready: string;
@@ -511,6 +520,8 @@ export interface TranslationKeys {
   accPlanPendingResume: string;
   accPlanCancelUpgrade: string;
   accPlanCancelUpgradeConfirm: string;
+  accPlanCancelUpgradeConfirmTitle: string;
+  accPlanCancelUpgradeKeep: string;
   accPlanCancelUpgradeWorking: string;
   accPlanCancelUpgradeDone: string;
   accPlanCancelUpgradeAlready: string;
@@ -535,6 +546,25 @@ export interface TranslationKeys {
   accResuming: string;
   accResumeDone: string;
   accResumeError: string;
+
+  // Account — preferencia de facturación
+  accBillingPrefHeading: string;
+  accBillingPrefAutomatic: string;
+  accBillingPrefManual: string;
+  accBillingPrefManualHint: string;
+  accBillingPrefSwitchToAutomatic: string;
+  accBillingPrefSwitchToManual: string;
+  accBillingPrefSwitchToAutomaticConfirm: string;
+  accBillingPrefSwitchToManualConfirm: string;
+  accBillingPrefSwitchToAutomaticTitle: string;
+  accBillingPrefSwitchToManualTitle: string;
+  accBillingPrefSwitching: string;
+  accBillingPrefSwitchError: string;
+  accBillingPrefUpdateCard: string;
+  accBillingPrefNextCharge: string;
+  accBillingPrefExpires: string;
+  accBillingPrefNoCard: string;
+  accBillingPrefProviderManagedCard: string;
 
   // Account — historial de pagos
   accNavBilling: string;

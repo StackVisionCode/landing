@@ -36,7 +36,7 @@
             {{ t().accAddOnResume }}
           </button>
         }
-        <button type="button" (click)="cancelPending(checkout.intentId)" [disabled]="cancellingId() !== null"
+        <button type="button" (click)="openCancelConfirm(checkout.intentId)" [disabled]="cancellingId() !== null"
           class="rounded-lg border border-line bg-white px-4 py-2 text-[13px] font-semibold text-twilight hover:bg-cream disabled:opacity-60">
           {{ cancellingId() === checkout.intentId ? t().accAddOnsCancelling : t().accAddOnsCancelPending }}
         </button>
@@ -132,3 +132,14 @@
     </article>
   }
 </section>
+
+<app-confirm-dialog
+  [open]="cancelConfirmIntentId() !== null"
+  [title]="t().accAddOnsCancelConfirmTitle"
+  [message]="t().accAddOnsCancelConfirm"
+  [confirmLabel]="t().accAddOnsCancelPending"
+  [cancelLabel]="t().accAddOnsKeep"
+  tone="danger"
+  (confirmed)="cancelPending()"
+  (dismissed)="dismissCancelConfirm()"
+/>

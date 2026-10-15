@@ -16,6 +16,7 @@ import { TranslationStore } from '@core/i18n/translation.store';
 import { ActionCooldown } from '@core/http/action-cooldown';
 import { formatClock } from '@core/http/throttling';
 import { throttleNotice } from '@account/shared/account-throttle';
+import { ConfirmDialogComponent } from '@account/shared/confirm-dialog.component';
 
 /** Lo que pasó con el pago al volver del proveedor. */
 type CheckoutOutcome = 'none' | 'paid' | 'done' | 'cancelled' | 'slow';
@@ -30,7 +31,7 @@ const MAX_POLLS = 20;
 
 @Component({
   selector: 'app-account-seats',
-  imports: [FormsModule],
+  imports: [FormsModule, ConfirmDialogComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: './account-seats.component.html',
 })
@@ -188,13 +189,22 @@ export class AccountSeatsComponent {
       });
   }
 
+  readonly cancelConfirmOpen = signal(false);
+
+  openCancelConfirm(): void {
+    if (!this.openCheckout() || this.cancelling()) return;
+    this.cancelConfirmOpen.set(true);
+  }
+
+  dismissCancelConfirm(): void {
+    this.cancelConfirmOpen.set(false);
+  }
+
   /** Cierra el intent pending: libera el guard y permite empezar una compra nueva. */
   cancelPending(): void {
     const pending = this.openCheckout();
+    this.cancelConfirmOpen.set(false);
     if (!pending || this.cancelling()) {
-      return;
-    }
-    if (!window.confirm(this.t().accSeatsCancelConfirm)) {
       return;
     }
     this.cancelling.set(true);

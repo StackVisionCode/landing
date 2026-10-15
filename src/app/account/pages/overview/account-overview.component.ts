@@ -73,8 +73,6 @@ export class AccountOverviewComponent {
         return t.accOvStatusTrialing;
       case 'PastDue':
         return t.accOvStatusPastDue;
-      case 'GracePeriod':
-        return t.accOvStatusGracePeriod;
       case 'Suspended':
         return t.accOvStatusSuspended;
       case 'Cancelled':
@@ -89,7 +87,6 @@ export class AccountOverviewComponent {
   readonly statusTone = computed<StatusTone>(() => {
     switch (this.subscription()?.plan.status) {
       case 'PastDue':
-      case 'GracePeriod':
         return 'warn';
       case 'Suspended':
       case 'Expired':
@@ -122,9 +119,6 @@ export class AccountOverviewComponent {
     }
     if (period.cancelledAtUtc || plan.status === 'Cancelled') {
       return t.accOvAccessEnds.replace('{date}', this.date(period.currentPeriodEndUtc));
-    }
-    if (period.gracePeriodEndsAtUtc) {
-      return t.accOvAccessEnds.replace('{date}', this.date(period.gracePeriodEndsAtUtc));
     }
     return period.nextRenewalAtUtc
       ? t.accOvNextCharge.replace('{date}', this.date(period.nextRenewalAtUtc))
