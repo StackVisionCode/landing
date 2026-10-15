@@ -1,6 +1,6 @@
 import { CUSTOM_ELEMENTS_SCHEMA, Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { AccountAddOn, AccountSubscription } from '@core/account/account-subscription.models';
+import { AccountAddOn, AccountOpenAddOnCheckout, AccountSubscription } from '@core/account/account-subscription.models';
 import { AccountSubscriptionService } from '@core/account/account-subscription.service';
 import { AccountSessionStore } from '@core/auth/account-session.store';
 import { apiErrorCode } from '@core/http/api-error';
@@ -10,6 +10,7 @@ import { TranslationStore } from '@core/i18n/translation.store';
 import { ActionCooldown } from '@core/http/action-cooldown';
 import { formatClock } from '@core/http/throttling';
 import { throttleNotice } from '@account/shared/account-throttle';
+import { ConfirmDialogComponent } from '@account/shared/confirm-dialog.component';
 
 /** Lo que pasó con el pago al volver del proveedor. */
 type CheckoutOutcome = 'none' | 'paid' | 'done' | 'cancelled';
@@ -25,6 +26,7 @@ const MAX_POLLS = 20;
 
 @Component({
   selector: 'app-account-addons',
+  imports: [ConfirmDialogComponent],
   templateUrl: './account-addons.component.html',
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
@@ -45,16 +47,58 @@ export class AccountAddOnsComponent {
   readonly waitLabel = computed(() => `${this.t().accWaitPrefix} ${formatClock(this.cooldown.secondsLeft())}`);
 
   readonly outcome = signal<CheckoutOutcome>('none');
+  /** Intent del last checkout abierto: lo seteamos al redirigir, lo leemos al volver, y queda para cancelar
+   * si el usuario abandonó la pasarela y vuelve con `?checkout=cancelled` o reintenta otra compra. Es el
+   * fallback para cuando el snapshot del backend aún no trae el array (o lo trae vacío por un desalineo). */
+  readonly pendingIntentId = signal<string | null>(null);
+  /** Qué intent está siendo cancelado: con varias tarjetas en pantalla no basta un booleano global. */
+  readonly cancellingId = signal<string | null>(null);
+  readonly cancelNotice = signal<{ kind: 'ok' | 'already' | 'error' } | null>(null);
 
   readonly included = computed(() => this.group('Included'));
   readonly active = computed(() => this.group('Active'));
   readonly available = computed(() => this.group('Available'));
   readonly isEmpty = computed(() => (this.subscription()?.addOns.length ?? 0) === 0);
 
+  /**
+   * Decisión UX: pintamos UNA tarjeta por intent abierto. Add-ons permite varios en paralelo (uno por
+   * `addOnCode`): si colapsásemos a la primera, el usuario no vería ni podría cerrar las otras compras
+   * abandonadas. El snapshot del backend es la fuente de verdad; el `pendingIntentId` del sessionStorage
+   * solo entra en juego si el snapshot aún no trae el campo (compat con un backend viejo) o lo manda vacío
+   * tras el error `AddOn.CheckoutInProgress` del flow de compra.
+   */
+  readonly openCheckouts = computed<AccountOpenAddOnCheckout[]>(() => {
+    const fromSnapshot = this.subscription()?.openAddOnCheckouts;
+    if (fromSnapshot && fromSnapshot.length > 0) {
+      return fromSnapshot;
+    }
+    const legacy = this.pendingIntentId();
+    return legacy
+      ? [
+          // Fallback: el intent del sessionStorage no sabemos su addOnCode ni URL, pero sí basta para
+          // dibujar un card con botón Cancel. Resume se oculta cuando no hay URL.
+          {
+            intentId: legacy,
+            addOnCode: '',
+            addOnDisplayName: '',
+            quantity: 0,
+            totalCents: 0,
+            currency: '',
+            checkoutUrl: '',
+            expiresAtUtc: '',
+          },
+        ]
+      : [];
+  });
+
   constructor() {
     const returned = inject(ActivatedRoute).snapshot.queryParamMap.get('checkout');
     const intentId = this.takeStoredIntent();
     this.outcome.set(returned === 'success' ? 'paid' : returned === 'cancelled' ? 'cancelled' : 'none');
+    // Al volver con checkout cancelado, el intent sigue Pending en el backend: ofrecer cerrarlo.
+    if (returned === 'cancelled' && intentId) {
+      this.pendingIntentId.set(intentId);
+    }
     this.load();
     if (returned === 'success') {
       this.followPayment(intentId);
@@ -102,9 +146,62 @@ export class AccountAddOnsComponent {
         error: err => {
           this.buyingCode.set(null);
           this.buyError.set(this.messageFor(err));
+          // Si el backend rechaza por intent abierto, el que tenemos en storage sirve para cancelar.
+          if (apiErrorCode(err) === 'AddOn.CheckoutInProgress') {
+            const stored = this.takeStoredIntent();
+            if (stored) {
+              this.pendingIntentId.set(stored);
+            }
+          }
           this.load();
         },
       });
+  }
+
+  /** Intent que el usuario está por confirmar cancelar. */
+  readonly cancelConfirmIntentId = signal<string | null>(null);
+
+  openCancelConfirm(intentId: string): void {
+    if (!intentId || this.cancellingId() !== null) return;
+    this.cancelConfirmIntentId.set(intentId);
+  }
+
+  dismissCancelConfirm(): void {
+    this.cancelConfirmIntentId.set(null);
+  }
+
+  /** Cierra el intent pending del snapshot (o el del storage, cuando el snapshot aún no lo trae). */
+  cancelPending(): void {
+    const intentId = this.cancelConfirmIntentId();
+    this.cancelConfirmIntentId.set(null);
+    if (!intentId || this.cancellingId() !== null) {
+      return;
+    }
+    this.cancellingId.set(intentId);
+    this.cancelNotice.set(null);
+    this.api.cancelPendingAddOnCheckout(intentId).subscribe({
+      next: response => {
+        this.cancellingId.set(null);
+        this.cancelNotice.set({ kind: response.alreadyCancelled ? 'already' : 'ok' });
+        if (this.pendingIntentId() === intentId) {
+          this.pendingIntentId.set(null);
+        }
+        this.load();
+      },
+      error: () => {
+        this.cancellingId.set(null);
+        this.cancelNotice.set({ kind: 'error' });
+      },
+    });
+  }
+
+  /** Pasa al proveedor para terminar de pagar un intent todavía abierto. */
+  resumeCheckout(checkout: AccountOpenAddOnCheckout): void {
+    if (!checkout.checkoutUrl) {
+      return;
+    }
+    this.storeIntent(checkout.intentId);
+    window.location.assign(checkout.checkoutUrl);
   }
 
   /**

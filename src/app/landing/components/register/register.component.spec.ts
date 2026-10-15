@@ -36,7 +36,7 @@ describe('RegisterComponent', () => {
     TestBed.configureTestingModule({
       imports: [RegisterComponent],
       providers: [
-        provideRouter([]),
+        provideRouter([{ path: 'register', children: [] }]),
         { provide: OnboardingService, useValue: onboarding },
         { provide: PlansService, useValue: { getPlans: () => of([PLAN]) } },
         { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: { get: (key: string) => params[key] ?? null } } } },
@@ -55,6 +55,7 @@ describe('RegisterComponent', () => {
     component.verifyOtp();
     component.firstName.set('Ada');
     component.lastName.set('Lovelace');
+    component.billingPreferenceMode.set('Manual');
   }
 
   function onboardingMock(overrides: Record<string, unknown> = {}) {
@@ -67,6 +68,7 @@ describe('RegisterComponent', () => {
       startCheckout: vi.fn((_request: StartCheckoutRequest) =>
         of({ checkoutUrl: 'https://stripe.test/session', fullyCovered: false }),
       ),
+      cancelOnboarding: vi.fn(() => of(void 0)),
       ...overrides,
     };
   }
@@ -181,6 +183,37 @@ describe('RegisterComponent', () => {
     expect(onboarding.createOnboarding).toHaveBeenCalledTimes(1);
     expect(onboarding.startCheckout).toHaveBeenCalledTimes(2);
     expect(window.location.href).toBe('https://stripe.test/session');
+  });
+
+  it('offers a cancel button in the processing step and routes back to /register with the cancelled notice', () => {
+    const onboarding = onboardingMock();
+    const component = create({ plan: 'plan-1' }, onboarding);
+    reachDetails(component);
+    component.submitDetails();
+    expect(component.step()).toBe('processing');
+    expect(component.canCancelProcessing()).toBe(true);
+
+    component.cancelOnboarding();
+
+    expect(onboarding.cancelOnboarding).toHaveBeenCalledWith('onboarding-1');
+  });
+
+  it('hides the cancel button in processing when there is no onboardingId in memory', () => {
+    const onboarding = onboardingMock();
+    const component = create({ plan: 'plan-1' }, onboarding);
+    component.step.set('processing');
+    expect(component.canCancelProcessing()).toBe(false);
+  });
+
+  it('resets processing back to the email step on a bfcache restore without onboardingId', () => {
+    const component = create({ plan: 'plan-1' });
+    component.step.set('processing');
+    const event = new Event('pageshow') as PageTransitionEvent;
+    Object.defineProperty(event, 'persisted', { value: true });
+
+    window.dispatchEvent(event);
+
+    expect(component.step()).toBe('email');
   });
 
   it('shows the mapped message for errors that are not a wait', () => {

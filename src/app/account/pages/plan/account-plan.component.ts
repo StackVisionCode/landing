@@ -16,6 +16,12 @@ import { StepUpDialogComponent } from '../../shared/step-up-dialog.component';
 import { ActionCooldown } from '@core/http/action-cooldown';
 import { formatClock } from '@core/http/throttling';
 import { throttleNotice } from '@account/shared/account-throttle';
+import { ConfirmDialogComponent } from '@account/shared/confirm-dialog.component';
+import {
+  BILLING_PREFERENCE_CONSENT_VERSION,
+  BillingPreference,
+  BillingPreferenceService,
+} from '@core/account/billing-preference.service';
 
 /** Qué está haciendo la zona de riesgo. */
 type CancelStage = 'idle' | 'confirming' | 'working';
@@ -28,7 +34,7 @@ type CheckoutOutcome = 'none' | 'paid' | 'cancelled';
 
 @Component({
   selector: 'app-account-plan',
-  imports: [StepUpDialogComponent],
+  imports: [StepUpDialogComponent, ConfirmDialogComponent],
   templateUrl: './account-plan.component.html',
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
@@ -37,6 +43,7 @@ export class AccountPlanComponent {
   private readonly plansApi = inject(PlansService);
   private readonly session = inject(AccountSessionStore);
   private readonly i18n = inject(TranslationStore);
+  private readonly billingPrefApi = inject(BillingPreferenceService);
 
   readonly t = this.i18n.t;
   readonly loading = signal(true);
@@ -55,8 +62,11 @@ export class AccountPlanComponent {
   readonly cancelStage = signal<CancelStage>('idle');
   readonly cancelReason = signal('');
   readonly cancelError = signal<string | null>(null);
+  readonly cancellingUpgrade = signal(false);
+  /** Mensaje efímero de la cancelación del upgrade: éxito / idempotente / error. */
+  readonly upgradeCancelNotice = signal<{ kind: 'ok' | 'already' | 'error' } | null>(null);
   /** Qué acción reintentar cuando el usuario confirme su contraseña. */
-  private readonly pendingAction = signal<'change' | 'cancel'>('change');
+  private readonly pendingAction = signal<'change' | 'cancel' | 'switch-automatic' | 'update-card'>('change');
   /** Un 429 bloquea el botón con la espera real del backend en vez de contarse como fallo. */
   protected readonly cooldown = new ActionCooldown();
   readonly waiting = this.cooldown.active;
@@ -82,6 +92,48 @@ export class AccountPlanComponent {
     return period ? this.date(period.currentPeriodEndUtc) : '';
   });
 
+  // Preferencia de facturación y mandato guardado.
+  readonly billingPreference = signal<BillingPreference | null>(null);
+  readonly billingPreferenceFailed = signal(false);
+  readonly billingPreferenceSwitching = signal(false);
+  readonly billingPreferenceSwitchError = signal<string | null>(null);
+  readonly switchToAutomaticOpen = signal(false);
+  readonly switchToManualOpen = signal(false);
+
+  readonly isAutomaticBilling = computed(() => this.billingPreference()?.mode === 'Automatic');
+  readonly isManualBilling = computed(() => this.billingPreference()?.mode === 'Manual');
+  readonly hasSavedCard = computed(() => !!this.billingPreference()?.defaultPaymentMethod);
+  /** Hoy solo Stripe soporta Checkout mode=setup (cambiar tarjeta sin cobrar). En PayPal el usuario
+   *  administra su wallet directamente, así que ocultamos el botón y mostramos el aviso. */
+  readonly canUpdateCard = computed(() => {
+    const provider = this.billingPreference()?.providerCode;
+    return !provider || provider.toLowerCase() === 'stripe';
+  });
+  readonly providerManagedCardLabel = computed(() => {
+    const provider = this.billingPreference()?.providerCode ?? '';
+    return this.t().accBillingPrefProviderManagedCard.replace('{provider}', provider);
+  });
+  readonly savedCardLabel = computed(() => {
+    const pm = this.billingPreference()?.defaultPaymentMethod;
+    if (!pm) return '';
+    const month = String(pm.expMonth).padStart(2, '0');
+    const year = String(pm.expYear).slice(-2);
+    return `${pm.brand} •••• ${pm.last4} · ${this.t().accBillingPrefExpires} ${month}/${year}`;
+  });
+  readonly nextChargeLabel = computed(() => {
+    const next = this.subscription()?.period.nextRenewalAtUtc;
+    const pref = this.billingPreference();
+    if (!next || !pref) return '';
+    const plan = this.subscription()?.plan;
+    const amount =
+      pref.agreedAmountCents != null && pref.agreedCurrency
+        ? this.money(pref.agreedAmountCents, pref.agreedCurrency)
+        : plan
+          ? this.money(plan.currentCyclePriceCents, plan.currency)
+          : '';
+    return `${this.t().accBillingPrefNextCharge}: ${this.date(next)} · ${amount}`;
+  });
+
   constructor() {
     // El proveedor devuelve al usuario acá tras pagar el upgrade.
     const returned = inject(ActivatedRoute).snapshot.queryParamMap.get('checkout');
@@ -95,10 +147,13 @@ export class AccountPlanComponent {
     forkJoin({
       subscription: this.api.get(),
       plans: this.plansApi.getPlans().pipe(catchError(() => of([] as PlanResponse[]))),
+      billingPreference: this.billingPrefApi.get().pipe(catchError(() => of(null as BillingPreference | null))),
     }).subscribe({
-      next: ({ subscription, plans }) => {
+      next: ({ subscription, plans, billingPreference }) => {
         this.subscription.set(subscription);
         this.plans.set([...plans].sort((a, b) => a.monthlyPriceUsd - b.monthlyPriceUsd));
+        this.billingPreference.set(billingPreference);
+        this.billingPreferenceFailed.set(billingPreference === null);
         this.loading.set(false);
       },
       error: () => {
@@ -174,6 +229,38 @@ export class AccountPlanComponent {
     });
   }
 
+  readonly cancelUpgradeConfirmOpen = signal(false);
+
+  openCancelUpgradeConfirm(): void {
+    if (this.cancellingUpgrade()) return;
+    this.cancelUpgradeConfirmOpen.set(true);
+  }
+
+  dismissCancelUpgradeConfirm(): void {
+    this.cancelUpgradeConfirmOpen.set(false);
+  }
+
+  /** Cierra el upgrade AwaitingPayment: libera el intent y permite elegir otro plan sin cobro extra. */
+  cancelUpgrade(): void {
+    this.cancelUpgradeConfirmOpen.set(false);
+    if (this.cancellingUpgrade()) {
+      return;
+    }
+    this.cancellingUpgrade.set(true);
+    this.upgradeCancelNotice.set(null);
+    this.api.cancelPendingUpgrade().subscribe({
+      next: response => {
+        this.cancellingUpgrade.set(false);
+        this.upgradeCancelNotice.set({ kind: response.alreadyCancelled ? 'already' : 'ok' });
+        this.load();
+      },
+      error: () => {
+        this.cancellingUpgrade.set(false);
+        this.upgradeCancelNotice.set({ kind: 'error' });
+      },
+    });
+  }
+
   /** Arranca la renovación y sale al proveedor; al volver, la pantalla ya refleja el pago. */
   renew(): void {
     const email = this.session.me()?.email;
@@ -201,8 +288,17 @@ export class AccountPlanComponent {
   /** Ya confirmó su contraseña: se reintenta lo que el backend había rechazado. */
   onStepUpConfirmed(): void {
     this.stepUpNeeded.set(false);
-    if (this.pendingAction() === 'cancel') {
+    const action = this.pendingAction();
+    if (action === 'cancel') {
       this.confirmCancel();
+      return;
+    }
+    if (action === 'switch-automatic') {
+      this.confirmSwitchToAutomatic();
+      return;
+    }
+    if (action === 'update-card') {
+      this.updateCard();
       return;
     }
     this.confirm();
@@ -210,8 +306,17 @@ export class AccountPlanComponent {
 
   onStepUpDismissed(): void {
     this.stepUpNeeded.set(false);
-    if (this.pendingAction() === 'cancel') {
+    const action = this.pendingAction();
+    if (action === 'cancel') {
       this.cancelStage.set('confirming');
+      return;
+    }
+    if (action === 'switch-automatic') {
+      this.switchToAutomaticOpen.set(true);
+      return;
+    }
+    if (action === 'update-card') {
+      // El usuario descartó el step-up; no abrimos otro checkout, el botón vuelve a estar disponible.
       return;
     }
     this.stage.set('previewing');
@@ -273,6 +378,123 @@ export class AccountPlanComponent {
         this.cancelError.set(this.t().accResumeError);
       },
     });
+  }
+
+  /** Texto EXACTO que verá el usuario en el modal de confirmación: es el mismo string que viaja al backend. */
+  switchToAutomaticConsentText(): string {
+    return this.t().accBillingPrefSwitchToAutomaticConfirm;
+  }
+
+  switchToManualConsentText(): string {
+    return this.t().accBillingPrefSwitchToManualConfirm;
+  }
+
+  openSwitchToAutomatic(): void {
+    if (this.billingPreferenceSwitching()) return;
+    this.billingPreferenceSwitchError.set(null);
+    this.switchToAutomaticOpen.set(true);
+  }
+
+  dismissSwitchToAutomatic(): void {
+    this.switchToAutomaticOpen.set(false);
+  }
+
+  openSwitchToManual(): void {
+    if (this.billingPreferenceSwitching()) return;
+    this.billingPreferenceSwitchError.set(null);
+    this.switchToManualOpen.set(true);
+  }
+
+  dismissSwitchToManual(): void {
+    this.switchToManualOpen.set(false);
+  }
+
+  /** Cambia a Automatic. Si no hay card-on-file, el backend igual acepta la preferencia; además abrimos un
+   *  checkout en modo "store method" para que el usuario agregue tarjeta — así el mandato queda viable
+   *  antes del próximo cobro. */
+  confirmSwitchToAutomatic(): void {
+    if (this.billingPreferenceSwitching()) return;
+    this.switchToAutomaticOpen.set(false);
+    this.billingPreferenceSwitching.set(true);
+    this.billingPreferenceSwitchError.set(null);
+    this.pendingAction.set('switch-automatic');
+    this.billingPrefApi
+      .set({
+        mode: 'Automatic',
+        providerCode: 'stripe',
+        consentText: this.switchToAutomaticConsentText(),
+        consentTextVersion: BILLING_PREFERENCE_CONSENT_VERSION,
+      })
+      .subscribe({
+        next: (next) => {
+          this.billingPreference.set(next);
+          this.billingPreferenceSwitching.set(false);
+          if (!next.defaultPaymentMethod) {
+            this.updateCard();
+          }
+        },
+        error: (err: unknown) => {
+          this.billingPreferenceSwitching.set(false);
+          if (apiErrorCode(err) === 'Auth.ReauthenticationRequired') {
+            this.stepUpNeeded.set(true);
+            return;
+          }
+          this.billingPreferenceSwitchError.set(this.t().accBillingPrefSwitchError);
+        },
+      });
+  }
+
+  confirmSwitchToManual(): void {
+    if (this.billingPreferenceSwitching()) return;
+    this.switchToManualOpen.set(false);
+    this.billingPreferenceSwitching.set(true);
+    this.billingPreferenceSwitchError.set(null);
+    this.billingPrefApi
+      .set({
+        mode: 'Manual',
+        consentText: this.switchToManualConsentText(),
+        consentTextVersion: BILLING_PREFERENCE_CONSENT_VERSION,
+      })
+      .subscribe({
+        next: (next) => {
+          this.billingPreference.set(next);
+          this.billingPreferenceSwitching.set(false);
+        },
+        error: () => {
+          this.billingPreferenceSwitching.set(false);
+          this.billingPreferenceSwitchError.set(this.t().accBillingPrefSwitchError);
+        },
+      });
+  }
+
+  /** Reemplaza el PM default guardado. Usa un Checkout en modo "setup" — captura la tarjeta sin cobrar, el
+   *  webhook atacha el método como nuevo default y detacha el viejo. Antes esto reusaba el renew-checkout
+   *  y cobraba un ciclo entero sin querer. */
+  updateCard(): void {
+    if (this.renewing()) return;
+    this.renewing.set(true);
+    this.billingPreferenceSwitchError.set(null);
+    this.pendingAction.set('update-card');
+    const back = `${window.location.origin}/account/plan`;
+    const payerEmail = this.session.me()?.email ?? null;
+    this.billingPrefApi
+      .startSetupSession(`${back}?checkout=success`, `${back}?checkout=cancelled`, payerEmail)
+      .subscribe({
+        next: (session) => window.location.assign(session.checkoutUrl),
+        error: (err: unknown) => {
+          this.renewing.set(false);
+          const code = apiErrorCode(err);
+          if (code === 'Auth.ReauthenticationRequired') {
+            this.stepUpNeeded.set(true);
+            return;
+          }
+          if (code === 'PaymentMethodSetup.ProviderNotSupported') {
+            this.billingPreferenceSwitchError.set(this.providerManagedCardLabel());
+            return;
+          }
+          this.billingPreferenceSwitchError.set(this.t().accBillingPrefSwitchError);
+        },
+      });
   }
 
   priceLabel(plan: PlanResponse): string {

@@ -109,6 +109,18 @@ describe('RegisterPaymentReceivedComponent', () => {
     }
   });
 
+  it('shows the cancelled branch when the backend reports Cancelled', () => {
+    configure({ ...failedResponse(null), status: 'Cancelled' as const });
+    const component = start();
+    expect(component.step()).toBe('cancelled');
+  });
+
+  it('shows the expired branch when the backend reports Expired', () => {
+    configure({ ...failedResponse(null), status: 'Expired' as const });
+    const component = start();
+    expect(component.step()).toBe('expired');
+  });
+
   it('blocks the payment retry with a countdown when it is rate limited', () => {
     vi.useFakeTimers();
     try {

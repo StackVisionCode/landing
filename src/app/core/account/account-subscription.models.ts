@@ -17,7 +17,6 @@ export interface AccountPeriod {
   currentPeriodEndUtc: string;
   nextRenewalAtUtc: string | null;
   trialEndsAtUtc: string | null;
-  gracePeriodEndsAtUtc: string | null;
   /** Cancelación programada: el acceso llega hasta `currentPeriodEndUtc` y se puede deshacer. */
   cancelAtPeriodEnd: boolean;
   cancelledAtUtc: string | null;
@@ -63,10 +62,33 @@ export interface AccountAddOn {
   autoRenew: boolean | null;
 }
 
+/** Respuesta de los endpoints de cancelación de intents pending. Idempotente: ya cerrada → `alreadyCancelled: true`. */
+export interface CancelCheckoutResponse {
+  alreadyCancelled: boolean;
+  intentId: string;
+}
+
 /** Compra de asientos a medias que todavía se puede pagar: mientras exista, no se abre otra. */
 export interface AccountOpenSeatCheckout {
   intentId: string;
   seatType: string;
+  quantity: number;
+  totalCents: number;
+  currency: string;
+  checkoutUrl: string;
+  expiresAtUtc: string;
+}
+
+/**
+ * Compra de un add-on a medias y todavía pagable. A diferencia de los asientos puede haber varias a la vez
+ * (una por `addOnCode`): el sessionStorage no basta cuando el navegador se cerró entre redirect y retorno,
+ * así que el snapshot entrega todas y la pantalla pinta una tarjeta por cada una.
+ */
+export interface AccountOpenAddOnCheckout {
+  intentId: string;
+  addOnCode: string;
+  /** Nombre del catálogo para rotular la tarjeta. Fallback al código si el catálogo no lo tiene. */
+  addOnDisplayName: string;
   quantity: number;
   totalCents: number;
   currency: string;
@@ -81,6 +103,8 @@ export interface AccountSubscription {
   seats: AccountSeats;
   addOns: AccountAddOn[];
   openSeatCheckout: AccountOpenSeatCheckout | null;
+  /** Fail-closed si un backend viejo no lo manda: la pantalla ignora el campo y cae al sessionStorage. */
+  openAddOnCheckouts: AccountOpenAddOnCheckout[] | null;
 }
 
 /** Cuerpo de `POST /subscriptions/me/renew-checkout`: renovar a mano una suscripción vencida. */

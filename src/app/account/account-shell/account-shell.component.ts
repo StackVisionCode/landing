@@ -2,9 +2,11 @@ import { CUSTOM_ELEMENTS_SCHEMA, Component, computed, effect, inject, signal } f
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { SITE_CONFIG } from '@core/config/site-config';
 import { AccountSessionStore } from '@core/auth/account-session.store';
+import { AccountSubscriptionStore } from '@core/account/account-subscription.store';
 import { OfficeBrandingStore } from '@core/account/office-branding.store';
 import { SessionWatch } from '@core/auth/session-watch';
 import { TranslationStore } from '@core/i18n/translation.store';
+import { AccountExpiryBannerComponent } from '../shared/account-expiry-banner.component';
 
 /**
  * Marco del Account: cabecera con la oficina, navegación lateral (barra inferior en móvil) y el outlet.
@@ -12,7 +14,7 @@ import { TranslationStore } from '@core/i18n/translation.store';
  */
 @Component({
   selector: 'app-account-shell',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, AccountExpiryBannerComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   providers: [SessionWatch],
   templateUrl: './account-shell.component.html',
@@ -22,6 +24,7 @@ export class AccountShellComponent {
   private readonly router = inject(Router);
   private readonly i18n = inject(TranslationStore);
   private readonly branding = inject(OfficeBrandingStore);
+  private readonly subscription = inject(AccountSubscriptionStore);
   private readonly watch = inject(SessionWatch);
 
   readonly t = this.i18n.t;
@@ -51,6 +54,8 @@ export class AccountShellComponent {
 
   constructor() {
     this.branding.load();
+    // Snapshot compartido para el banner global; las sub-páginas pueden refrescarlo tras acciones.
+    this.subscription.load();
     // Si la sesión muere en otro lado, que se note sin tener que recargar.
     this.watch.start();
 

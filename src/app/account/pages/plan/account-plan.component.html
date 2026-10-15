@@ -23,15 +23,79 @@
     </article>
   }
 
+  <!-- Preferencia de facturación. Separada de la zona de riesgo porque es una
+       decisión recurrente del usuario, no una acción destructiva. -->
+  @if (!loading() && !failed() && billingPreference(); as pref) {
+    <article class="mt-4 rounded-xl border border-line bg-white p-5">
+      <h2 class="text-sm font-semibold text-twilight">{{ t().accBillingPrefHeading }}</h2>
+      @if (pref.mode === 'Automatic') {
+        <p class="mt-1 text-[13px] text-twilight">{{ t().accBillingPrefAutomatic }}</p>
+        @if (hasSavedCard()) {
+          <p class="mt-1 text-xs text-muted">{{ savedCardLabel() }}</p>
+        } @else {
+          <p class="mt-1 text-xs text-muted">{{ t().accBillingPrefNoCard }}</p>
+        }
+        @if (nextChargeLabel(); as label) {
+          <p class="mt-1 text-xs text-muted">{{ label }}</p>
+        }
+        @if (!canUpdateCard()) {
+          <p class="mt-1 text-xs text-muted">{{ providerManagedCardLabel() }}</p>
+        }
+        <div class="mt-4 flex flex-wrap gap-3">
+          @if (canUpdateCard()) {
+            <button type="button" (click)="updateCard()" [disabled]="renewing() || billingPreferenceSwitching() || waiting()"
+              class="rounded-lg border border-line bg-white px-4 py-2 text-[13px] font-semibold text-twilight hover:bg-cream disabled:opacity-60">
+              {{ t().accBillingPrefUpdateCard }}
+            </button>
+          }
+          <button type="button" (click)="openSwitchToManual()" [disabled]="billingPreferenceSwitching() || waiting()"
+            class="rounded-lg border border-line bg-white px-4 py-2 text-[13px] font-semibold text-twilight hover:bg-cream disabled:opacity-60">
+            {{ billingPreferenceSwitching() ? t().accBillingPrefSwitching : t().accBillingPrefSwitchToManual }}
+          </button>
+        </div>
+      } @else {
+        <p class="mt-1 text-[13px] text-twilight">{{ t().accBillingPrefManual }}</p>
+        <p class="mt-1 text-xs text-muted">
+          {{ t().accBillingPrefManualHint.replace('{date}', accessEndsLabel()) }}
+        </p>
+        <div class="mt-4 flex flex-wrap gap-3">
+          <button type="button" (click)="openSwitchToAutomatic()" [disabled]="billingPreferenceSwitching() || waiting()"
+            class="rounded-lg bg-twilight px-4 py-2 text-[13px] font-semibold text-white hover:bg-star disabled:opacity-60">
+            {{ billingPreferenceSwitching() ? t().accBillingPrefSwitching : t().accBillingPrefSwitchToAutomatic }}
+          </button>
+        </div>
+      }
+      @if (billingPreferenceSwitchError(); as message) {
+        <p role="alert" class="mt-3 rounded-lg border border-twilight/30 bg-sand px-4 py-3 text-[13px] font-medium text-twilight">{{ message }}</p>
+      }
+    </article>
+  }
+
   @if (openUpgrade(); as resumeUrl) {
     <article class="mt-4 rounded-xl border border-line bg-sand p-5">
       <h2 class="text-sm font-semibold text-twilight">{{ t().accPlanPendingTitle }}</h2>
       <p class="mt-1 text-[13px] text-muted">{{ pendingLabel() }}</p>
-      <a [href]="resumeUrl"
-        class="mt-4 inline-block rounded-lg bg-twilight px-4 py-2 text-[13px] font-semibold text-white hover:bg-star">
-        {{ t().accPlanPendingResume }}
-      </a>
+      <div class="mt-4 flex flex-wrap gap-3">
+        <a [href]="resumeUrl"
+          class="inline-block rounded-lg bg-twilight px-4 py-2 text-[13px] font-semibold text-white hover:bg-star">
+          {{ t().accPlanPendingResume }}
+        </a>
+        <button type="button" (click)="openCancelUpgradeConfirm()" [disabled]="cancellingUpgrade()"
+          class="rounded-lg border border-line bg-white px-4 py-2 text-[13px] font-semibold text-twilight hover:bg-cream disabled:opacity-60">
+          {{ cancellingUpgrade() ? t().accPlanCancelUpgradeWorking : t().accPlanCancelUpgrade }}
+        </button>
+      </div>
     </article>
+  }
+  @if (upgradeCancelNotice(); as notice) {
+    <p role="status"
+      [class]="notice.kind === 'error'
+        ? 'mt-2 rounded-lg border border-twilight/30 bg-sand px-3 py-2 text-[13px] font-medium text-twilight'
+        : 'mt-2 rounded-lg border border-line bg-sand px-3 py-2 text-[13px] text-twilight'">
+      @if (notice.kind === 'ok') { {{ t().accPlanCancelUpgradeDone }} }
+      @else if (notice.kind === 'already') { {{ t().accPlanCancelUpgradeAlready }} }
+      @else { {{ t().accPlanCancelUpgradeError }} }
+    </p>
   }
 
   @if (outcome(); as message) {
@@ -187,3 +251,34 @@
     <app-step-up-dialog (confirmed)="onStepUpConfirmed()" (dismissed)="onStepUpDismissed()" />
   }
 </section>
+
+<app-confirm-dialog
+  [open]="cancelUpgradeConfirmOpen()"
+  [title]="t().accPlanCancelUpgradeConfirmTitle"
+  [message]="t().accPlanCancelUpgradeConfirm"
+  [confirmLabel]="t().accPlanCancelUpgrade"
+  [cancelLabel]="t().accPlanCancelUpgradeKeep"
+  tone="danger"
+  (confirmed)="cancelUpgrade()"
+  (dismissed)="dismissCancelUpgradeConfirm()"
+/>
+
+<app-confirm-dialog
+  [open]="switchToAutomaticOpen()"
+  [title]="t().accBillingPrefSwitchToAutomaticTitle"
+  [message]="switchToAutomaticConsentText()"
+  [confirmLabel]="t().accBillingPrefSwitchToAutomatic"
+  [cancelLabel]="t().accPlanCancelUpgradeKeep"
+  (confirmed)="confirmSwitchToAutomatic()"
+  (dismissed)="dismissSwitchToAutomatic()"
+/>
+
+<app-confirm-dialog
+  [open]="switchToManualOpen()"
+  [title]="t().accBillingPrefSwitchToManualTitle"
+  [message]="switchToManualConsentText()"
+  [confirmLabel]="t().accBillingPrefSwitchToManual"
+  [cancelLabel]="t().accPlanCancelUpgradeKeep"
+  (confirmed)="confirmSwitchToManual()"
+  (dismissed)="dismissSwitchToManual()"
+/>

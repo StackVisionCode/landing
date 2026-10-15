@@ -16,6 +16,23 @@ import { ActionCooldown } from '@core/http/action-cooldown';
 import { formatClock, readThrottle, type ThrottleKind } from '@core/http/throttling';
 import type { PlanResponse } from '@core/plans/plans.models';
 import type { BillingCycle, OnboardingPaymentOption } from '@core/onboarding/onboarding.models';
+import {
+  BILLING_PREFERENCE_CONSENT_VERSION,
+  type BillingPreferenceMode,
+} from '@core/account/billing-preference.service';
+
+/** Clave en sessionStorage: la preferencia + consent exacto que el usuario vio al firmar en /register.
+ *  Se conserva durante el redirect al provider y hasta /register/complete, donde recién hay sesión
+ *  autenticada para persistirla en el backend contra el tenant recién provisionado. */
+export const BILLING_PREF_CONSENT_STORAGE_KEY = 'tv.onboarding.billingPreferenceConsent';
+
+export interface PendingBillingPreferenceConsent {
+  mode: BillingPreferenceMode;
+  providerCode: string;
+  consentText: string;
+  consentTextVersion: string;
+  capturedAtUtc: string;
+}
 
 type RegisterStep =
   | 'loading'
@@ -98,6 +115,9 @@ export class RegisterComponent implements OnInit, OnDestroy {
   protected readonly detailsError = signal('');
   protected readonly paymentOptions = signal<OnboardingPaymentOption[]>([]);
   protected readonly selectedPaymentOption = signal<OnboardingPaymentOption | null>(null);
+  // Elección obligatoria entre Automatic (card-on-file) y Manual (aviso por email, pago manual).
+  // Null hasta que el usuario tilde una de las dos opciones; sin eso el botón de pagar sigue deshabilitado.
+  protected readonly billingPreferenceMode = signal<BillingPreferenceMode | null>(null);
 
   protected readonly showCodeFields = signal(false);
   protected readonly referralCode = signal('');
@@ -123,6 +143,14 @@ export class RegisterComponent implements OnInit, OnDestroy {
 
   // El onboarding ya creado se reutiliza al reintentar el pago: repetir el POST crearía otro.
   private onboardingId: string | null = null;
+
+  // Edad del processing para mostrar "Started Xmin ago. Expires in Ymin." y empuñar la ventana del sweeper (30min TTL del backend).
+  private checkoutStartedAt: number | null = null;
+  protected readonly processingClockTick = signal(0);
+  private processingClockTimer: ReturnType<typeof setInterval> | null = null;
+  protected readonly isCancellingOnboarding = signal(false);
+  // bfcache: restaurar la pestaña (back del browser desde el provider) no vuelve a disparar ngOnInit.
+  private readonly onPageShow = (event: PageTransitionEvent) => this.handlePageShow(event);
 
   /** Paso del marco: correo y código = 1, datos = 2, pago/errores = 3. */
   protected readonly stepIndex = computed(() => {
@@ -167,6 +195,9 @@ export class RegisterComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    if (typeof window !== 'undefined') {
+      window.addEventListener('pageshow', this.onPageShow);
+    }
     const params = this.route.snapshot.queryParamMap;
 
     // El link real del correo de registro apunta a "{RegistrationUrlBase}/register?token=..."
@@ -262,8 +293,12 @@ export class RegisterComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.stopOtpTimer();
+    this.stopProcessingClock();
     for (const cooldown of [this.sendCodeCooldown, this.resendCooldown, this.verifyCooldown, this.submitCooldown]) {
       cooldown.stop();
+    }
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('pageshow', this.onPageShow);
     }
   }
 
@@ -384,6 +419,11 @@ export class RegisterComponent implements OnInit, OnDestroy {
       this.detailsError.set(this.t().regPaymentMethodUnavailable);
       return;
     }
+    if (!this.billingPreferenceMode()) {
+      this.detailsError.set(this.t().signupBillingPrefRequired);
+      return;
+    }
+    this.persistBillingPreferenceConsent();
 
     this.isSubmittingDetails.set(true);
     if (this.onboardingId) {
@@ -417,6 +457,8 @@ export class RegisterComponent implements OnInit, OnDestroy {
     this.isSubmittingDetails.set(false);
     this.step.set('processing');
     this.processingMessage.set(this.t().regPreparingPayment);
+    this.checkoutStartedAt = Date.now();
+    this.startProcessingClock();
     const origin = typeof window !== 'undefined' ? window.location.origin : SITE_CONFIG.websiteUrl;
     const plan = this.plan();
     const paymentOption = this.selectedPaymentOption();
@@ -432,6 +474,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
         referralCode: this.referralCode().trim() || undefined,
         promoCode: this.promoCode().trim() || undefined,
         giftCode: this.giftCode().trim() || undefined,
+        storeMethodForOffSession: this.billingPreferenceMode() === 'Automatic',
       })
       .subscribe({
         next: (res) => {
@@ -556,5 +599,129 @@ export class RegisterComponent implements OnInit, OnDestroy {
 
   private isValidEmail(email: string): boolean {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
+
+  // TTL alineado con el sweeper del backend (OnboardingExpirationOptions.TtlMinutes).
+  private static readonly PROCESSING_TTL_SECONDS = 30 * 60;
+
+  protected canCancelProcessing(): boolean {
+    return !!this.onboardingId && !this.isCancellingOnboarding();
+  }
+
+  cancelOnboarding(): void {
+    if (!this.onboardingId || this.isCancellingOnboarding()) return;
+    this.isCancellingOnboarding.set(true);
+    this.onboarding.cancelOnboarding(this.onboardingId).subscribe({
+      next: () => this.redirectToCancelledNotice(),
+      // Un error acá no debe atrapar al buyer en processing: igual lo devolvemos al inicio.
+      error: () => this.redirectToCancelledNotice(),
+    });
+  }
+
+  private redirectToCancelledNotice(): void {
+    this.stopProcessingClock();
+    this.isCancellingOnboarding.set(false);
+    this.onboardingId = null;
+    const plan = this.plan();
+    this.router.navigate(['/register'], {
+      queryParams: { plan: plan?.id ?? '', cycle: this.cycle(), cancelled: '1' },
+      replaceUrl: true,
+    });
+  }
+
+  protected processingAgeLabel(): string | null {
+    if (!this.checkoutStartedAt) return null;
+    void this.processingClockTick();
+    const elapsed = Math.max(0, Math.floor((Date.now() - this.checkoutStartedAt) / 1000));
+    const remaining = Math.max(0, RegisterComponent.PROCESSING_TTL_SECONDS - elapsed);
+    return this.t()
+      .regProcessingStartedAgo
+      .replace('{ago}', this.formatMinutes(elapsed))
+      .replace('{remaining}', this.formatMinutes(remaining));
+  }
+
+  private formatMinutes(totalSeconds: number): string {
+    const minutes = Math.floor(totalSeconds / 60);
+    if (minutes <= 0) return '< 1 min';
+    return minutes === 1 ? '1 min' : `${minutes} min`;
+  }
+
+  private startProcessingClock(): void {
+    this.stopProcessingClock();
+    this.processingClockTick.set(0);
+    this.processingClockTimer = setInterval(() => {
+      this.processingClockTick.set(this.processingClockTick() + 1);
+    }, 15000);
+  }
+
+  private stopProcessingClock(): void {
+    if (this.processingClockTimer !== null) {
+      clearInterval(this.processingClockTimer);
+      this.processingClockTimer = null;
+    }
+  }
+
+  /** Texto EXACTO del radio Automatic con los valores que el usuario ve en pantalla. Es lo que se guarda
+   *  como `consentText` al llamar al backend — mismo string que mostró la UI, no una copia inventada. */
+  protected automaticConsentText(): string {
+    return this.t()
+      .signupBillingPrefAutomatic.replace('{brand}', this.brand)
+      .replace('{amount}', this.formattedAmount())
+      .replace('{cadence}', this.formattedCadence());
+  }
+
+  protected manualConsentText(): string {
+    return this.t().signupBillingPrefManual;
+  }
+
+  private formattedAmount(): string {
+    const price = this.planPrice;
+    try {
+      return new Intl.NumberFormat(this.translation.lang(), {
+        style: 'currency',
+        currency: 'USD',
+      }).format(price);
+    } catch {
+      return `$${price}`;
+    }
+  }
+
+  private formattedCadence(): string {
+    return this.cycle() === 'Yearly'
+      ? this.t().annualLabel.toLowerCase()
+      : this.t().monthlyLabel.toLowerCase();
+  }
+
+  /** Guarda la elección + texto exacto que vio el usuario en sessionStorage: ni el register, ni el
+   *  payment-received, tienen una sesión autenticada para hablar con Subscription — pero /register/complete
+   *  sí la crea al terminar. Ahí se consume este breadcrumb para hacer POST /subscriptions/me/billing-preference. */
+  private persistBillingPreferenceConsent(): void {
+    const mode = this.billingPreferenceMode();
+    if (!mode || typeof window === 'undefined') return;
+    const consent: PendingBillingPreferenceConsent = {
+      mode,
+      providerCode: 'stripe',
+      consentText: mode === 'Automatic' ? this.automaticConsentText() : this.manualConsentText(),
+      consentTextVersion: BILLING_PREFERENCE_CONSENT_VERSION,
+      capturedAtUtc: new Date().toISOString(),
+    };
+    try {
+      window.sessionStorage.setItem(BILLING_PREF_CONSENT_STORAGE_KEY, JSON.stringify(consent));
+    } catch {
+      // sessionStorage puede estar bloqueado (modo privado); el flujo sigue, el POST igual se intentará
+      // cuando el usuario ya tenga sesión, con los defaults mínimos.
+    }
+  }
+
+  // bfcache: Safari/Firefox restauran la pestaña con el DOM intacto al apretar "atrás" desde el provider.
+  // Si no tenemos onboardingId en memoria (reinicio real), volvemos al paso del email.
+  private handlePageShow(event: PageTransitionEvent): void {
+    if (!event.persisted) return;
+    if (this.step() !== 'processing') return;
+    if (!this.onboardingId) {
+      this.stopProcessingClock();
+      this.checkoutStartedAt = null;
+      this.step.set('email');
+    }
   }
 }

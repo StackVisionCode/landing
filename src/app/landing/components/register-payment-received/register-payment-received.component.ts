@@ -25,8 +25,8 @@ const POLL_BASE_MS = 2500;
 const POLL_MAX_MS = 10000;
 const MAX_RECONCILE_ATTEMPTS = 8;
 
-type PaymentReceivedStep = 'checking' | 'redirecting' | 'processing' | 'fallback' | 'failed';
-const FAILURE_STATUSES: OnboardingStatusValue[] = ['PaymentFailed', 'Cancelled', 'Refunded'];
+type PaymentReceivedStep = 'checking' | 'redirecting' | 'processing' | 'fallback' | 'failed' | 'cancelled' | 'expired';
+const FAILURE_STATUSES: OnboardingStatusValue[] = ['PaymentFailed', 'Refunded'];
 
 @Component({
   selector: 'app-register-payment-received',
@@ -152,6 +152,19 @@ export class RegisterPaymentReceivedComponent implements OnInit, OnDestroy {
     if (response.registrationUrl) {
       this.step.set('redirecting');
       this.navigateToRegistration(response.registrationUrl);
+      return;
+    }
+
+    if (response.status === 'Cancelled') {
+      // Buyer apretó "atrás" en el provider y el callback de cancel llegó; no reofrece reintento.
+      this.stopPolling();
+      this.step.set('cancelled');
+      return;
+    }
+
+    if (response.status === 'Expired') {
+      this.stopPolling();
+      this.step.set('expired');
       return;
     }
 

@@ -36,7 +36,6 @@ function subscription(overrides: Partial<AccountSubscription> = {}): AccountSubs
       currentPeriodEndUtc: '2026-10-01T00:00:00Z',
       nextRenewalAtUtc: '2026-10-01T00:00:00Z',
       trialEndsAtUtc: null,
-      gracePeriodEndsAtUtc: null,
       cancelAtPeriodEnd: false,
       cancelledAtUtc: null,
     },
@@ -44,6 +43,7 @@ function subscription(overrides: Partial<AccountSubscription> = {}): AccountSubs
     seats: { includedInPlan: 5, purchased: 2, total: 7 },
     addOns: [],
     openSeatCheckout: null,
+    openAddOnCheckouts: null,
     ...overrides,
   };
 }
@@ -68,6 +68,7 @@ describe('AccountSeatsComponent', () => {
       seatQuote: vi.fn(() => of(quote)),
       startSeatCheckout: vi.fn(() => of({ seatPurchaseIntentId: 'i1', checkoutUrl: 'https://pay/x', paymentId: 'p1', expiresAtUtc: '2026-09-26T00:00:00Z' })),
       seatCheckoutStatus: vi.fn(() => of({ seatPurchaseIntentId: 'i1', status: 'Pending', seatType: 'Standard', quantity: 2, proratedTotalCents: 1500, currency: 'USD', checkoutUrl: null })),
+      cancelPendingSeatCheckout: vi.fn(() => of({ alreadyCancelled: false, intentId: 'i1' })),
       ...overrides,
     };
     TestBed.configureTestingModule({
@@ -183,5 +184,74 @@ describe('AccountSeatsComponent', () => {
 
     expect(component.outcome()).toBe('cancelled');
     expect(page.textContent).toContain('Nothing was charged');
+  });
+
+  describe('cancelar un intent pending', () => {
+    const withOpen = subscription({
+      openSeatCheckout: {
+        intentId: 'i1',
+        seatType: 'Standard',
+        quantity: 2,
+        totalCents: 1500,
+        currency: 'USD',
+        checkoutUrl: 'https://pay/x',
+        expiresAtUtc: '2026-09-26T00:00:00Z',
+      },
+    });
+
+    it('la tarjeta pending ofrece Resume y Cancel', () => {
+      const { page } = create(withOpen);
+
+      expect(page.textContent).toContain('Finish payment');
+      expect(page.textContent).toContain('Cancel & start over');
+    });
+
+    it('cancelar llama al endpoint, muestra el toast y recarga', () => {
+      const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+      const { component, api } = create(withOpen);
+
+      component.cancelPending();
+
+      expect(api.cancelPendingSeatCheckout).toHaveBeenCalledWith('i1');
+      expect(component.cancelNotice()).toEqual({ kind: 'ok' });
+      expect(api.get).toHaveBeenCalledTimes(2);
+      confirmSpy.mockRestore();
+    });
+
+    it('si el intent ya estaba cerrado, mensaje idempotente', () => {
+      const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+      const { component } = create(withOpen, null, {
+        cancelPendingSeatCheckout: vi.fn(() => of({ alreadyCancelled: true, intentId: 'i1' })),
+      });
+
+      component.cancelPending();
+
+      expect(component.cancelNotice()).toEqual({ kind: 'already' });
+      confirmSpy.mockRestore();
+    });
+
+    it('fallo del service → toast de error y vuelve a habilitar el botón', () => {
+      const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+      const { component } = create(withOpen, null, {
+        cancelPendingSeatCheckout: vi.fn(() => throwError(() => new HttpErrorResponse({ status: 500 }))),
+      });
+
+      component.cancelPending();
+
+      expect(component.cancelNotice()).toEqual({ kind: 'error' });
+      expect(component.cancelling()).toBe(false);
+      confirmSpy.mockRestore();
+    });
+
+    it('si el usuario rechaza el confirm, no se llama al endpoint', () => {
+      const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+      const { component, api } = create(withOpen);
+
+      component.cancelPending();
+
+      expect(api.cancelPendingSeatCheckout).not.toHaveBeenCalled();
+      expect(component.cancelNotice()).toBeNull();
+      confirmSpy.mockRestore();
+    });
   });
 });

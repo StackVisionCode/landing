@@ -50,6 +50,8 @@ export interface StartCheckoutRequest {
   referralCode?: string;
   promoCode?: string;
   giftCode?: string;
+  /** True pide al provider guardar la tarjeta para cobros off-session (Automatic renewal). */
+  storeMethodForOffSession?: boolean;
 }
 
 export interface StartCheckoutResponse {
