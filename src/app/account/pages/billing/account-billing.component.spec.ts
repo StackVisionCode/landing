@@ -1,8 +1,10 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
+import { Router, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { SaaSPaymentRow } from '@core/account/account-subscription.models';
 import { AccountSubscriptionService } from '@core/account/account-subscription.service';
+import { AccountSessionStore } from '@core/auth/account-session.store';
 import { AccountBillingComponent } from './account-billing.component';
 
 function row(overrides: Partial<SaaSPaymentRow> = {}): SaaSPaymentRow {
@@ -26,11 +28,17 @@ describe('AccountBillingComponent', () => {
     const api = {
       payments: vi.fn(() => of({ items: [row()], totalCount: 1 })),
       receiptUrl: vi.fn(() => of({ downloadUrl: 'https://files/receipt.pdf', expiresAtUtc: '2026-09-01T00:10:00Z' })),
+      startRenewCheckout: vi.fn(() => of({ checkoutUrl: 'https://checkout.example/renew', intentId: 'intent-1', status: 'Pending' })),
       ...overrides,
     };
+    const session = { me: () => ({ email: 'owner@example.com' }) } as unknown as AccountSessionStore;
     TestBed.configureTestingModule({
       imports: [AccountBillingComponent],
-      providers: [{ provide: AccountSubscriptionService, useValue: api }],
+      providers: [
+        provideRouter([]),
+        { provide: AccountSubscriptionService, useValue: api },
+        { provide: AccountSessionStore, useValue: session },
+      ],
     });
     const fixture = TestBed.createComponent(AccountBillingComponent);
     fixture.detectChanges();
@@ -136,5 +144,73 @@ describe('AccountBillingComponent', () => {
     const { component } = create({ payments: vi.fn(() => throwError(() => new Error('boom'))) });
 
     expect(component.failed()).toBe(true);
+  });
+
+  // --- Pay now por fila fallida ---
+
+  it('una renovación fallida de la suscripción ofrece Pay now y abre el picker', () => {
+    const { component } = create({
+      payments: vi.fn(() => of({ items: [row({ status: 'Failed', type: 'SubscriptionRenewal' })], totalCount: 1 })),
+    });
+
+    const r = component.rows()[0];
+    expect(component.canPayNow(r)).toBe(true);
+    expect(component.payNowKind(r)).toBe('subscription-renewal');
+    expect(component.pickerOpen()).toBe(false);
+
+    component.startPayNow(r);
+
+    expect(component.pickerOpen()).toBe(true);
+  });
+
+  it('elegir provider lanza el renew checkout con ese provider', () => {
+    const assign = vi.fn();
+    vi.stubGlobal('location', { ...window.location, origin: 'https://app.local', assign });
+    const { component, api } = create({
+      payments: vi.fn(() => of({ items: [row({ status: 'Failed', type: 'SubscriptionRenewal' })], totalCount: 1 })),
+    });
+    component.startPayNow(component.rows()[0]);
+
+    component.onProviderPicked({
+      provider: 'PayPal',
+      method: 'PayPal',
+      displayName: 'PayPal',
+      enabled: true,
+      priority: 2,
+      disabledReason: null,
+    });
+
+    expect(api.startRenewCheckout).toHaveBeenCalledWith(expect.objectContaining({ provider: 'PayPal', method: 'PayPal', payerEmail: 'owner@example.com' }));
+    expect(assign).toHaveBeenCalledWith('https://checkout.example/renew');
+    vi.unstubAllGlobals();
+  });
+
+  it('una renovación de seat fallida linkea al administrador de asientos', () => {
+    const { component } = create({
+      payments: vi.fn(() => of({ items: [row({ status: 'Failed', type: 'SeatRenewal' })], totalCount: 1 })),
+    });
+
+    const r = component.rows()[0];
+    expect(component.canPayNow(r)).toBe(true);
+    expect(component.payNowKind(r)).toBe('seat');
+    expect(component.payNowRouterLink(r)).toEqual(['/account/seats']);
+  });
+
+  it('una renovación de add-on fallida linkea al administrador de add-ons', () => {
+    const { component } = create({
+      payments: vi.fn(() => of({ items: [row({ status: 'Failed', type: 'AddOnRenewal' })], totalCount: 1 })),
+    });
+
+    const r = component.rows()[0];
+    expect(component.payNowKind(r)).toBe('addon');
+    expect(component.payNowRouterLink(r)).toEqual(['/account/addons']);
+  });
+
+  it('un pago Succeeded no ofrece Pay now', () => {
+    const { component } = create({
+      payments: vi.fn(() => of({ items: [row({ status: 'Succeeded', type: 'SubscriptionRenewal' })], totalCount: 1 })),
+    });
+
+    expect(component.canPayNow(component.rows()[0])).toBe(false);
   });
 });

@@ -1,6 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, catchError, finalize, map, of, shareReplay, switchMap, tap, throwError } from 'rxjs';
+import { apiErrorCode } from '@core/http/api-error';
 import { ACCOUNT_ACTOR_TYPE, AccountSessionResponse, MeResponse, ReauthenticateRequest } from './account-session.models';
 import { AccountSessionService } from './account-session.service';
 import { TrustedDeviceStore } from './trusted-device.store';
@@ -156,6 +157,14 @@ export class AccountSessionStore {
       }),
       map(() => accessToken),
       catchError((err: unknown) => {
+        // 409 Terms.NotAccepted: la sesión del backend está VIVA; solo falta aceptar la nueva versión del
+        // ToS. Si limpiáramos acá el user quedaría sin token y el guard lo mandaría de vuelta a sign-in
+        // sin ver nunca el gate de términos — con el interceptor desviándolo entraría en loop. Se marca
+        // como active aunque no haya perfil; AccountAcceptTermsComponent trabaja sin él.
+        if (err instanceof HttpErrorResponse && err.status === 409 && apiErrorCode(err) === 'Terms.NotAccepted') {
+          this._status.set('active');
+          return of(accessToken);
+        }
         this.clear(err instanceof HttpErrorResponse && err.status === 401 ? 'revoked' : 'anonymous');
         return throwError(() => err);
       })

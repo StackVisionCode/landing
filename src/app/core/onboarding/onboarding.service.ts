@@ -89,6 +89,16 @@ export class OnboardingService {
     );
   }
 
+  /** OBF-2.5 — pedir reemisión del email "completa tu oficina" desde la pantalla fallback cuando el
+   *  cliente no vio el link al pagar (vino desde otro dispositivo o lo borró). El reference autoriza. */
+  resendRegistrationEmail(reference: string): Observable<void> {
+    return this.http.post<void>(
+      `${this.base}/onboarding/resume/${encodeURIComponent(reference)}/resend-registration-email`,
+      {},
+      this.credentialOptions
+    );
+  }
+
   cancelOnboarding(onboardingId: string, reason?: string): Observable<void> {
     return this.http.post<void>(
       `${this.base}/onboarding/${onboardingId}/cancel`,

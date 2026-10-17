@@ -100,11 +100,22 @@
                   <ion-icon name="extension-puzzle-outline" class="text-lg"></ion-icon>
                 </span>
               <div class="min-w-0 flex-1">
-                <p class="text-sm font-semibold text-twilight">{{ displayName(addOn) }}</p>
+                <p class="text-sm font-semibold text-twilight">
+                  {{ displayName(addOn) }}
+                  @if (addOn.activeQuantity > 1) {
+                    <span class="ml-1 text-xs font-medium text-muted">× {{ addOn.activeQuantity }}</span>
+                  }
+                </p>
                 @if (activeDetail(addOn); as detail) {
                   <p class="text-xs text-muted">{{ detail }}</p>
                 }
               </div>
+              @if (addOn.canStack) {
+                <button type="button" (click)="buy(addOn)" [disabled]="buyingCode() !== null || waiting()"
+                  class="rounded-lg border border-line bg-white px-3 py-1.5 text-[13px] font-semibold text-twilight hover:bg-cream disabled:opacity-60">
+                  {{ buyingCode() === addOn.code ? t().accAddOnBuying : t().accAddOnBuyAnother }}
+                </button>
+              }
               <span class="inline-flex items-center gap-1.5 rounded-full bg-azure/20 px-2.5 py-0.5 text-xs font-semibold text-twilight">
                 <span class="h-1.5 w-1.5 rounded-full bg-star"></span>
                 {{ t().accOvAddOnActive }}
@@ -114,8 +125,27 @@
         </ul>
       }
 
+      @if (blocked().length) {
+        <h2 class="bg-cream px-5 py-2.5 text-xs font-semibold text-muted" [class.border-t]="available().length || active().length" [class.border-line]="available().length || active().length">{{ t().accAddOnsBlockedGroup }}</h2>
+        <ul class="divide-y divide-line">
+          @for (addOn of blocked(); track addOn.code) {
+            <li class="flex flex-wrap items-center gap-3 px-5 py-3.5">
+              <span class="grid h-10 w-10 shrink-0 place-items-center rounded-[10px] bg-sand text-muted">
+                  <ion-icon name="extension-puzzle-outline" class="text-lg"></ion-icon>
+                </span>
+              <div class="min-w-0 flex-1">
+                <p class="text-sm font-semibold text-twilight">{{ displayName(addOn) }}</p>
+                <p class="text-xs text-muted">{{ priceLabel(addOn) }}</p>
+              </div>
+              <span class="rounded-full bg-sand px-2.5 py-0.5 text-xs font-semibold text-muted">{{ t().accAddOnsBlockedBadge }}</span>
+            </li>
+          }
+        </ul>
+        <p class="border-t border-line px-5 py-3 text-xs text-muted">{{ t().accAddOnsBlockedHint }}</p>
+      }
+
       @if (included().length) {
-        <h2 class="bg-cream px-5 py-2.5 text-xs font-semibold text-muted" [class.border-t]="available().length || active().length" [class.border-line]="available().length || active().length">{{ t().accAddOnsIncludedGroup }}</h2>
+        <h2 class="bg-cream px-5 py-2.5 text-xs font-semibold text-muted" [class.border-t]="available().length || active().length || blocked().length" [class.border-line]="available().length || active().length || blocked().length">{{ t().accAddOnsIncludedGroup }}</h2>
         <ul class="divide-y divide-line">
           @for (addOn of included(); track addOn.code) {
             <li class="flex flex-wrap items-center gap-3 px-5 py-3.5">
@@ -142,4 +172,10 @@
   tone="danger"
   (confirmed)="cancelPending()"
   (dismissed)="dismissCancelConfirm()"
+/>
+
+<app-payment-provider-picker
+  [open]="pickerOpen"
+  (confirmed)="onProviderPicked($event)"
+  (dismissed)="onProviderPickerDismissed()"
 />

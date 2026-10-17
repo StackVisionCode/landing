@@ -1,7 +1,13 @@
 import { HttpErrorResponse } from '@angular/common/http';
 
 /** Códigos que no vienen de un handler sino de un middleware, que responde `type` en vez de `code`. */
-const MIDDLEWARE_CODES = new Set(['Auth.SessionRevoked', 'Auth.SessionDenylistUnavailable']);
+const MIDDLEWARE_CODES = new Set([
+  'Auth.SessionRevoked',
+  'Auth.SessionDenylistUnavailable',
+  // TermsAcceptanceMiddleware del backend responde con {type:"Terms.NotAccepted",title,currentVersion}
+  // en lugar de {code,message}. El interceptor del Account lo usa para desviar al gate de aceptación.
+  'Terms.NotAccepted',
+]);
 
 /**
  * Código de negocio del error. Los handlers responden `{ code, message }`; los middlewares de sesión

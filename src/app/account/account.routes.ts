@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { accountGuard } from '@core/auth/account.guard';
+import { accountTermsGuard } from '@core/auth/account-terms.guard';
 import { PLATFORM_BRAND } from '@core/config/site-config';
 
 /**
@@ -32,8 +33,17 @@ export const ACCOUNT_ROUTES: Routes = [
     title: `Account - ${PLATFORM_BRAND}`,
   },
   {
-    path: '',
+    // Gate de ToS: cuando el middleware del backend rechaza con 409 Terms.NotAccepted, el usuario
+    // llega acá (via accountTermsGuard de las rutas protegidas) y puede aceptar sin salir del landing.
+    path: 'accept-terms',
     canActivate: [accountGuard],
+    loadComponent: () =>
+      import('./pages/accept-terms/account-accept-terms.component').then(m => m.AccountAcceptTermsComponent),
+    title: `Accept terms - ${PLATFORM_BRAND}`,
+  },
+  {
+    path: '',
+    canActivate: [accountGuard, accountTermsGuard],
     loadComponent: () =>
       import('./account-shell/account-shell.component').then(m => m.AccountShellComponent),
     children: [

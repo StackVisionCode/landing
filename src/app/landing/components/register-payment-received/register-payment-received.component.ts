@@ -47,6 +47,11 @@ export class RegisterPaymentReceivedComponent implements OnInit, OnDestroy {
   protected readonly failureMessage = signal('');
   protected readonly isRetrying = signal(false);
   protected readonly retryError = signal('');
+  // OBF-2.6 — resend end-user state. Separado del retry-payment porque son dos CTAs distintos en fallback.
+  protected readonly isResending = signal(false);
+  protected readonly resendError = signal('');
+  protected readonly resendSuccess = signal(false);
+  protected readonly resendCooldown = new ActionCooldown();
   private attemptCount = 0;
   private pollTimerId: ReturnType<typeof setTimeout> | null = null;
   protected readonly retryCooldown = new ActionCooldown();
@@ -73,6 +78,51 @@ export class RegisterPaymentReceivedComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.stopPolling();
     this.retryCooldown.stop();
+    this.resendCooldown.stop();
+  }
+
+  /** OBF-2.6 — ¿se puede ofrecer el botón Resend? Solo si tenemos reference (vino desde el link del
+   *  email de fallo o del successUrl); sin reference el fallback no puede autenticarse al backend. */
+  protected canResend(): boolean {
+    return !!this.returnReference;
+  }
+
+  protected resendLabel(): string {
+    const t = this.t();
+    if (this.isResending()) return t.payReceivedResendSending;
+    if (this.resendCooldown.active())
+      return t.payReceivedResendCooldown.replace('{seconds}', String(this.resendCooldown.secondsLeft()));
+    return t.payReceivedResendButton;
+  }
+
+  protected resendRegistrationEmail(): void {
+    if (!this.returnReference || this.isResending() || this.resendCooldown.active()) return;
+    this.isResending.set(true);
+    this.resendError.set('');
+    this.resendSuccess.set(false);
+    this.onboarding.resendRegistrationEmail(this.returnReference).subscribe({
+      next: () => {
+        this.isResending.set(false);
+        this.resendSuccess.set(true);
+        // Cooldown UI de 60s alineado con el del backend — así el usuario no spamea el botón ni ve
+        // "ResendTooSoon" apenas clickea otra vez.
+        this.resendCooldown.start(60);
+      },
+      error: (err) => {
+        this.isResending.set(false);
+        const throttle = readThrottle(err);
+        if (throttle) {
+          this.resendCooldown.start(throttle.retryAfterSeconds);
+          return;
+        }
+        const code = (err?.error?.code ?? err?.error?.Code ?? '') as string;
+        if (code === 'Onboarding.ResumeReferenceExpired' || err?.status === 410) {
+          this.resendError.set(this.t().payReceivedResendUnavailable);
+          return;
+        }
+        this.resendError.set(this.t().payReceivedResendError);
+      },
+    });
   }
 
   protected throttleNotice(): string {

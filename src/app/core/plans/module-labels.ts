@@ -10,7 +10,6 @@ export const MODULE_LABELS: Record<string, { es: string; en: string }> = {
   planner: { es: 'Planificador de tareas', en: 'Task planner' },
   customers: { es: 'Gestión de clientes', en: 'Client management' },
   email: { es: 'Correo integrado', en: 'Integrated email' },
-  reports: { es: 'Reportes', en: 'Reports' },
   campaigns: { es: 'Campañas de marketing', en: 'Marketing campaigns' },
   comms: { es: 'Comunicación con clientes', en: 'Client communication' },
   meetings: { es: 'Reuniones por vídeo', en: 'Video meetings' },
@@ -27,7 +26,7 @@ export const MODULE_LABELS: Record<string, { es: string; en: string }> = {
  * suscripción vieja o un snapshot guardado pueden seguir nombrándolos y ahí hace falta un nombre
  * legible. Esta lista es otra cosa: lo que se le enseña a alguien que todavía no es cliente.
  *
- * `reports`, `marketing`, `builder`, `irs` y `miles` están fuera porque **no existen**: no tienen ni
+ * `marketing`, `builder`, `irs` y `miles` están fuera porque **no existen**: no tienen ni
  * un endpoint detrás ni pantalla en el producto. La página pública los anunciaba igual.
  */
 export const OFFERED_MODULES: readonly string[] = [
@@ -55,7 +54,6 @@ export const MODULE_ICONS: Record<string, string> = {
   planner: 'checkbox-outline',
   customers: 'people-outline',
   email: 'mail-outline',
-  reports: 'stats-chart-outline',
   campaigns: 'megaphone-outline',
   comms: 'chatbubbles-outline',
   meetings: 'videocam-outline',

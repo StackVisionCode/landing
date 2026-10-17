@@ -291,6 +291,11 @@ export class AccountSignInComponent implements AfterViewInit, OnDestroy {
         return t.accSignInMfaSetup;
       case 'Auth.HandoffInvalid':
         return t.accSignInExpired;
+      case 'Auth.TakeoverInvalid':
+        // El vale se consume al primer canje; un segundo intento (botón pulsado dos veces, red lenta
+        // reintentada) da el mismo 401 que un vale caducado. El copy pide volver a empezar en vez de
+        // repetir el canje con un ticket agotado.
+        return t.accSignInTakeoverExpired;
       default:
         return fallback;
     }

@@ -27,12 +27,16 @@ export class CentralLoginService {
    * todavía tiene que pedir el código, y la pantalla lo necesita para saber si mostrar el campo.
    */
   discover(email: string, password: string): Observable<DiscoverOutcome> {
+    // surface=Account: el landing SOLO lista oficinas donde el usuario es TenantAdmin. Sin esto,
+    // una persona que es Admin en Oficina A y Employee en Oficina B veía la B en el selector y
+    // recibía "Only office administrators..." tres pasos después al materializar la sesión.
     return this.http
       .post<DiscoverLoginResponse>(`${this.base}/auth/discover-login`, {
         email,
         password,
         accountKind: STAFF_ACCOUNT_KIND,
         deviceToken: this.device.read(),
+        surface: 'Account',
       })
       .pipe(map(interpret));
   }

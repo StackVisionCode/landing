@@ -6,6 +6,10 @@
     <p role="alert" class="mt-4 rounded-xl border border-twilight/40 bg-sand px-4 py-3 text-sm text-twilight">{{ message }}</p>
   }
 
+  @if (payNowError(); as message) {
+    <p role="alert" class="mt-4 rounded-xl border border-twilight/40 bg-sand px-4 py-3 text-sm text-twilight">{{ message }}</p>
+  }
+
   @if (waiting()) {
     <p role="status" class="mt-2 text-xs font-medium text-muted">{{ waitLabel() }}</p>
   }
@@ -43,16 +47,32 @@
                 }
               </div>
             </div>
-            <div class="mt-3 flex items-center justify-between gap-3">
+            <div class="mt-3 flex flex-wrap items-center justify-between gap-3">
               <span class="rounded-full px-2.5 py-0.5 text-xs font-semibold" [class]="statusTone(row)">
                 {{ statusOf(row) }}
               </span>
-              @if (row.hasReceipt) {
-                <button type="button" (click)="openReceipt(row)" [disabled]="openingReceipt() !== null || waiting()"
-                  class="text-[13px] font-semibold text-star hover:underline disabled:opacity-60">
-                  {{ openingReceipt() === row.id ? t().accBillingReceiptWait : t().accBillingReceiptGet }}
-                </button>
-              }
+              <div class="flex items-center gap-3">
+                @if (canPayNow(row)) {
+                  @if (payNowRouterLink(row); as link) {
+                    <a [routerLink]="link"
+                      class="text-[13px] font-semibold text-star hover:underline">
+                      {{ payNowLabel(row) }}
+                    </a>
+                  } @else {
+                    <button type="button" (click)="startPayNow(row)"
+                      [disabled]="payingRowId() !== null || waiting()"
+                      class="rounded-lg bg-twilight px-3 py-1.5 text-[13px] font-semibold text-white hover:bg-star disabled:opacity-60">
+                      {{ payingRowId() === row.id ? t().accBillingPayNowOpening : payNowLabel(row) }}
+                    </button>
+                  }
+                }
+                @if (row.hasReceipt) {
+                  <button type="button" (click)="openReceipt(row)" [disabled]="openingReceipt() !== null || waiting()"
+                    class="text-[13px] font-semibold text-star hover:underline disabled:opacity-60">
+                    {{ openingReceipt() === row.id ? t().accBillingReceiptWait : t().accBillingReceiptGet }}
+                  </button>
+                }
+              </div>
             </div>
           </li>
         }
@@ -81,9 +101,25 @@
                   }
                 </td>
                 <td class="whitespace-nowrap px-6 py-3">
-                  <span class="rounded-full px-2.5 py-0.5 text-xs font-semibold" [class]="statusTone(row)">
-                    {{ statusOf(row) }}
-                  </span>
+                  <div class="flex items-center gap-3">
+                    <span class="rounded-full px-2.5 py-0.5 text-xs font-semibold" [class]="statusTone(row)">
+                      {{ statusOf(row) }}
+                    </span>
+                    @if (canPayNow(row)) {
+                      @if (payNowRouterLink(row); as link) {
+                        <a [routerLink]="link"
+                          class="text-[13px] font-semibold text-star hover:underline">
+                          {{ payNowLabel(row) }}
+                        </a>
+                      } @else {
+                        <button type="button" (click)="startPayNow(row)"
+                          [disabled]="payingRowId() !== null || waiting()"
+                          class="rounded-lg bg-twilight px-3 py-1.5 text-[13px] font-semibold text-white hover:bg-star disabled:opacity-60">
+                          {{ payingRowId() === row.id ? t().accBillingPayNowOpening : payNowLabel(row) }}
+                        </button>
+                      }
+                    }
+                  </div>
                 </td>
                 <td class="whitespace-nowrap px-6 py-3">
                   @if (row.hasReceipt) {
@@ -112,3 +148,9 @@
     </article>
   }
 </section>
+
+<app-payment-provider-picker
+  [open]="pickerOpen"
+  (confirmed)="onProviderPicked($event)"
+  (dismissed)="onProviderPickerDismissed()"
+/>
