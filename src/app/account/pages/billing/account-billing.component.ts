@@ -165,10 +165,13 @@ export class AccountBillingComponent {
     return 'other';
   }
 
-  /** El botón solo aparece cuando el pago falló (incluye ChargedBack) y hay flujo de recovery conocido. */
+  /** El botón solo aparece cuando el pago falló (incluye ChargedBack), hay flujo de recovery conocido
+   * y el backend confirma que la fila sigue pagable — i.e. no hay un Succeeded posterior sobre el
+   * mismo target que la haya saldado (si existe, "Pay now" sería un cobro doble). */
   canPayNow(row: SaaSPaymentRow): boolean {
     if (row.status !== 'Failed' && row.status !== 'ChargedBack') return false;
-    return this.payNowKind(row) !== 'other';
+    if (this.payNowKind(row) === 'other') return false;
+    return row.canRetry;
   }
 
   payNowLabel(row: SaaSPaymentRow): string {

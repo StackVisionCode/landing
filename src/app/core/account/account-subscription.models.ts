@@ -280,6 +280,9 @@ export interface SaaSPaymentRow {
   createdAtUtc: string;
   /** El PDF se genera después del cobro: hasta que esté, no hay nada que descargar. */
   hasReceipt: boolean;
+  /** El backend lo apaga cuando ya hay un pago posterior Succeeded sobre el mismo target
+   * (misma suscripción/seat/add-on): la fila Failed quedó saldada y "Pay now" sería un cobro doble. */
+  canRetry: boolean;
 }
 
 /** `GET /payments-app/saas-payments/{id}/receipt`: URL firmada, de vida corta. */
