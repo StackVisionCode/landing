@@ -254,4 +254,49 @@ describe('AccountSeatsComponent', () => {
       confirmSpy.mockRestore();
     });
   });
+
+  // B4.a — Portal/Signature no se cuentan por política (feedback senior); solo Standard.
+  describe('breakdown por estado de seats Standard', () => {
+    const makeSeat = (type: string, status: string) => ({
+      id: `${type}-${status}`,
+      type,
+      status,
+      nextRenewalAtUtc: null,
+      autoRenew: true,
+    });
+
+    it('cuenta Active, PastDue y Suspended por separado para Standard', () => {
+      const { component } = create(subscription(), null, {
+        seats: vi.fn(() => of({
+          items: [
+            makeSeat('Standard', 'Active'),
+            makeSeat('Standard', 'Active'),
+            makeSeat('Standard', 'PastDue'),
+            makeSeat('Standard', 'Suspended'),
+          ],
+          totalCount: 4,
+        })),
+      });
+
+      expect(component.standardStatusBreakdown()).toEqual({ active: 2, pastDue: 1, suspended: 1 });
+      expect(component.hasStandardAttention()).toBe(true);
+    });
+
+    it('ignora Portal y otros tipos no-Standard', () => {
+      const { component } = create(subscription(), null, {
+        seats: vi.fn(() => of({
+          items: [
+            makeSeat('Standard', 'Active'),
+            makeSeat('Portal', 'Active'),
+            makeSeat('Portal', 'Suspended'),
+            makeSeat('Signature', 'PastDue'),
+          ],
+          totalCount: 4,
+        })),
+      });
+
+      expect(component.standardStatusBreakdown()).toEqual({ active: 1, pastDue: 0, suspended: 0 });
+      expect(component.hasStandardAttention()).toBe(false);
+    });
+  });
 });

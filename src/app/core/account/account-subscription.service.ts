@@ -21,6 +21,8 @@ import {
   StartAddOnCheckoutResponse,
   StartSeatCheckoutRequest,
   StartSeatCheckoutResponse,
+  StartSeatReactivationCheckoutRequest,
+  StartSeatReactivationCheckoutResponse,
   TenantLimits,
 } from './account-subscription.models';
 
@@ -57,6 +59,18 @@ export class AccountSubscriptionService {
 
   seatCheckoutStatus(intentId: string): Observable<SeatCheckoutStatus> {
     return this.http.get<SeatCheckoutStatus>(`${this.base}/seats/checkout/${intentId}`);
+  }
+
+  /** Reactiva un seat Suspended/PastDue: cobra 1 período nuevo y, al succeed, el seat vuelve a Active. Backend
+   * rechaza si el seat está Active/Cancelled/Expired o si no es del tenant del token. */
+  startSeatReactivationCheckout(
+    seatId: string,
+    request: StartSeatReactivationCheckoutRequest,
+  ): Observable<StartSeatReactivationCheckoutResponse> {
+    return this.http.post<StartSeatReactivationCheckoutResponse>(
+      `${this.base}/seats/${seatId}/reactivate-checkout`,
+      request,
+    );
   }
 
   /** Compra de un add-on por checkout hosteado; el backend rechaza lo ya incluido o ya activo. */

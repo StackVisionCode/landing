@@ -24,6 +24,14 @@ export class AccountSubscriptionStore {
   readonly billingAccessBlocked = computed(() => this._summary()?.plan.billingAccessBlocked === true);
   readonly cancelAtPeriodEnd = computed(() => this._summary()?.period.cancelAtPeriodEnd === true);
 
+  /**
+   * El cobro de la renovación falló y aún no se cortó el acceso: el guard de compras ya rechaza add-ons
+   * con <c>Subscription.CannotPurchaseAddOns</c>, así que el banner global ofrece reintentar sin esperar
+   * a que la suscripción se marque Suspended. <c>billingAccessBlocked</c> solo cubre Suspended/Expired —
+   * sin esto, el estado intermedio PastDue dejaba al admin sin CTA en el landing.
+   */
+  readonly paymentFailed = computed(() => (this._summary()?.plan.status ?? '') === 'PastDue');
+
   /** Días hasta la próxima renovación (o fin de período si no hay nextRenewal). Nulo si no aplica. */
   readonly daysUntilRenewal = computed<number | null>(() => {
     const s = this._summary();

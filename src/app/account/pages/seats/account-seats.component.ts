@@ -17,6 +17,8 @@ import { ActionCooldown } from '@core/http/action-cooldown';
 import { formatClock } from '@core/http/throttling';
 import { throttleNotice } from '@account/shared/account-throttle';
 import { ConfirmDialogComponent } from '@account/shared/confirm-dialog.component';
+import { PaymentProviderPickerComponent } from '@account/shared/payment-provider-picker.component';
+import { AccountPaymentOption } from '@core/account/account-payment-options.service';
 
 /** Lo que pasó con el pago al volver del proveedor. */
 type CheckoutOutcome = 'none' | 'paid' | 'done' | 'cancelled' | 'slow';
@@ -31,7 +33,7 @@ const MAX_POLLS = 20;
 
 @Component({
   selector: 'app-account-seats',
-  imports: [FormsModule, ConfirmDialogComponent],
+  imports: [FormsModule, ConfirmDialogComponent, PaymentProviderPickerComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: './account-seats.component.html',
 })
@@ -95,7 +97,6 @@ export class AccountSeatsComponent {
   readonly usedCount = computed(() => this.limits()?.activeUsers ?? 0);
   readonly totalCount = computed(() => this.subscription()?.seats.total ?? 0);
   readonly purchasedCount = computed(() => this.subscription()?.seats.purchased ?? 0);
-  readonly unassignedCount = computed(() => Math.max(0, this.totalCount() - this.usedCount()));
   readonly usagePercent = computed(() =>
     this.totalCount() > 0 ? Math.min(100, Math.round((this.usedCount() / this.totalCount()) * 100)) : 0
   );
@@ -107,6 +108,25 @@ export class AccountSeatsComponent {
           .accOvSeatsBreakdown.replace('{included}', String(seats.includedInPlan))
           .replace('{purchased}', String(seats.purchased))
       : '';
+  });
+
+  /** Desglose por estado SOLO para seats Standard (empleados). Portal/Signature/ReadOnly/ServiceAccount
+   * no se cuentan — son pools informativos y la política del producto es dejarlos fuera del dashboard
+   * de consumo (ver feedback_portal_customer_seats_no_contar_sin_senior). */
+  readonly standardStatusBreakdown = computed(() => {
+    const breakdown = { active: 0, pastDue: 0, suspended: 0 };
+    for (const seat of this.seats()) {
+      if (seat.type !== SEAT_TYPE) continue;
+      if (seat.status === 'Active') breakdown.active++;
+      else if (seat.status === 'PastDue') breakdown.pastDue++;
+      else if (seat.status === 'Suspended') breakdown.suspended++;
+    }
+    return breakdown;
+  });
+
+  readonly hasStandardAttention = computed(() => {
+    const b = this.standardStatusBreakdown();
+    return b.pastDue > 0 || b.suspended > 0;
   });
 
   constructor() {
@@ -156,13 +176,27 @@ export class AccountSeatsComponent {
     });
   }
 
+  /** Picker: true cuando el user ya cotizó y pidió comprar, pendiente de elegir provider. */
+  readonly pickerOpen = signal(false);
+
   buy(): void {
+    if (!this.session.me()?.email) return;
+    this.buyError.set(null);
+    this.pickerOpen.set(true);
+  }
+
+  onProviderPickerDismissed(): void {
+    this.pickerOpen.set(false);
+  }
+
+  onProviderPicked(option: AccountPaymentOption): void {
     const email = this.session.me()?.email;
     if (!email) {
+      this.pickerOpen.set(false);
       return;
     }
+    this.pickerOpen.set(false);
     this.buying.set(true);
-    this.buyError.set(null);
     const back = `${window.location.origin}/account/seats`;
     this.api
       .startSeatCheckout({
@@ -172,6 +206,8 @@ export class AccountSeatsComponent {
         payerEmail: email,
         successUrl: `${back}?checkout=success`,
         cancelUrl: `${back}?checkout=cancelled`,
+        provider: option.provider,
+        method: option.method,
       })
       .subscribe({
         next: checkout => window.location.assign(checkout.checkoutUrl),
@@ -283,16 +319,68 @@ export class AccountSeatsComponent {
       : '';
   });
 
-  seatStatusLabel(seat: Seat): string {
-    return seat.currentUserId ? this.t().accSeatsAssigned : this.t().accSeatsFree;
-  }
-
   seatRenewalLabel(seat: Seat): string {
     if (!seat.nextRenewalAtUtc) {
       return '';
     }
     const template = seat.autoRenew ? this.t().accSeatsRenews : this.t().accSeatsNoRenew;
     return template.replace('{date}', this.date(seat.nextRenewalAtUtc));
+  }
+
+  // -------- Reactivación de un seat Suspended/PastDue (B5) --------
+  /** Picker de reactivación: distinto del `pickerOpen` de compra nueva — el user puede estar reactivando un
+   * seat impago mientras tenga abierta la cotización para comprar más. Guarda el seat elegido para el handler. */
+  readonly reactivationPickerOpen = signal(false);
+  readonly reactivationError = signal<string | null>(null);
+  /** Seat específico que el user tocó "Pay now". null mientras el picker esté cerrado. */
+  private readonly pendingReactivationSeat = signal<Seat | null>(null);
+  /** Mientras arrancamos el checkout de reactivación, deshabilitamos el botón de esa fila. */
+  readonly reactivatingSeatId = signal<string | null>(null);
+
+  canReactivate(seat: Seat): boolean {
+    return seat.status === 'Suspended' || seat.status === 'PastDue';
+  }
+
+  startReactivation(seat: Seat): void {
+    if (!this.canReactivate(seat) || this.reactivatingSeatId() !== null) return;
+    if (!this.session.me()?.email) return;
+    this.reactivationError.set(null);
+    this.pendingReactivationSeat.set(seat);
+    this.reactivationPickerOpen.set(true);
+  }
+
+  onReactivationPickerDismissed(): void {
+    this.reactivationPickerOpen.set(false);
+    this.pendingReactivationSeat.set(null);
+  }
+
+  onReactivationProviderPicked(option: AccountPaymentOption): void {
+    const seat = this.pendingReactivationSeat();
+    this.reactivationPickerOpen.set(false);
+    this.pendingReactivationSeat.set(null);
+    if (!seat) return;
+    const email = this.session.me()?.email;
+    if (!email) return;
+
+    this.reactivatingSeatId.set(seat.id);
+    const back = `${window.location.origin}/account/seats`;
+    this.api
+      .startSeatReactivationCheckout(seat.id, {
+        payerEmail: email,
+        successUrl: `${back}?checkout=success`,
+        cancelUrl: `${back}?checkout=cancelled`,
+        provider: option.provider,
+        method: option.method,
+      })
+      .subscribe({
+        next: checkout => window.location.assign(checkout.checkoutUrl),
+        error: (err: unknown) => {
+          this.reactivatingSeatId.set(null);
+          this.reactivationError.set(
+            throttleNotice(err, this.cooldown, this.t()) ?? this.t().accSeatsReactivateError,
+          );
+        },
+      });
   }
 
   money(cents: number, currency: string): string {

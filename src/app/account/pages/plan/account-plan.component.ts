@@ -17,6 +17,8 @@ import { ActionCooldown } from '@core/http/action-cooldown';
 import { formatClock } from '@core/http/throttling';
 import { throttleNotice } from '@account/shared/account-throttle';
 import { ConfirmDialogComponent } from '@account/shared/confirm-dialog.component';
+import { PaymentProviderPickerComponent } from '@account/shared/payment-provider-picker.component';
+import { AccountPaymentOption } from '@core/account/account-payment-options.service';
 import {
   BILLING_PREFERENCE_CONSENT_VERSION,
   BillingPreference,
@@ -34,7 +36,7 @@ type CheckoutOutcome = 'none' | 'paid' | 'cancelled';
 
 @Component({
   selector: 'app-account-plan',
-  imports: [StepUpDialogComponent, ConfirmDialogComponent],
+  imports: [StepUpDialogComponent, ConfirmDialogComponent, PaymentProviderPickerComponent],
   templateUrl: './account-plan.component.html',
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
@@ -187,11 +189,40 @@ export class AccountPlanComponent {
     this.error.set(null);
   }
 
+  /** `change` cuando el preview es un upgrade cobrable; `renew` cuando el usuario pulsó renew. */
+  readonly pickerIntent = signal<'change' | 'renew' | null>(null);
+  readonly pickerOpen = computed(() => this.pickerIntent() !== null);
+
   confirm(): void {
     const preview = this.preview();
     if (!preview || preview.blocked || this.stage() === 'confirming') {
       return;
     }
+    // Downgrades no cobran: van off-session sin provider. Solo los upgrades abren el picker.
+    if (!preview.chargedNow) {
+      this.executeChangePlan(null);
+      return;
+    }
+    this.pickerIntent.set('change');
+  }
+
+  onProviderPickerDismissed(): void {
+    this.pickerIntent.set(null);
+  }
+
+  onProviderPicked(option: AccountPaymentOption): void {
+    const intent = this.pickerIntent();
+    this.pickerIntent.set(null);
+    if (intent === 'change') {
+      this.executeChangePlan(option);
+    } else if (intent === 'renew') {
+      this.executeRenew(option);
+    }
+  }
+
+  private executeChangePlan(option: AccountPaymentOption | null): void {
+    const preview = this.preview();
+    if (!preview) return;
     this.stage.set('confirming');
     this.error.set(null);
     this.pendingAction.set('change');
@@ -204,6 +235,8 @@ export class AccountPlanComponent {
         payerEmail: preview.chargedNow ? (this.session.me()?.email ?? null) : null,
         successUrl: preview.chargedNow ? `${back}?checkout=success` : null,
         cancelUrl: preview.chargedNow ? `${back}?checkout=cancelled` : null,
+        provider: option?.provider,
+        method: option?.method,
       })
       .subscribe({
       next: response => {
@@ -261,20 +294,25 @@ export class AccountPlanComponent {
     });
   }
 
-  /** Arranca la renovación y sale al proveedor; al volver, la pantalla ya refleja el pago. */
+  /** Arranca la renovación — primero elige provider en el picker, luego sale al proveedor. */
   renew(): void {
-    const email = this.session.me()?.email;
-    if (this.renewing() || !email) {
-      return;
-    }
-    this.renewing.set(true);
+    if (this.renewing() || !this.session.me()?.email) return;
     this.error.set(null);
+    this.pickerIntent.set('renew');
+  }
+
+  private executeRenew(option: AccountPaymentOption): void {
+    const email = this.session.me()?.email;
+    if (!email) return;
+    this.renewing.set(true);
     const back = `${window.location.origin}/account/plan`;
     this.api
       .startRenewCheckout({
         payerEmail: email,
         successUrl: `${back}?checkout=success`,
         cancelUrl: `${back}?checkout=cancelled`,
+        provider: option.provider,
+        method: option.method,
       })
       .subscribe({
         next: checkout => window.location.assign(checkout.checkoutUrl),

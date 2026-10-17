@@ -3,6 +3,8 @@ import { Router } from '@angular/router';
 import { AccountSessionStore } from '@core/auth/account-session.store';
 import { AccountSubscriptionStore } from '@core/account/account-subscription.store';
 import { AccountSubscriptionService } from '@core/account/account-subscription.service';
+import { AccountPaymentOption } from '@core/account/account-payment-options.service';
+import { PaymentProviderPickerComponent } from './payment-provider-picker.component';
 
 type BannerTone = 'info' | 'warning' | 'critical';
 
@@ -16,6 +18,7 @@ type BannerTone = 'info' | 'warning' | 'critical';
 @Component({
   selector: 'app-account-expiry-banner',
   standalone: true,
+  imports: [PaymentProviderPickerComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     @if (visible()) {
@@ -55,6 +58,11 @@ type BannerTone = 'info' | 'warning' | 'critical';
         }
       </div>
     }
+    <app-payment-provider-picker
+      [open]="pickerOpen"
+      (confirmed)="onProviderPicked($event)"
+      (dismissed)="onProviderPickerDismissed()"
+    />
   `,
 })
 export class AccountExpiryBannerComponent {
@@ -67,6 +75,7 @@ export class AccountExpiryBannerComponent {
 
   readonly tone = computed<BannerTone>(() => {
     if (this.store.billingAccessBlocked()) return 'critical';
+    if (this.store.paymentFailed()) return 'warning';
     const d = this.store.daysUntilRenewal();
     if (d === null) return 'info';
     if (d <= 1) return 'critical';
@@ -76,6 +85,9 @@ export class AccountExpiryBannerComponent {
 
   readonly visible = computed(() => {
     if (this.store.billingAccessBlocked()) return true;
+    // PastDue: el cobro falló pero aún no se cortó el acceso. Sin este branch no se pintaba banner
+    // y el admin veía solo "Status: Payment failed" en Overview sin CTA para pagar.
+    if (this.store.paymentFailed()) return true;
     if (this.store.cancelAtPeriodEnd()) return false;
     const d = this.store.daysUntilRenewal();
     return d !== null && d >= 0 && d <= 7;
@@ -93,6 +105,7 @@ export class AccountExpiryBannerComponent {
 
   readonly title = computed(() => {
     if (this.store.billingAccessBlocked()) return 'Your access is paused';
+    if (this.store.paymentFailed()) return 'Your last subscription payment failed';
     const d = this.store.daysUntilRenewal();
     if (d === null) return 'Subscription';
     if (d <= 0) return 'Your billing period ends today';
@@ -111,6 +124,8 @@ export class AccountExpiryBannerComponent {
   readonly message = computed(() => {
     if (this.store.billingAccessBlocked())
       return 'The last payment did not go through. Pay now to restore access for your team.';
+    if (this.store.paymentFailed())
+      return "The automatic charge didn't go through. Pay now to avoid any interruption to your team.";
     const d = this.store.daysUntilRenewal();
     const periodEnd = this.store.summary()?.period.currentPeriodEndUtc;
     const when = periodEnd ? new Date(periodEnd).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : null;
@@ -147,6 +162,8 @@ export class AccountExpiryBannerComponent {
     }
   });
 
+  readonly pickerOpen = signal(false);
+
   payNow(): void {
     // En Automatic con PM el botón "Manage billing" no cobra: lleva al plan a gestionar.
     // Lo mismo "Add card": por ahora reusa la misma ruta y el flujo de guardar tarjeta vive allí.
@@ -156,6 +173,21 @@ export class AccountExpiryBannerComponent {
     }
     const email = this.session.me()?.email;
     if (this.working() || !email) return;
+    // Abre el picker; la llamada al checkout real la dispara el user al confirmar provider.
+    this.pickerOpen.set(true);
+  }
+
+  onProviderPickerDismissed(): void {
+    this.pickerOpen.set(false);
+  }
+
+  onProviderPicked(option: AccountPaymentOption): void {
+    const email = this.session.me()?.email;
+    if (!email) {
+      this.pickerOpen.set(false);
+      return;
+    }
+    this.pickerOpen.set(false);
     this.working.set(true);
     const back = `${window.location.origin}/account/plan`;
     this.api
@@ -163,6 +195,8 @@ export class AccountExpiryBannerComponent {
         payerEmail: email,
         successUrl: `${back}?checkout=success`,
         cancelUrl: `${back}?checkout=cancelled`,
+        provider: option.provider,
+        method: option.method,
       })
       .subscribe({
         next: checkout => window.location.assign(checkout.checkoutUrl),

@@ -44,7 +44,7 @@ export interface AccountSeats {
   total: number;
 }
 
-export type AddOnEligibility = 'Included' | 'Active' | 'Available';
+export type AddOnEligibility = 'Included' | 'Active' | 'Available' | 'Blocked';
 
 export interface AccountAddOn {
   code: string;
@@ -60,6 +60,10 @@ export interface AccountAddOn {
   tenantAddOnId: string | null;
   currentPeriodEndUtc: string | null;
   autoRenew: boolean | null;
+  /** Cuántas instancias activas tiene el tenant de este SKU (storage packs son apilables). */
+  activeQuantity: number;
+  /** Si el tenant puede comprar OTRA instancia del mismo SKU estando ya activo. */
+  canStack: boolean;
 }
 
 /** Respuesta de los endpoints de cancelación de intents pending. Idempotente: ya cerrada → `alreadyCancelled: true`. */
@@ -112,6 +116,9 @@ export interface StartRenewCheckoutRequest {
   payerEmail: string;
   successUrl: string;
   cancelUrl: string;
+  /** Provider del picker (Stripe/PayPal). Opcional por compat; el backend cae a Stripe si no viene. */
+  provider?: string;
+  method?: string;
 }
 
 export interface StartRenewCheckoutResponse {
@@ -130,12 +137,12 @@ export interface RenewCheckoutStatus {
   checkoutUrl: string | null;
 }
 
-/** Fila de `GET /seats`: un asiento comprado y a quién está asignado. */
+/** Fila de `GET /seats`: un asiento comprado (status del seat + renovación). La ocupación por usuario
+ * se maneja ahora como capacidad lógica en Auth — ya no se asigna seat a user individual. */
 export interface Seat {
   id: string;
   type: string;
   status: string;
-  currentUserId: string | null;
   nextRenewalAtUtc: string | null;
   autoRenew: boolean;
 }
@@ -165,6 +172,8 @@ export interface StartSeatCheckoutRequest {
   payerEmail: string;
   successUrl: string;
   cancelUrl: string;
+  provider?: string;
+  method?: string;
 }
 
 export interface StartSeatCheckoutResponse {
@@ -193,6 +202,8 @@ export interface StartAddOnCheckoutRequest {
   payerEmail: string;
   successUrl: string;
   cancelUrl: string;
+  provider?: string;
+  method?: string;
 }
 
 /** `GET /addons/checkout/{id}`: al volver del proveedor se pollea hasta que el webhook activa el add-on. */
@@ -221,6 +232,8 @@ export interface ChangePlanRequest {
   payerEmail?: string | null;
   successUrl?: string | null;
   cancelUrl?: string | null;
+  provider?: string;
+  method?: string;
 }
 
 /**
@@ -278,6 +291,24 @@ export interface ReceiptDownloadUrl {
 export interface SaaSPaymentsPage {
   items: SaaSPaymentRow[];
   totalCount: number;
+}
+
+/** `POST /seats/{seatId}/reactivate-checkout` — pago manual del admin para recuperar un seat Suspended/PastDue
+ * y devolverlo a Active con un período nuevo. */
+export interface StartSeatReactivationCheckoutRequest {
+  payerEmail: string;
+  successUrl: string;
+  cancelUrl: string;
+  /** Elegido en el picker. Opcional por compat; el backend cae a Stripe/Card si no viene. */
+  provider?: string;
+  method?: string;
+}
+
+export interface StartSeatReactivationCheckoutResponse {
+  seatId: string;
+  checkoutUrl: string;
+  paymentId: string;
+  expiresAtUtc: string;
 }
 
 /** `GET /auth/tenants/limits` — de acá sale el único dato que Subscription no tiene: los asientos en uso. */

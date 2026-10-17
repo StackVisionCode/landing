@@ -282,3 +282,9 @@
   (confirmed)="confirmSwitchToManual()"
   (dismissed)="dismissSwitchToManual()"
 />
+
+<app-payment-provider-picker
+  [open]="pickerOpen"
+  (confirmed)="onProviderPicked($event)"
+  (dismissed)="onProviderPickerDismissed()"
+/>

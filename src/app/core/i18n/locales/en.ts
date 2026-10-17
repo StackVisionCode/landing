@@ -396,11 +396,8 @@ export const en: TranslationKeys = {
   accSeatsSubtitle: "How many people can work in your office, and how to add more.",
   accSeatsPurchasedTitle: "Purchased seats",
   accSeatsPurchasedEmpty: "You haven't purchased extra seats. Your plan's seats are enough so far.",
-  accSeatsAssigned: "Assigned",
-  accSeatsFree: "Unassigned",
   accSeatsRenews: "Renews on {date}",
   accSeatsNoRenew: "Ends on {date}",
-  accSeatsAssignHint: "Seats are assigned to people in your office workspace.",
   accSeatsBuyTitle: "Add seats",
   accSeatsQuantity: "How many",
   accSeatsGetQuote: "See price",
@@ -441,11 +438,36 @@ export const en: TranslationKeys = {
   accAddOnPerMonth: "{price} per month",
   accAddOnPerYear: "{price} per year",
   accAddOnBuy: "Add to my plan",
+  accAddOnBuyAnother: "Add another",
   accAddOnBuying: "Adding...",
   accAddOnAdded: "{name} is now active.",
   accAddOnBuyError: "We couldn't add it. Please try again.",
   accAddOnAlreadyIncluded: "Your plan already includes it.",
   accAddOnAlreadyActive: "You already have it active.",
+  accAddOnMutexBlocked: "Another add-on of the same type is active. Cancel it first to switch.",
+  accAddOnSubscriptionNotActive: "Your subscription is not active. Settle the overdue invoice to buy add-ons.",
+
+  accTermsTitle: "Review our Terms of Service",
+  accTermsSubtitle: "We updated the terms that govern your office's use of the service. Please review and accept to continue.",
+  accTermsReadPrompt: "Read the full document before accepting:",
+  accTermsOpenLink: "Open Terms of Service",
+  accTermsCheckboxLabel: "I have read and agree to the Terms of Service on behalf of my office.",
+  accTermsAccept: "Accept and continue",
+  accTermsSubmitting: "Saving…",
+  accTermsSignOut: "Sign out",
+  accTermsNeedsAgreement: "Please confirm you have read and agree before continuing.",
+  accTermsError: "We couldn't save your acceptance. Please try again.",
+
+  accSignInTakeoverExpired: "That confirmation expired. Please sign in again.",
+
+  accPaymentPickerTitle: "Choose how to pay",
+  accPaymentPickerSubtitle: "Pick the payment method we'll use for this purchase.",
+  accPaymentPickerCancel: "Cancel",
+  accPaymentPickerConfirm: "Continue",
+  accPaymentPickerEmpty: "No payment methods are available right now. Please try again in a moment.",
+  accAddOnsBlockedGroup: "Not available right now",
+  accAddOnsBlockedBadge: "Blocked",
+  accAddOnsBlockedHint: "You already have another add-on of the same type. Cancel it first to switch.",
   accAddOnNoPrice: "Price on request",
 
   // Account — vuelta del checkout de Add-ons
@@ -605,4 +627,23 @@ export const en: TranslationKeys = {
   accBillingReceiptWait: "Preparing",
   accBillingReceiptError: "We couldn't open the receipt. Please try again.",
   accBillingReceiptNotReady: "The receipt is still being generated. Try again in a moment.",
+
+  // Account — reintentar un cobro fallido
+  accBillingPayNow: "Pay now",
+  accBillingPayNowOpening: "Opening…",
+  accBillingPayNowSeat: "Manage seats",
+  accBillingPayNowAddOn: "Manage add-ons",
+  accBillingPayNowError: "We couldn't start the checkout. Please try again.",
+
+  // Account — breakdown de estado de seats Standard
+  accSeatsStatusBreakdownTitle: "Standard seat status",
+  accSeatsStatusActive: "{count} active",
+  accSeatsStatusPastDue: "{count} past-due",
+  accSeatsStatusSuspended: "{count} suspended",
+  accSeatsStatusAttention: "{pastDue} past-due · {suspended} suspended · pay to restore the cap.",
+
+  // Reactivación de seat impago (B5)
+  accSeatsReactivate: "Pay now",
+  accSeatsReactivateOpening: "Opening…",
+  accSeatsReactivateError: "We couldn't open the checkout to reactivate this seat. Please try again.",
 };

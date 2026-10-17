@@ -403,11 +403,8 @@ export interface TranslationKeys {
   accSeatsSubtitle: string;
   accSeatsPurchasedTitle: string;
   accSeatsPurchasedEmpty: string;
-  accSeatsAssigned: string;
-  accSeatsFree: string;
   accSeatsRenews: string;
   accSeatsNoRenew: string;
-  accSeatsAssignHint: string;
   accSeatsBuyTitle: string;
   accSeatsQuantity: string;
   accSeatsGetQuote: string;
@@ -448,11 +445,39 @@ export interface TranslationKeys {
   accAddOnPerMonth: string;
   accAddOnPerYear: string;
   accAddOnBuy: string;
+  accAddOnBuyAnother: string;
   accAddOnBuying: string;
   accAddOnAdded: string;
   accAddOnBuyError: string;
   accAddOnAlreadyIncluded: string;
   accAddOnAlreadyActive: string;
+  accAddOnMutexBlocked: string;
+  accAddOnSubscriptionNotActive: string;
+
+  // Account — Accept terms gate (si el backend bloquea con 409 Terms.NotAccepted)
+  accTermsTitle: string;
+  accTermsSubtitle: string;
+  accTermsReadPrompt: string;
+  accTermsOpenLink: string;
+  accTermsCheckboxLabel: string;
+  accTermsAccept: string;
+  accTermsSubmitting: string;
+  accTermsSignOut: string;
+  accTermsNeedsAgreement: string;
+  accTermsError: string;
+
+  // Account — sign-in: motivo específico cuando el vale de takeover ya no vale
+  accSignInTakeoverExpired: string;
+
+  // Account — picker "Choose how to pay" compartido en addons/seats/renewal/plan-change
+  accPaymentPickerTitle: string;
+  accPaymentPickerSubtitle: string;
+  accPaymentPickerCancel: string;
+  accPaymentPickerConfirm: string;
+  accPaymentPickerEmpty: string;
+  accAddOnsBlockedGroup: string;
+  accAddOnsBlockedBadge: string;
+  accAddOnsBlockedHint: string;
   accAddOnNoPrice: string;
 
   // Account — vuelta del checkout de Add-ons
@@ -611,4 +636,17 @@ export interface TranslationKeys {
   accBillingReceiptWait: string;
   accBillingReceiptError: string;
   accBillingReceiptNotReady: string;
+  accBillingPayNow: string;
+  accBillingPayNowOpening: string;
+  accBillingPayNowSeat: string;
+  accBillingPayNowAddOn: string;
+  accBillingPayNowError: string;
+  accSeatsStatusBreakdownTitle: string;
+  accSeatsStatusActive: string;
+  accSeatsStatusPastDue: string;
+  accSeatsStatusSuspended: string;
+  accSeatsStatusAttention: string;
+  accSeatsReactivate: string;
+  accSeatsReactivateOpening: string;
+  accSeatsReactivateError: string;
 }

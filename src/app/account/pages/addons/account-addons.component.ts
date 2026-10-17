@@ -2,6 +2,7 @@ import { CUSTOM_ELEMENTS_SCHEMA, Component, computed, inject, signal } from '@an
 import { ActivatedRoute } from '@angular/router';
 import { AccountAddOn, AccountOpenAddOnCheckout, AccountSubscription } from '@core/account/account-subscription.models';
 import { AccountSubscriptionService } from '@core/account/account-subscription.service';
+import { AccountPaymentOption } from '@core/account/account-payment-options.service';
 import { AccountSessionStore } from '@core/auth/account-session.store';
 import { apiErrorCode } from '@core/http/api-error';
 import { nextPollDelayMs } from '@core/http/polling';
@@ -11,6 +12,7 @@ import { ActionCooldown } from '@core/http/action-cooldown';
 import { formatClock } from '@core/http/throttling';
 import { throttleNotice } from '@account/shared/account-throttle';
 import { ConfirmDialogComponent } from '@account/shared/confirm-dialog.component';
+import { PaymentProviderPickerComponent } from '@account/shared/payment-provider-picker.component';
 
 /** Lo que pasó con el pago al volver del proveedor. */
 type CheckoutOutcome = 'none' | 'paid' | 'done' | 'cancelled';
@@ -26,7 +28,7 @@ const MAX_POLLS = 20;
 
 @Component({
   selector: 'app-account-addons',
-  imports: [ConfirmDialogComponent],
+  imports: [ConfirmDialogComponent, PaymentProviderPickerComponent],
   templateUrl: './account-addons.component.html',
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
@@ -58,6 +60,7 @@ export class AccountAddOnsComponent {
   readonly included = computed(() => this.group('Included'));
   readonly active = computed(() => this.group('Active'));
   readonly available = computed(() => this.group('Available'));
+  readonly blocked = computed(() => this.group('Blocked'));
   readonly isEmpty = computed(() => (this.subscription()?.addOns.length ?? 0) === 0);
 
   /**
@@ -120,14 +123,35 @@ export class AccountAddOnsComponent {
     });
   }
 
-  /** Solo se ofrece comprar lo que el backend considera disponible; el resto ni siquiera muestra botón. */
+  /** Add-on pendiente de confirmar provider en el picker — null cuando el picker está cerrado. */
+  readonly pendingAddOn = signal<AccountAddOn | null>(null);
+  readonly pickerOpen = computed(() => this.pendingAddOn() !== null);
+
+  /** Click en "Add to my plan" / "Add another". Abre el picker; la compra real la dispara `onProviderPicked`. */
   buy(addOn: AccountAddOn): void {
     const email = this.session.me()?.email;
-    if (addOn.eligibility !== 'Available' || !email) {
+    const purchasable = addOn.eligibility === 'Available' || (addOn.eligibility === 'Active' && addOn.canStack);
+    if (!purchasable || !email) {
       return;
     }
-    this.buyingCode.set(addOn.code);
     this.buyError.set(null);
+    this.pendingAddOn.set(addOn);
+  }
+
+  onProviderPickerDismissed(): void {
+    this.pendingAddOn.set(null);
+  }
+
+  /** Confirmación del picker: ejecuta el checkout con el provider+method elegidos. */
+  onProviderPicked(option: AccountPaymentOption): void {
+    const addOn = this.pendingAddOn();
+    const email = this.session.me()?.email;
+    if (!addOn || !email) {
+      this.pendingAddOn.set(null);
+      return;
+    }
+    this.pendingAddOn.set(null);
+    this.buyingCode.set(addOn.code);
     const back = `${window.location.origin}/account/add-ons`;
     this.api
       .startAddOnCheckout({
@@ -137,6 +161,8 @@ export class AccountAddOnsComponent {
         payerEmail: email,
         successUrl: `${back}?checkout=success`,
         cancelUrl: `${back}?checkout=cancelled`,
+        provider: option.provider,
+        method: option.method,
       })
       .subscribe({
         next: checkout => {
@@ -296,6 +322,10 @@ export class AccountAddOnsComponent {
         return t.accAddOnAlreadyActive;
       case 'AddOn.CheckoutInProgress':
         return t.accAddOnInProgressError;
+      case 'AddOn.MutexGroupConflict':
+        return t.accAddOnMutexBlocked;
+      case 'Subscription.CannotPurchaseAddOns':
+        return t.accAddOnSubscriptionNotActive;
       default:
         return t.accAddOnBuyError;
     }
