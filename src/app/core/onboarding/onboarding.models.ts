@@ -32,6 +32,7 @@ export interface CreateOnboardingRequest {
   planId: string;
   emailVerificationChallengeId: string;
   billingCycle?: BillingCycle;
+  autoRenew?: boolean;
 }
 
 export interface CreateOnboardingResponse {

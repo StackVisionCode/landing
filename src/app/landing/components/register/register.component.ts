@@ -440,6 +440,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
         planId: plan.id,
         emailVerificationChallengeId: this.challengeId,
         billingCycle: this.cycle(),
+        autoRenew: this.billingPreferenceMode() === 'Automatic',
       })
       .subscribe({
         next: (created) => {
