@@ -8,6 +8,19 @@ import { AccountSubscriptionService } from '@core/account/account-subscription.s
 import { AccountSessionStore } from '@core/auth/account-session.store';
 import { AccountAddOnsComponent } from './account-addons.component';
 
+/**
+ * Provider seleccionado en el picker. `buy()` solo abre el picker: la compra real sale en
+ * `onProviderPicked()`, así que en los tests encadenamos las dos llamadas.
+ */
+const PICKED = {
+  provider: 'Stripe',
+  method: 'Card',
+  displayName: 'Stripe',
+  enabled: true,
+  priority: 1,
+  disabledReason: null,
+};
+
 const me = {
   id: 'u1',
   name: 'Ada',
@@ -19,7 +32,11 @@ const me = {
   permissions: ['addons.manage'],
 };
 
-function addOn(code: string, eligibility: AccountAddOn['eligibility'], overrides: Partial<AccountAddOn> = {}): AccountAddOn {
+function addOn(
+  code: string,
+  eligibility: AccountAddOn['eligibility'],
+  overrides: Partial<AccountAddOn> = {},
+): AccountAddOn {
   return {
     code,
     name: code,
@@ -33,11 +50,16 @@ function addOn(code: string, eligibility: AccountAddOn['eligibility'], overrides
     tenantAddOnId: null,
     currentPeriodEndUtc: null,
     autoRenew: null,
+    activeQuantity: 0,
+    canStack: false,
     ...overrides,
   };
 }
 
-function subscription(addOns: AccountAddOn[], openAddOnCheckouts: AccountSubscription['openAddOnCheckouts'] = null): AccountSubscription {
+function subscription(
+  addOns: AccountAddOn[],
+  openAddOnCheckouts: AccountSubscription['openAddOnCheckouts'] = null,
+): AccountSubscription {
   return {
     plan: {
       code: 'pro',
@@ -65,7 +87,12 @@ function subscription(addOns: AccountAddOn[], openAddOnCheckouts: AccountSubscri
   };
 }
 
-function openCheckout(intentId: string, overrides: Partial<AccountSubscription['openAddOnCheckouts'] extends (infer U)[] | null ? U : never> = {}) {
+function openCheckout(
+  intentId: string,
+  overrides: Partial<
+    AccountSubscription['openAddOnCheckouts'] extends (infer U)[] | null ? U : never
+  > = {},
+) {
   return {
     intentId,
     addOnCode: 'sms.addon',
@@ -80,11 +107,32 @@ function openCheckout(intentId: string, overrides: Partial<AccountSubscription['
 }
 
 describe('AccountAddOnsComponent', () => {
-  function create(addOns: AccountAddOn[], queryParam: string | null = null, overrides: object = {}) {
+  function create(
+    addOns: AccountAddOn[],
+    queryParam: string | null = null,
+    overrides: object = {},
+  ) {
     const api = {
       get: vi.fn(() => of(subscription(addOns))),
-      addOnCheckoutStatus: vi.fn(() => of({ addOnPurchaseIntentId: 'i1', status: 'Pending', addOnCode: 'sms.addon', quantity: 1, proratedTotalCents: 2900, currency: 'USD', checkoutUrl: null })),
-      startAddOnCheckout: vi.fn(() => of({ addOnPurchaseIntentId: 'i1', checkoutUrl: 'https://pay/x', paymentId: 'p1', expiresAtUtc: '2026-09-26T00:00:00Z' })),
+      addOnCheckoutStatus: vi.fn(() =>
+        of({
+          addOnPurchaseIntentId: 'i1',
+          status: 'Pending',
+          addOnCode: 'sms.addon',
+          quantity: 1,
+          proratedTotalCents: 2900,
+          currency: 'USD',
+          checkoutUrl: null,
+        }),
+      ),
+      startAddOnCheckout: vi.fn(() =>
+        of({
+          addOnPurchaseIntentId: 'i1',
+          checkoutUrl: 'https://pay/x',
+          paymentId: 'p1',
+          expiresAtUtc: '2026-09-26T00:00:00Z',
+        }),
+      ),
       ...overrides,
     };
     TestBed.configureTestingModule({
@@ -92,12 +140,20 @@ describe('AccountAddOnsComponent', () => {
       providers: [
         { provide: AccountSubscriptionService, useValue: api },
         { provide: AccountSessionStore, useValue: { me: signal(me) } },
-        { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: { get: () => queryParam } } } },
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { queryParamMap: { get: () => queryParam } } },
+        },
       ],
     });
     const fixture = TestBed.createComponent(AccountAddOnsComponent);
     fixture.detectChanges();
-    return { fixture, component: fixture.componentInstance, page: fixture.nativeElement as HTMLElement, api };
+    return {
+      fixture,
+      component: fixture.componentInstance,
+      page: fixture.nativeElement as HTMLElement,
+      api,
+    };
   }
 
   afterEach(() => {
@@ -114,7 +170,12 @@ describe('AccountAddOnsComponent', () => {
   });
 
   it('un add-on ya activo se lista sin botón de compra', () => {
-    const { page } = create([addOn('sms.addon', 'Active', { currentPeriodEndUtc: '2026-10-01T00:00:00Z', autoRenew: true })]);
+    const { page } = create([
+      addOn('sms.addon', 'Active', {
+        currentPeriodEndUtc: '2026-10-01T00:00:00Z',
+        autoRenew: true,
+      }),
+    ]);
 
     expect(page.textContent).toContain('Active');
     expect(page.querySelectorAll('button').length).toBe(0);
@@ -131,9 +192,15 @@ describe('AccountAddOnsComponent', () => {
     const { component, api } = create([addOn('sms.addon', 'Available')]);
 
     component.buy(component.available()[0]);
+    component.onProviderPicked(PICKED);
 
     expect(api.startAddOnCheckout).toHaveBeenCalledWith(
-      expect.objectContaining({ addOnCode: 'sms.addon', quantity: 1, autoRenew: true, payerEmail: 'ada@example.com' })
+      expect.objectContaining({
+        addOnCode: 'sms.addon',
+        quantity: 1,
+        autoRenew: true,
+        payerEmail: 'ada@example.com',
+      }),
     );
   });
 
@@ -146,12 +213,16 @@ describe('AccountAddOnsComponent', () => {
   });
 
   it('si el backend dice que el plan ya lo incluye, lo explica y recarga', () => {
-    const conflict = new HttpErrorResponse({ status: 409, error: { code: 'AddOn.AlreadyIncludedInPlan' } });
+    const conflict = new HttpErrorResponse({
+      status: 409,
+      error: { code: 'AddOn.AlreadyIncludedInPlan' },
+    });
     const { component, api } = create([addOn('sms.addon', 'Available')], null, {
       startAddOnCheckout: vi.fn(() => throwError(() => conflict)),
     });
 
     component.buy(component.available()[0]);
+    component.onProviderPicked(PICKED);
 
     expect(component.buyError()).toBe('Your plan already includes it.');
     expect(api.get).toHaveBeenCalledTimes(2);
@@ -163,6 +234,7 @@ describe('AccountAddOnsComponent', () => {
     const { component } = create([addOn('sms.addon', 'Available')]);
 
     component.buy(component.available()[0]);
+    component.onProviderPicked(PICKED);
 
     expect(sessionStorage.getItem('tv-account-addon-intent')).toBe('i1');
   });
@@ -193,7 +265,9 @@ describe('AccountAddOnsComponent', () => {
     // El catálogo guarda el nombre en la base y solo en español ("Correo"), así que el MISMO módulo
     // salía como "Correo" en Add-ons y como "Integrated email" en Plan. Ahora los dos leen
     // MODULE_LABELS, y el nombre de la base solo queda de respaldo.
-    const { page } = create([addOn('addon-email', 'Available', { name: 'Correo', modules: ['email'] })]);
+    const { page } = create([
+      addOn('addon-email', 'Available', { name: 'Correo', modules: ['email'] }),
+    ]);
 
     expect(page.textContent).toContain('Integrated email');
     expect(page.textContent).not.toContain('Correo');
@@ -201,7 +275,9 @@ describe('AccountAddOnsComponent', () => {
 
   it('si el complemento no aporta módulos, cae al nombre del catálogo', () => {
     // Un add-on de solo cupos (sin `module.*`) no tiene etiqueta que buscar.
-    const { page } = create([addOn('addon-seats', 'Available', { name: 'Extra seats', modules: [] })]);
+    const { page } = create([
+      addOn('addon-seats', 'Available', { name: 'Extra seats', modules: [] }),
+    ]);
 
     expect(page.textContent).toContain('Extra seats');
   });
@@ -220,77 +296,98 @@ describe('AccountAddOnsComponent', () => {
       expect(page.textContent).toContain('Cancel pending purchase');
     });
 
-    it('si el usuario rechaza el confirm, no se llama al endpoint', () => {
-      const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
-      const cancelPendingAddOnCheckout = vi.fn(() => of({ alreadyCancelled: false, intentId: 'i1' }));
+    it('si el usuario cierra el confirm, no se llama al endpoint', () => {
+      const cancelPendingAddOnCheckout = vi.fn(() =>
+        of({ alreadyCancelled: false, intentId: 'i1' }),
+      );
       const { component } = createWithPendingIntent({ cancelPendingAddOnCheckout });
 
-      component.cancelPending('i1');
+      component.openCancelConfirm('i1');
+      component.dismissCancelConfirm();
 
       expect(cancelPendingAddOnCheckout).not.toHaveBeenCalled();
       expect(component.cancelNotice()).toBeNull();
-      confirmSpy.mockRestore();
     });
 
     it('cancelar llama al endpoint, muestra el toast y recarga', () => {
-      const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
-      const cancelPendingAddOnCheckout = vi.fn(() => of({ alreadyCancelled: false, intentId: 'i1' }));
+      const cancelPendingAddOnCheckout = vi.fn(() =>
+        of({ alreadyCancelled: false, intentId: 'i1' }),
+      );
       const { component, api } = createWithPendingIntent({ cancelPendingAddOnCheckout });
 
-      component.cancelPending('i1');
+      component.openCancelConfirm('i1');
+      component.cancelPending();
 
       expect(cancelPendingAddOnCheckout).toHaveBeenCalledWith('i1');
       expect(component.cancelNotice()).toEqual({ kind: 'ok' });
       expect(api.get).toHaveBeenCalledTimes(2); // recarga tras el cierre del intent
-      confirmSpy.mockRestore();
     });
 
     it('si el intent ya estaba cerrado, mensaje idempotente', () => {
-      const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
       const { component } = createWithPendingIntent({
         cancelPendingAddOnCheckout: vi.fn(() => of({ alreadyCancelled: true, intentId: 'i1' })),
       });
 
-      component.cancelPending('i1');
+      component.openCancelConfirm('i1');
+      component.cancelPending();
 
       expect(component.cancelNotice()).toEqual({ kind: 'already' });
-      confirmSpy.mockRestore();
     });
 
     it('fallo del service → toast de error y vuelve a habilitar el botón', () => {
-      const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
       const { component } = createWithPendingIntent({
-        cancelPendingAddOnCheckout: vi.fn(() => throwError(() => new HttpErrorResponse({ status: 500 }))),
+        cancelPendingAddOnCheckout: vi.fn(() =>
+          throwError(() => new HttpErrorResponse({ status: 500 })),
+        ),
       });
 
-      component.cancelPending('i1');
+      component.openCancelConfirm('i1');
+      component.cancelPending();
 
       expect(component.cancelNotice()).toEqual({ kind: 'error' });
       expect(component.cancellingId()).toBeNull();
-      confirmSpy.mockRestore();
     });
 
     it('al cancelar limpia el intent del storage y del estado', () => {
-      const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
       const { component } = createWithPendingIntent({
         cancelPendingAddOnCheckout: vi.fn(() => of({ alreadyCancelled: false, intentId: 'i1' })),
       });
 
-      component.cancelPending('i1');
+      component.openCancelConfirm('i1');
+      component.cancelPending();
 
       expect(component.pendingIntentId()).toBeNull();
       expect(sessionStorage.getItem('tv-account-addon-intent')).toBeNull();
-      confirmSpy.mockRestore();
     });
   });
 
   describe('snapshot con openAddOnCheckouts', () => {
     // Cuando el backend informa intents abiertos, la pantalla los lista aunque el navegador haya perdido el storage.
-    function createWithSnapshot(openAddOnCheckouts: AccountSubscription['openAddOnCheckouts'], overrides: object = {}) {
+    function createWithSnapshot(
+      openAddOnCheckouts: AccountSubscription['openAddOnCheckouts'],
+      overrides: object = {},
+    ) {
       const api = {
         get: vi.fn(() => of(subscription([addOn('sms.addon', 'Available')], openAddOnCheckouts))),
-        addOnCheckoutStatus: vi.fn(() => of({ addOnPurchaseIntentId: 'i1', status: 'Pending', addOnCode: 'sms.addon', quantity: 1, proratedTotalCents: 2900, currency: 'USD', checkoutUrl: null })),
-        startAddOnCheckout: vi.fn(() => of({ addOnPurchaseIntentId: 'i1', checkoutUrl: 'https://pay/x', paymentId: 'p1', expiresAtUtc: '2026-09-26T00:00:00Z' })),
+        addOnCheckoutStatus: vi.fn(() =>
+          of({
+            addOnPurchaseIntentId: 'i1',
+            status: 'Pending',
+            addOnCode: 'sms.addon',
+            quantity: 1,
+            proratedTotalCents: 2900,
+            currency: 'USD',
+            checkoutUrl: null,
+          }),
+        ),
+        startAddOnCheckout: vi.fn(() =>
+          of({
+            addOnPurchaseIntentId: 'i1',
+            checkoutUrl: 'https://pay/x',
+            paymentId: 'p1',
+            expiresAtUtc: '2026-09-26T00:00:00Z',
+          }),
+        ),
         ...overrides,
       };
       TestBed.configureTestingModule({
@@ -298,16 +395,26 @@ describe('AccountAddOnsComponent', () => {
         providers: [
           { provide: AccountSubscriptionService, useValue: api },
           { provide: AccountSessionStore, useValue: { me: signal(me) } },
-          { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: { get: () => null } } } },
+          {
+            provide: ActivatedRoute,
+            useValue: { snapshot: { queryParamMap: { get: () => null } } },
+          },
         ],
       });
       const fixture = TestBed.createComponent(AccountAddOnsComponent);
       fixture.detectChanges();
-      return { fixture, component: fixture.componentInstance, page: fixture.nativeElement as HTMLElement, api };
+      return {
+        fixture,
+        component: fixture.componentInstance,
+        page: fixture.nativeElement as HTMLElement,
+        api,
+      };
     }
 
     it('con una intención abierta pinta su tarjeta con el nombre y el botón Resume', () => {
-      const { component, page } = createWithSnapshot([openCheckout('i-snapshot', { addOnDisplayName: 'SMS' })]);
+      const { component, page } = createWithSnapshot([
+        openCheckout('i-snapshot', { addOnDisplayName: 'SMS' }),
+      ]);
 
       expect(component.openCheckouts()).toHaveLength(1);
       expect(page.textContent).toContain('SMS');
@@ -326,7 +433,10 @@ describe('AccountAddOnsComponent', () => {
         providers: [
           { provide: AccountSubscriptionService, useValue: api },
           { provide: AccountSessionStore, useValue: { me: signal(me) } },
-          { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: { get: () => 'cancelled' } } } },
+          {
+            provide: ActivatedRoute,
+            useValue: { snapshot: { queryParamMap: { get: () => 'cancelled' } } },
+          },
         ],
       });
       const fixture = TestBed.createComponent(AccountAddOnsComponent);
@@ -346,21 +456,24 @@ describe('AccountAddOnsComponent', () => {
       ]);
 
       expect(component.openCheckouts()).toHaveLength(2);
-      const titles = Array.from(page.querySelectorAll('h2')).map(h => h.textContent ?? '');
-      expect(titles.some(t => t.includes('SMS'))).toBe(true);
-      expect(titles.some(t => t.includes('Email'))).toBe(true);
+      const titles = Array.from(page.querySelectorAll('h2')).map((h) => h.textContent ?? '');
+      expect(titles.some((t) => t.includes('SMS'))).toBe(true);
+      expect(titles.some((t) => t.includes('Email'))).toBe(true);
     });
 
     it('cancelar sobre un intent del snapshot llama al service y recarga', () => {
-      const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
-      const cancelPendingAddOnCheckout = vi.fn(() => of({ alreadyCancelled: false, intentId: 'i-snapshot' }));
-      const { component, api } = createWithSnapshot([openCheckout('i-snapshot')], { cancelPendingAddOnCheckout });
+      const cancelPendingAddOnCheckout = vi.fn(() =>
+        of({ alreadyCancelled: false, intentId: 'i-snapshot' }),
+      );
+      const { component, api } = createWithSnapshot([openCheckout('i-snapshot')], {
+        cancelPendingAddOnCheckout,
+      });
 
-      component.cancelPending('i-snapshot');
+      component.openCancelConfirm('i-snapshot');
+      component.cancelPending();
 
       expect(cancelPendingAddOnCheckout).toHaveBeenCalledWith('i-snapshot');
       expect(api.get).toHaveBeenCalledTimes(2);
-      confirmSpy.mockRestore();
     });
   });
 });

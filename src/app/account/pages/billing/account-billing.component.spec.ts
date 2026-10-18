@@ -19,6 +19,7 @@ function row(overrides: Partial<SaaSPaymentRow> = {}): SaaSPaymentRow {
     paidAtUtc: '2026-09-01T00:00:00Z',
     createdAtUtc: '2026-09-01T00:00:00Z',
     hasReceipt: false,
+    canRetry: false,
     ...overrides,
   };
 }
@@ -27,11 +28,21 @@ describe('AccountBillingComponent', () => {
   function create(overrides: object = {}) {
     const api = {
       payments: vi.fn(() => of({ items: [row()], totalCount: 1 })),
-      receiptUrl: vi.fn(() => of({ downloadUrl: 'https://files/receipt.pdf', expiresAtUtc: '2026-09-01T00:10:00Z' })),
-      startRenewCheckout: vi.fn(() => of({ checkoutUrl: 'https://checkout.example/renew', intentId: 'intent-1', status: 'Pending' })),
+      receiptUrl: vi.fn(() =>
+        of({ downloadUrl: 'https://files/receipt.pdf', expiresAtUtc: '2026-09-01T00:10:00Z' }),
+      ),
+      startRenewCheckout: vi.fn(() =>
+        of({
+          checkoutUrl: 'https://checkout.example/renew',
+          intentId: 'intent-1',
+          status: 'Pending',
+        }),
+      ),
       ...overrides,
     };
-    const session = { me: () => ({ email: 'owner@example.com' }) } as unknown as AccountSessionStore;
+    const session = {
+      me: () => ({ email: 'owner@example.com' }),
+    } as unknown as AccountSessionStore;
     TestBed.configureTestingModule({
       imports: [AccountBillingComponent],
       providers: [
@@ -42,7 +53,12 @@ describe('AccountBillingComponent', () => {
     });
     const fixture = TestBed.createComponent(AccountBillingComponent);
     fixture.detectChanges();
-    return { fixture, component: fixture.componentInstance, page: fixture.nativeElement as HTMLElement, api };
+    return {
+      fixture,
+      component: fixture.componentInstance,
+      page: fixture.nativeElement as HTMLElement,
+      api,
+    };
   }
 
   afterEach(() => TestBed.resetTestingModule());
@@ -67,7 +83,12 @@ describe('AccountBillingComponent', () => {
 
   it('un reembolso parcial se ve junto al importe', () => {
     const { component } = create({
-      payments: vi.fn(() => of({ items: [row({ status: 'PartiallyRefunded', refundedAmountCents: 1000 })], totalCount: 1 })),
+      payments: vi.fn(() =>
+        of({
+          items: [row({ status: 'PartiallyRefunded', refundedAmountCents: 1000 })],
+          totalCount: 1,
+        }),
+      ),
     });
 
     expect(component.refundLabel(component.rows()[0])).toBe('$10.00 refunded');
@@ -131,7 +152,9 @@ describe('AccountBillingComponent', () => {
 
     component.openReceipt(component.rows()[0]);
 
-    expect(component.receiptError()).toBe('The receipt is still being generated. Try again in a moment.');
+    expect(component.receiptError()).toBe(
+      'The receipt is still being generated. Try again in a moment.',
+    );
   });
 
   it('sin pagos lo dice', () => {
@@ -150,7 +173,12 @@ describe('AccountBillingComponent', () => {
 
   it('una renovación fallida de la suscripción ofrece Pay now y abre el picker', () => {
     const { component } = create({
-      payments: vi.fn(() => of({ items: [row({ status: 'Failed', type: 'SubscriptionRenewal' })], totalCount: 1 })),
+      payments: vi.fn(() =>
+        of({
+          items: [row({ status: 'Failed', type: 'SubscriptionRenewal', canRetry: true })],
+          totalCount: 1,
+        }),
+      ),
     });
 
     const r = component.rows()[0];
@@ -167,7 +195,9 @@ describe('AccountBillingComponent', () => {
     const assign = vi.fn();
     vi.stubGlobal('location', { ...window.location, origin: 'https://app.local', assign });
     const { component, api } = create({
-      payments: vi.fn(() => of({ items: [row({ status: 'Failed', type: 'SubscriptionRenewal' })], totalCount: 1 })),
+      payments: vi.fn(() =>
+        of({ items: [row({ status: 'Failed', type: 'SubscriptionRenewal' })], totalCount: 1 }),
+      ),
     });
     component.startPayNow(component.rows()[0]);
 
@@ -180,14 +210,25 @@ describe('AccountBillingComponent', () => {
       disabledReason: null,
     });
 
-    expect(api.startRenewCheckout).toHaveBeenCalledWith(expect.objectContaining({ provider: 'PayPal', method: 'PayPal', payerEmail: 'owner@example.com' }));
+    expect(api.startRenewCheckout).toHaveBeenCalledWith(
+      expect.objectContaining({
+        provider: 'PayPal',
+        method: 'PayPal',
+        payerEmail: 'owner@example.com',
+      }),
+    );
     expect(assign).toHaveBeenCalledWith('https://checkout.example/renew');
     vi.unstubAllGlobals();
   });
 
   it('una renovación de seat fallida linkea al administrador de asientos', () => {
     const { component } = create({
-      payments: vi.fn(() => of({ items: [row({ status: 'Failed', type: 'SeatRenewal' })], totalCount: 1 })),
+      payments: vi.fn(() =>
+        of({
+          items: [row({ status: 'Failed', type: 'SeatRenewal', canRetry: true })],
+          totalCount: 1,
+        }),
+      ),
     });
 
     const r = component.rows()[0];
@@ -198,7 +239,9 @@ describe('AccountBillingComponent', () => {
 
   it('una renovación de add-on fallida linkea al administrador de add-ons', () => {
     const { component } = create({
-      payments: vi.fn(() => of({ items: [row({ status: 'Failed', type: 'AddOnRenewal' })], totalCount: 1 })),
+      payments: vi.fn(() =>
+        of({ items: [row({ status: 'Failed', type: 'AddOnRenewal' })], totalCount: 1 }),
+      ),
     });
 
     const r = component.rows()[0];
@@ -208,7 +251,9 @@ describe('AccountBillingComponent', () => {
 
   it('un pago Succeeded no ofrece Pay now', () => {
     const { component } = create({
-      payments: vi.fn(() => of({ items: [row({ status: 'Succeeded', type: 'SubscriptionRenewal' })], totalCount: 1 })),
+      payments: vi.fn(() =>
+        of({ items: [row({ status: 'Succeeded', type: 'SubscriptionRenewal' })], totalCount: 1 }),
+      ),
     });
 
     expect(component.canPayNow(component.rows()[0])).toBe(false);

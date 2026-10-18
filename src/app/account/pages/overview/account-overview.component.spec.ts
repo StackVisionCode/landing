@@ -73,7 +73,11 @@ function downgrade(): NonNullable<AccountSubscription['pendingPlanChange']> {
 }
 
 describe('AccountOverviewComponent', () => {
-  function create(data: AccountSubscription | null, limitsResult: unknown = of(limits), overrides: object = {}) {
+  function create(
+    data: AccountSubscription | null,
+    limitsResult: unknown = of(limits),
+    overrides: object = {},
+  ) {
     const api = {
       get: vi.fn(() => (data ? of(data) : throwError(() => new Error('boom')))),
       limits: vi.fn(() => limitsResult),
@@ -90,7 +94,12 @@ describe('AccountOverviewComponent', () => {
     });
     const fixture = TestBed.createComponent(AccountOverviewComponent);
     fixture.detectChanges();
-    return { fixture, component: fixture.componentInstance, page: fixture.nativeElement as HTMLElement, api };
+    return {
+      fixture,
+      component: fixture.componentInstance,
+      page: fixture.nativeElement as HTMLElement,
+      api,
+    };
   }
 
   afterEach(() => TestBed.resetTestingModule());
@@ -114,7 +123,10 @@ describe('AccountOverviewComponent', () => {
 
   // Los asientos usados son de Auth: si no responde, la pantalla sigue mostrando el resto.
   it('sin el dato de Auth muestra el total sin el "usados"', () => {
-    const { component } = create(subscription(), throwError(() => new Error('forbidden')));
+    const { component } = create(
+      subscription(),
+      throwError(() => new Error('forbidden')),
+    );
 
     expect(component.seatsLabel()).toBe('10 seats');
     expect(component.seatsPercent()).toBeNull();
@@ -167,13 +179,18 @@ describe('AccountOverviewComponent', () => {
   it('el downgrade agendado se puede deshacer y el upgrade no', () => {
     const scheduled = create(subscription({ pendingPlanChange: downgrade() }));
     expect(scheduled.component.canUndoPending()).toBe(true);
-    expect((scheduled.page.textContent ?? '')).toContain('Undo');
+    expect(scheduled.page.textContent ?? '').toContain('Undo');
 
     TestBed.resetTestingModule();
     const awaiting = create(
       subscription({
-        pendingPlanChange: { ...downgrade(), kind: 'Upgrade', status: 'AwaitingPayment', effectiveAtUtc: null },
-      })
+        pendingPlanChange: {
+          ...downgrade(),
+          kind: 'Upgrade',
+          status: 'AwaitingPayment',
+          effectiveAtUtc: null,
+        },
+      }),
     );
     expect(awaiting.component.canUndoPending()).toBe(false);
   });
@@ -189,7 +206,10 @@ describe('AccountOverviewComponent', () => {
 
   // Si el downgrade ya no está, no es un error del usuario: se le dice y se refresca.
   it('si ya no hay nada que deshacer lo explica', () => {
-    const gone = new HttpErrorResponse({ status: 404, error: { code: 'PendingDowngrade.NotFound' } });
+    const gone = new HttpErrorResponse({
+      status: 404,
+      error: { code: 'PendingDowngrade.NotFound' },
+    });
     const { component } = create(subscription({ pendingPlanChange: downgrade() }), of(limits), {
       cancelPendingPlanChange: vi.fn(() => throwError(() => gone)),
     });
@@ -203,8 +223,36 @@ describe('AccountOverviewComponent', () => {
   it('marca como incluido el add-on que el plan ya cubre y con precio el que no', () => {
     const data = subscription({
       addOns: [
-        { code: 'email.addon', name: 'Email', modules: ['email'], description: '', category: 'module', eligibility: 'Included', unitAmountCents: 2900, currency: 'USD', tenantAddOnId: null, currentPeriodEndUtc: null, autoRenew: null },
-        { code: 'sms.addon', name: 'SMS', modules: ['sms'], description: '', category: 'module', eligibility: 'Available', unitAmountCents: 1500, currency: 'USD', tenantAddOnId: null, currentPeriodEndUtc: null, autoRenew: null },
+        {
+          code: 'email.addon',
+          name: 'Email',
+          modules: ['email'],
+          description: '',
+          category: 'module',
+          eligibility: 'Included',
+          unitAmountCents: 2900,
+          currency: 'USD',
+          tenantAddOnId: null,
+          currentPeriodEndUtc: null,
+          autoRenew: null,
+          activeQuantity: 0,
+          canStack: false,
+        },
+        {
+          code: 'sms.addon',
+          name: 'SMS',
+          modules: ['sms'],
+          description: '',
+          category: 'module',
+          eligibility: 'Available',
+          unitAmountCents: 1500,
+          currency: 'USD',
+          tenantAddOnId: null,
+          currentPeriodEndUtc: null,
+          autoRenew: null,
+          activeQuantity: 0,
+          canStack: false,
+        },
       ],
     });
 
