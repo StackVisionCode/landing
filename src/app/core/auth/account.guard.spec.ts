@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, UrlTree } from '@angular/router';
 import { of } from 'rxjs';
@@ -10,7 +11,14 @@ describe('accountGuard', () => {
       providers: [
         {
           provide: AccountSessionStore,
-          useValue: { restore: () => of(status), isAccountAdmin: () => isAdmin },
+          useValue: {
+            restore: () => of(status),
+            isAccountAdmin: () => isAdmin,
+            // El guard consulta `me()` para distinguir la sesión activa con perfil cargado del
+            // gate de términos (409 en /auth/me). Como signal readonly en el store real, aquí basta
+            // con un signal con un objeto no nulo.
+            me: signal({} as never),
+          },
         },
       ],
     });

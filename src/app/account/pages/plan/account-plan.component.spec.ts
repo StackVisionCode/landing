@@ -11,6 +11,17 @@ import { PlansService } from '@core/plans/plans.service';
 import { BillingPreferenceService } from '@core/account/billing-preference.service';
 import { AccountPlanComponent } from './account-plan.component';
 
+/** Provider seleccionado en el picker. `confirm()` de un upgrade y `renew()` solo abren el picker: el
+ *  checkout real sale en `onProviderPicked()`, así que en los tests encadenamos ambas llamadas. */
+const PICKED = {
+  provider: 'Stripe',
+  method: 'Card',
+  displayName: 'Stripe',
+  enabled: true,
+  priority: 1,
+  disabledReason: null,
+};
+
 const me = {
   id: 'u1',
   name: 'Ada',
@@ -142,6 +153,7 @@ describe('AccountPlanComponent', () => {
     expect(page.textContent).toContain(component.t().accRenewCta);
 
     component.renew();
+    component.onProviderPicked(PICKED);
 
     expect(startRenewCheckout).toHaveBeenCalledOnce();
     expect(assign).toHaveBeenCalledWith('https://pay/renew');
@@ -240,6 +252,7 @@ describe('AccountPlanComponent', () => {
     component.choose(component.plans()[0]);
 
     component.confirm();
+    component.onProviderPicked(PICKED);
 
     expect(api.changePlan).toHaveBeenCalledWith(
       expect.objectContaining({ payerEmail: 'ada@example.com', successUrl: expect.stringContaining('checkout=success') })
@@ -374,19 +387,21 @@ describe('AccountPlanComponent', () => {
       expect(page.textContent).not.toContain('Cancel upgrade');
     });
 
-    it('si el usuario rechaza el confirm, no se llama al endpoint', () => {
-      const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    it('si el usuario cierra el confirm, no se llama al endpoint', () => {
+      // Antes esto se resolvía con `window.confirm`; ahora el componente abre un ConfirmDialog y
+      // la confirmación real la dispara `cancelUpgrade()`. Si el usuario descarta el modal, el
+      // endpoint no se toca.
       const cancelPendingUpgrade = vi.fn(() => of({ alreadyCancelled: false, intentId: 'r1' }));
       const { component } = create({
         get: vi.fn(() => of(withPending(pendingUpgrade))),
         cancelPendingUpgrade,
       });
 
-      component.cancelUpgrade();
+      component.openCancelUpgradeConfirm();
+      component.dismissCancelUpgradeConfirm();
 
       expect(cancelPendingUpgrade).not.toHaveBeenCalled();
       expect(component.upgradeCancelNotice()).toBeNull();
-      confirmSpy.mockRestore();
     });
 
     it('cancelar llama al endpoint, muestra el toast y recarga', () => {
