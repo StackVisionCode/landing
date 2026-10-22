@@ -39,7 +39,14 @@ export const serverRoutes: ServerRoute[] = [
     renderMode: RenderMode.Client
   },
   {
-    path: '**',
+    // Solo el home se pre-renderiza (index.html). Con '**' en Prerender el build volcaba el home en
+    // index.html y nginx lo servía para cualquier ruta: al entrar al Account desde el CRM se veía el
+    // home antes de redirigir. Las rutas desconocidas van al shell vacío y muestran la 404 del cliente.
+    path: '',
     renderMode: RenderMode.Prerender
+  },
+  {
+    path: '**',
+    renderMode: RenderMode.Client
   }
 ];

@@ -727,4 +727,9 @@ export const es: TranslationKeys = {
   accSeatsReorderInvalidReason: 'Escribe un motivo con al menos 3 caracteres.',
   accSeatsReorderForbidden: 'No tienes permiso para reordenar los puestos.',
   accSeatsReorderRateLimited: 'Demasiados cambios. Espera un minuto e int\u00e9ntalo otra vez.',
+  notFoundEyebrow: 'Error 404',
+  notFoundTitle: 'No encontramos esa p\u00e1gina',
+  notFoundBody: 'Puede que el enlace est\u00e9 roto o que la p\u00e1gina se haya movido. Revisa la direcci\u00f3n o vuelve a una p\u00e1gina conocida.',
+  notFoundHome: 'Ir al inicio',
+  notFoundAccount: 'Gestionar suscripci\u00f3n',
 };

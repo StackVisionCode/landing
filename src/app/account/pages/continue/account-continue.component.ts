@@ -3,7 +3,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { safeAccountReturnUrl } from '@core/auth/account-return-url';
 import { AccountSessionStore } from '@core/auth/account-session.store';
 import { SITE_CONFIG } from '@core/config/site-config';
-import { InfinityLoaderComponent } from '@shared/infinity-loader/infinity-loader.component';
 import { TranslationStore } from '@core/i18n/translation.store';
 
 /**
@@ -12,8 +11,19 @@ import { TranslationStore } from '@core/i18n/translation.store';
  */
 @Component({
   selector: 'app-account-continue',
-  imports: [InfinityLoaderComponent],
   templateUrl: './account-continue.component.html',
+  styles: `
+    .continue-failed {
+      animation: continue-failed-in 240ms ease-out both;
+    }
+    @keyframes continue-failed-in {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: none; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .continue-failed { animation: none; }
+    }
+  `,
 })
 export class AccountContinueComponent {
   private readonly session = inject(AccountSessionStore);
@@ -23,6 +33,10 @@ export class AccountContinueComponent {
   readonly t = this.i18n.t;
   readonly workspaceUrl = SITE_CONFIG.appUrl;
   readonly failed = signal(false);
+
+  /** Lemniscata del loader de marca: dos lazos unidos en el centro (32,16). */
+  readonly path =
+    'M32 16 C24 4 14 4 10 4 C5 4 2 9 2 16 C2 23 5 28 10 28 C14 28 24 28 32 16 C40 4 50 4 54 4 C59 4 62 9 62 16 C62 23 59 28 54 28 C50 28 40 28 32 16 Z';
 
   constructor() {
     const params = inject(ActivatedRoute).snapshot.queryParamMap;

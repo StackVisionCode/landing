@@ -1,16 +1,24 @@
-<main class="grid min-h-screen place-items-center bg-[#FAFAFA] px-4 py-12">
-  <div class="w-full max-w-md rounded-2xl border border-line bg-white p-8 text-center">
-    @if (failed()) {
+@if (failed()) {
+  <main class="continue-failed grid min-h-screen place-items-center bg-[#FAFAFA] px-4 py-12">
+    <div class="w-full max-w-md rounded-2xl border border-line bg-white p-8 text-center">
       <h1 class="text-xl font-bold text-ink">{{ t().accContinueFailedTitle }}</h1>
       <p class="mt-2 text-sm text-muted">{{ t().accContinueFailedBody }}</p>
       <a [href]="workspaceUrl"
         class="mt-6 inline-block rounded-lg bg-twilight px-5 py-2.5 text-sm font-semibold text-white hover:bg-star">
         {{ t().accSignInCta }}
       </a>
-    } @else {
-      <span class="mx-auto flex justify-center"><app-infinity-loader size="md" [label]="t().accLoading" /></span>
-      <h1 class="mt-5 text-xl font-bold text-ink">{{ t().accContinueTitle }}</h1>
-      <p class="mt-2 text-sm text-muted">{{ t().accContinueBody }}</p>
-    }
-  </div>
-</main>
+    </div>
+  </main>
+} @else {
+  <!-- Mismas clases que la pantalla de carga de index.html (estilos inline del documento): el relevo no se nota. -->
+  <main class="boot-splash" role="status" aria-live="polite" aria-busy="true">
+    <svg class="boot-flow" viewBox="0 0 64 32" fill="none" aria-hidden="true">
+      <path class="boot-flow-base" pathLength="100" [attr.d]="path" />
+      <path class="boot-flow-trail" pathLength="100" [attr.d]="path" />
+      <path class="boot-flow-head" pathLength="100" [attr.d]="path" />
+    </svg>
+    <h1 class="boot-caption">{{ t().accContinueTitle }}</h1>
+    <p class="boot-sub">{{ t().accContinueBody }}</p>
+    <div class="boot-bar" aria-hidden="true"><span></span></div>
+  </main>
+}

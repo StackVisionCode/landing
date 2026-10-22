@@ -685,4 +685,9 @@ export interface TranslationKeys {
   accSeatsReorderInvalidReason: string;
   accSeatsReorderForbidden: string;
   accSeatsReorderRateLimited: string;
+  notFoundEyebrow: string;
+  notFoundTitle: string;
+  notFoundBody: string;
+  notFoundHome: string;
+  notFoundAccount: string;
 }
