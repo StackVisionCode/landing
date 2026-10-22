@@ -32,4 +32,11 @@ export const routes: Routes = [
     data: { kind: 'PrivacyPolicy' },
     title: `Privacy Policy - ${PLATFORM_BRAND}`,
   },
+  {
+    // Siempre la última: sin ella una URL mal escrita dejaba la página en blanco.
+    path: '**',
+    loadComponent: () =>
+      import('@landing/components/not-found/not-found.component').then(m => m.NotFoundComponent),
+    title: `Page not found - ${PLATFORM_BRAND}`,
+  },
 ];

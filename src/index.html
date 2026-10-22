@@ -10,8 +10,117 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="icon" type="image/svg+xml" href="favicon.svg?v=2">
   <link rel="apple-touch-icon" href="brand/taxproffice-app-icon.svg">
+  <!--
+    Pantalla de carga de las rutas de cliente (Account, registro, legales): se ve desde el primer byte
+    hasta que Angular pinta la ruta. Va inline porque el CSS de la app todavía no llegó. Mismo diseño
+    que la capa "Opening your account" del CRM y que /account/continue, así el paso entre sitios se
+    ve como una sola carga. El home pre-renderizado no la usa: Angular reemplaza el contenido de <app-root>.
+  -->
+  <style>
+    .boot-splash {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      background: #fafafa;
+      font-family: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+      text-align: center;
+      padding: 0 1.5rem;
+      animation: boot-in 240ms ease-out both;
+    }
+    .boot-flow {
+      width: 7.5rem;
+      height: 3.75rem;
+      overflow: visible;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 3;
+    }
+    .boot-flow-base { stroke: #057bc1; opacity: 0.16; }
+    .boot-flow-trail {
+      stroke: #057bc1;
+      stroke-dasharray: 30 70;
+      opacity: 0.6;
+      animation: boot-run 2.2s cubic-bezier(0.45, 0, 0.35, 1) infinite;
+    }
+    .boot-flow-head {
+      stroke: #4dd8ff;
+      stroke-dasharray: 9 91;
+      filter: drop-shadow(0 0 4px rgba(77, 216, 255, 0.95));
+      animation: boot-run 2.2s cubic-bezier(0.45, 0, 0.35, 1) infinite;
+    }
+    .boot-caption {
+      margin: 1.75rem 0 0;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #083645;
+    }
+    .boot-sub {
+      margin: 0.375rem 0 0;
+      max-width: 22rem;
+      font-size: 0.875rem;
+      color: #3e5f6b;
+    }
+    .boot-sub:empty { display: none; }
+    .boot-bar {
+      margin-top: 1.25rem;
+      height: 0.1875rem;
+      width: 10rem;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #e4dccf;
+    }
+    .boot-bar span {
+      display: block;
+      height: 100%;
+      width: 40%;
+      border-radius: inherit;
+      background: #057bc1;
+      animation: boot-bar 1.4s ease-in-out infinite;
+    }
+    @keyframes boot-in { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes boot-run { from { stroke-dashoffset: 0; } to { stroke-dashoffset: -100; } }
+    @keyframes boot-bar { from { transform: translateX(-100%); } to { transform: translateX(250%); } }
+    @media (prefers-reduced-motion: reduce) {
+      .boot-splash, .boot-flow-trail, .boot-flow-head, .boot-bar span { animation: none; }
+      .boot-flow-head { stroke-dasharray: 100 0; opacity: 0.6; }
+      .boot-bar span { width: 100%; }
+    }
+  </style>
 </head>
 <body>
-  <app-root></app-root>
+  <app-root>
+    <div class="boot-splash" role="status" aria-live="polite" aria-busy="true">
+      <svg class="boot-flow" viewBox="0 0 64 32" fill="none" aria-hidden="true">
+        <path class="boot-flow-base" pathLength="100" d="M32 16 C24 4 14 4 10 4 C5 4 2 9 2 16 C2 23 5 28 10 28 C14 28 24 28 32 16 C40 4 50 4 54 4 C59 4 62 9 62 16 C62 23 59 28 54 28 C50 28 40 28 32 16 Z" />
+        <path class="boot-flow-trail" pathLength="100" d="M32 16 C24 4 14 4 10 4 C5 4 2 9 2 16 C2 23 5 28 10 28 C14 28 24 28 32 16 C40 4 50 4 54 4 C59 4 62 9 62 16 C62 23 59 28 54 28 C50 28 40 28 32 16 Z" />
+        <path class="boot-flow-head" pathLength="100" d="M32 16 C24 4 14 4 10 4 C5 4 2 9 2 16 C2 23 5 28 10 28 C14 28 24 28 32 16 C40 4 50 4 54 4 C59 4 62 9 62 16 C62 23 59 28 54 28 C50 28 40 28 32 16 Z" />
+      </svg>
+      <p class="boot-caption" data-boot-caption>Loading...</p>
+      <p class="boot-sub" data-boot-sub></p>
+      <div class="boot-bar" aria-hidden="true"><span></span></div>
+    </div>
+  </app-root>
+  <script>
+    // Texto de la pantalla de carga según a dónde va y el idioma guardado (misma clave que TranslationStore).
+    (function () {
+      var caption = document.querySelector('[data-boot-caption]');
+      if (!caption) return;
+      var sub = document.querySelector('[data-boot-sub]');
+      var es = false;
+      try { es = localStorage.getItem('tpo.lang.v1') === 'es'; } catch (e) {}
+      if (location.pathname.indexOf('/account') === 0) {
+        caption.textContent = es ? 'Abriendo tu cuenta...' : 'Opening your account...';
+        sub.textContent = es
+          ? 'Un momento mientras te conectamos con tu suscripción.'
+          : 'One moment while we connect you to your subscription.';
+      } else if (es) {
+        caption.textContent = 'Cargando...';
+      }
+    })();
+  </script>
 </body>
 </html>

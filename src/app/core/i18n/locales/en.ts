@@ -719,4 +719,9 @@ export const en: TranslationKeys = {
   accSeatsReorderInvalidReason: 'Please provide a reason with at least 3 characters.',
   accSeatsReorderForbidden: "You don't have permission to reorder slots.",
   accSeatsReorderRateLimited: 'Too many changes. Wait a minute and try again.',
+  notFoundEyebrow: 'Error 404',
+  notFoundTitle: "We couldn't find that page",
+  notFoundBody: 'The link may be broken or the page may have moved. Check the address or head back to a page you know.',
+  notFoundHome: 'Go to homepage',
+  notFoundAccount: 'Manage subscription',
 };

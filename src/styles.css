@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Fundido del router entre pantallas (withViewTransitions). Sin animación si se pide menos movimiento. */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
 /* Resalte de titulares: Bold Blue de marca, sin gradiente. */
 .highlight {
   color: #1e466b;

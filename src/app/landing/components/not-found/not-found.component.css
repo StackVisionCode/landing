@@ -1,0 +1,50 @@
+.not-found {
+  animation: nf-in 320ms ease-out both;
+}
+
+.nf-flow {
+  width: 8rem;
+  height: 4rem;
+  overflow: visible;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 3;
+}
+.nf-base {
+  stroke: #057bc1;
+  opacity: 0.14;
+}
+/* Solo un tramo encendido que late despacio: el resto del lazo queda apagado. */
+.nf-lit {
+  stroke: #4dd8ff;
+  stroke-dasharray: 42 58;
+  filter: drop-shadow(0 0 3px rgba(77, 216, 255, 0.8));
+  animation: nf-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes nf-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes nf-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .not-found,
+  .nf-lit {
+    animation: none;
+  }
+}
