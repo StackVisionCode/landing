@@ -309,6 +309,16 @@ export interface TranslationKeys {
   accOfficeAdminNameLabel: string;
   accOfficeAdminEmailLabel: string;
   accOfficeEditHint: string;
+  accOfficeBillingTitle: string;
+  accOfficeBillingSubtitle: string;
+  accOfficeBillingLegalNameLabel: string;
+  accOfficeBillingEinLabel: string;
+  accOfficeBillingAddressLabel: string;
+  accOfficeBillingNotSet: string;
+  accOfficeBillingIncomplete: string;
+  accOfficeBillingMissingPrefix: string;
+  accOfficeBillingEdit: string;
+  accOfficeBillingLoadError: string;
   accContinueTitle: string;
   accContinueBody: string;
   accContinueFailedTitle: string;

@@ -48,6 +48,26 @@ describe('RegisterCompleteComponent', () => {
     expect(component.showTermsModal()).toBe(false);
   });
 
+  it('sends the browser time zone as an optional hint when completing the registration', () => {
+    const completeRegistration = vi.fn(() => of({ status: 'Provisioning', statusUrl: '/onboarding/status?token=tok' }));
+    const getStatus = vi.fn(() => of({ status: 'Provisioning', failureReason: null, redirectUrl: null }));
+    vi.spyOn(Intl, 'DateTimeFormat').mockReturnValue({
+      resolvedOptions: () => ({ timeZone: 'America/Chicago' }),
+    } as Intl.DateTimeFormat);
+    const component = create({ completeRegistration, getStatus });
+
+    component.officeName.set('Acme Tax');
+    component.subdomain.set('acme-tax');
+    component.subdomainStatus.set('available');
+    component.password.set('Sup3r-secret-pass');
+    component.confirmPassword.set('Sup3r-secret-pass');
+    component.termsAccepted.set(true);
+    component.submit();
+
+    expect(completeRegistration).toHaveBeenCalledWith(expect.objectContaining({ timeZoneId: 'America/Chicago' }));
+    vi.restoreAllMocks();
+  });
+
   describe('when the backend asks to wait', () => {
     beforeEach(() => vi.useFakeTimers());
     afterEach(() => vi.useRealTimers());

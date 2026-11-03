@@ -129,6 +129,8 @@ export interface CompleteRegistrationRequest {
   subdomain: string;
   termsAccepted: boolean;
   termsVersionId: string;
+  /** Zona IANA del navegador; opcional (sin ella o inválida, la oficina nace en UTC). */
+  timeZoneId?: string;
 }
 
 export interface CompleteRegistrationResponse {
