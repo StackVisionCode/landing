@@ -8,6 +8,7 @@ import { OnboardingService } from '@core/onboarding/onboarding.service';
 import { SITE_CONFIG, PLATFORM_BRAND, PLATFORM_LEGAL_NAME } from '@core/config/site-config';
 import { apiErrorCode } from '@core/http/api-error';
 import { suggestSubdomainFromOfficeName } from '@core/onboarding/subdomain-suggestion.util';
+import { browserTimeZone } from '@core/onboarding/browser-time-zone.util';
 import { ActionCooldown } from '@core/http/action-cooldown';
 import { nextPollDelayMs } from '@core/http/polling';
 import { formatClock, readThrottle, type ThrottleKind } from '@core/http/throttling';
@@ -240,6 +241,7 @@ export class RegisterCompleteComponent implements OnInit, OnDestroy {
         subdomain: this.subdomain(),
         termsAccepted: true,
         termsVersionId: this.termsVersionId,
+        timeZoneId: browserTimeZone(),
       })
       .subscribe({
         next: () => {

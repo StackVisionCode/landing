@@ -33,7 +33,7 @@ export const SITE_CONFIG = {
   },
 } as const;
 
-/** Espacio de trabajo de una oficina: `https://<slug>.<dominio>`. */
-export function officeWorkspaceUrl(slug: string): string {
-  return `https://${slug}${SITE_CONFIG.subdomainSuffix}`;
+/** Espacio de trabajo de una oficina: `https://<slug>.<dominio>`, opcionalmente con una ruta (`/company/settings`). */
+export function officeWorkspaceUrl(slug: string, path = ''): string {
+  return `https://${slug}${SITE_CONFIG.subdomainSuffix}${path}`;
 }
