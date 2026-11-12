@@ -33,11 +33,11 @@ const me = {
   permissions: ['subscription.plan.change'],
 };
 
-function plan(code: string, monthly: number, maxUsers: number): PlanResponse {
+function plan(code: string, monthly: number, maxUsers: number, rank = 0, name = code): PlanResponse {
   return {
     id: code,
     code,
-    name: code,
+    name,
     description: '',
     tier: 'Standard',
     monthlyPriceUsd: monthly,
@@ -47,6 +47,8 @@ function plan(code: string, monthly: number, maxUsers: number): PlanResponse {
     maxPendingInvitations: 5,
     storageQuotaBytes: 0,
     enabledModules: ['documents'],
+    rank,
+    isFeatured: false,
   };
 }
 
@@ -61,6 +63,7 @@ function subscription(): AccountSubscription {
       currency: 'USD',
       enabledModules: ['documents'],
       billingAccessBlocked: false,
+      rank: 2,
     },
     period: {
       currentPeriodStartUtc: '2026-09-01T00:00:00Z',
@@ -98,7 +101,11 @@ function preview(overrides: Partial<PlanChangePreview> = {}): PlanChangePreview 
 }
 
 describe('AccountPlanComponent', () => {
-  function create(overrides: object = {}, queryParam: string | null = null) {
+  function create(
+    overrides: object = {},
+    queryParam: string | null = null,
+    onSale: PlanResponse[] = [plan('pro', 49, 10, 2), plan('starter', 19, 3, 1)],
+  ) {
     const api = {
       get: vi.fn(() => of(subscription())),
       planChangePreview: vi.fn(() => of(preview())),
@@ -107,7 +114,7 @@ describe('AccountPlanComponent', () => {
       resumeSubscription: vi.fn(() => of(void 0)),
       ...overrides,
     };
-    const plansApi = { getPlans: vi.fn(() => of([plan('pro', 49, 10), plan('starter', 19, 3)])) };
+    const plansApi = { getPlans: vi.fn(() => of(onSale)) };
     const billingPref = {
       get: vi.fn(() =>
         of({
@@ -167,6 +174,40 @@ describe('AccountPlanComponent', () => {
     expect(page.textContent).not.toContain(component.t().accRenewCta);
   });
 
+
+  // F8: un plan retirado de la venta sigue siendo el de la oficina; solo los que se venden son destino.
+  it('muestra el plan contratado aunque ya no esté a la venta, como "Your plan"', () => {
+    const { component, page } = create({}, null, [plan('enterprise', 99, 3, 3, 'Enterprise')]);
+
+    expect(component.columns().map(p => p.code)).toEqual(['pro', 'enterprise']);
+    expect(component.isCurrent(component.columns()[0])).toBe(true);
+    expect(page.textContent).toContain('Pro');
+    expect(page.textContent).toContain(component.t().accPlanCurrent);
+    expect(page.querySelectorAll('button').length).toBeGreaterThan(0);
+    expect(component.destinations().map(p => p.code)).toEqual(['enterprise']);
+  });
+
+  it('el cambio pendiente dice el nombre del plan, no su código', () => {
+    const pending = subscription();
+    pending.pendingPlanChange = {
+      kind: 'Upgrade',
+      id: 'r1',
+      fromPlanCode: 'pro',
+      toPlanCode: 'enterprise',
+      toBillingCycle: 'Monthly',
+      status: 'AwaitingPayment',
+      requestedAtUtc: '2026-09-10T00:00:00Z',
+      effectiveAtUtc: null,
+      chargeAmountCents: 9900,
+      chargeCurrency: 'USD',
+      checkoutUrl: null,
+    };
+
+    const { component } = create({ get: vi.fn(() => of(pending)) }, null, [plan('enterprise', 99, 3, 3, 'Enterprise')]);
+
+    expect(component.pendingLabel()).toContain('Enterprise');
+    expect(component.pendingLabel()).not.toContain('enterprise');
+  });
 
   it('lista los planes de más barato a más caro y marca el contratado', () => {
     const { component, page } = create();

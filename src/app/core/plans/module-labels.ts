@@ -13,6 +13,7 @@ export const MODULE_LABELS: Record<string, { es: string; en: string }> = {
   campaigns: { es: 'Campañas de marketing', en: 'Marketing campaigns' },
   comms: { es: 'Comunicación con clientes', en: 'Client communication' },
   meetings: { es: 'Reuniones por vídeo', en: 'Video meetings' },
+  wallet: { es: 'Monedero prepago', en: 'Prepaid wallet' },
   marketing: { es: 'Herramientas de marketing', en: 'Marketing tools' },
   miles: { es: 'Registro de millaje', en: 'Mileage tracking' },
   builder: { es: 'Constructor de formularios', en: 'Form builder' },

@@ -1,5 +1,6 @@
 import type { Lang } from './translation.model';
 import { PLATFORM_BRAND } from '@core/config/site-config';
+import type { PriceSummary } from '@core/plans/plan-pricing';
 
 /**
  * Copy del landing (propuesta C). El nombre de la plataforma sale de PLATFORM_BRAND, nunca escrito aquí. Basado en funciones reales del
@@ -212,10 +213,15 @@ const es = {
   pricing: {
     badge: 'Precios',
     title: 'Elige el plan que se adapte a tu oficina',
-    note: 'SMS y Wallet se pagan por uso. Puedes subir de plan cuando quieras y cancelar al final del período.',
+    titleOne: 'Un plan con todo lo que tu oficina necesita',
+    note: 'SMS y Wallet se pagan por uso. Puedes cambiar de plan cuando quieras y cancelar al final del período.',
+    noteOne: 'SMS y Wallet se pagan por uso. Puedes cancelar al final del período.',
     monthly: 'Mensual',
     annual: 'Anual',
-    annualBadge: '2 meses gratis',
+    // El ahorro se calcula con los precios del catálogo.
+    annualBadge: (percent: number, several: boolean) => (several ? `Ahorra hasta ${percent} %` : `Ahorra ${percent} %`),
+    savings: (amount: string, percent: number) => `Ahorras ${amount} al año (${percent} %)`,
+    storage: (size: string) => `${size} de almacenamiento`,
     perMonth: '/mes',
     perYear: '/año',
     popular: 'Más Popular',
@@ -246,10 +252,16 @@ const es = {
         a: 'Siguen un flujo con consentimiento ESIGN/UETA, verificación por código y registro de auditoría. Para tu caso específico, consulta con tu asesor legal.',
       },
       {
-        q: '¿Cuánto cuesta y puedo cambiar de plan?',
-        a: 'Los planes van de $49 a $299 al mes y el plan anual incluye 2 meses gratis. Puedes subir de plan cuando quieras y cancelar al final del período. SMS y Wallet se pagan por uso.',
+        id: 'pricing',
+        q: '¿Cuánto cuesta?',
+        a: 'Encuentra los precios vigentes en la sección Precios. Puedes cancelar al final del período. SMS y Wallet se pagan por uso.',
       },
     ],
+    // Precios del catálogo, nunca escritos aquí.
+    pricingAnswer: (summary: PriceSummary) =>
+      summary.kind === 'one'
+        ? `El plan cuesta ${summary.monthly} al mes${summary.yearly ? ` o ${summary.yearly} al año` : ''}. Puedes cancelar al final del período. SMS y Wallet se pagan por uso.`
+        : `Los planes van de ${summary.min} a ${summary.max} al mes. Puedes cambiar de plan cuando quieras y cancelar al final del período. SMS y Wallet se pagan por uso.`,
   },
 
   newsletter: {
@@ -486,10 +498,14 @@ const en: LandingCopy = {
   pricing: {
     badge: 'Pricing',
     title: 'Choose the plan that fits your office',
-    note: 'SMS and Wallet are pay-per-use. You can upgrade anytime and cancel at the end of the period.',
+    titleOne: 'One plan with everything your office needs',
+    note: 'SMS and Wallet are pay-per-use. You can change plans anytime and cancel at the end of the period.',
+    noteOne: 'SMS and Wallet are pay-per-use. You can cancel at the end of the period.',
     monthly: 'Monthly',
     annual: 'Annual',
-    annualBadge: '2 months free',
+    annualBadge: (percent: number, several: boolean) => (several ? `Save up to ${percent}%` : `Save ${percent}%`),
+    savings: (amount: string, percent: number) => `Save ${amount}/yr (${percent}%)`,
+    storage: (size: string) => `${size} of storage`,
     perMonth: '/mo',
     perYear: '/yr',
     popular: 'Most Popular',
@@ -520,10 +536,15 @@ const en: LandingCopy = {
         a: 'They follow a flow with ESIGN/UETA consent, code verification and an audit trail. For your specific case, consult your legal advisor.',
       },
       {
-        q: 'How much does it cost and can I change plans?',
-        a: 'Plans range from $49 to $299 per month and the annual plan includes 2 months free. You can upgrade anytime and cancel at the end of the period. SMS and Wallet are pay-per-use.',
+        id: 'pricing',
+        q: 'How much does it cost?',
+        a: 'See the current prices in the Pricing section. You can cancel at the end of the period. SMS and Wallet are pay-per-use.',
       },
     ],
+    pricingAnswer: (summary: PriceSummary) =>
+      summary.kind === 'one'
+        ? `The plan costs ${summary.monthly} per month${summary.yearly ? ` or ${summary.yearly} per year` : ''}. You can cancel at the end of the period. SMS and Wallet are pay-per-use.`
+        : `Plans range from ${summary.min} to ${summary.max} per month. You can change plans anytime and cancel at the end of the period. SMS and Wallet are pay-per-use.`,
   },
 
   newsletter: {

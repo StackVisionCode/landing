@@ -150,10 +150,10 @@
     </p>
   } @else {
     <div class="mt-6 overflow-x-auto rounded-xl border border-line bg-white">
-      <div class="grid min-w-[640px]" [style.grid-template-columns]="'minmax(160px,1.1fr) repeat(' + plans().length + ', minmax(0,1fr))'">
+      <div class="grid min-w-[640px]" [style.grid-template-columns]="'minmax(160px,1.1fr) repeat(' + columns().length + ', minmax(0,1fr))'">
         <!-- Cabecera -->
         <div class="border-b border-line p-4"></div>
-        @for (plan of plans(); track plan.code) {
+        @for (plan of columns(); track plan.code) {
           <div class="border-b border-l border-line p-4" [class.bg-sand]="isCurrent(plan)">
             <div class="flex flex-wrap items-center gap-2">
               <h2 class="text-sm font-semibold text-twilight">{{ plan.name }}</h2>
@@ -175,18 +175,18 @@
 
         <!-- Límites -->
         <div class="border-b border-line px-4 py-3 text-xs text-muted">{{ t().accSeatsTitle }}</div>
-        @for (plan of plans(); track plan.code) {
+        @for (plan of columns(); track plan.code) {
           <div class="border-b border-l border-line px-4 py-3 text-xs text-twilight" [class.bg-sand]="isCurrent(plan)">{{ seatsLabel(plan) }}</div>
         }
         <div class="border-b border-line px-4 py-3 text-xs text-muted">{{ storageRowLabel() }}</div>
-        @for (plan of plans(); track plan.code) {
+        @for (plan of columns(); track plan.code) {
           <div class="border-b border-l border-line px-4 py-3 text-xs text-twilight" [class.bg-sand]="isCurrent(plan)">{{ storageLabel(plan) }}</div>
         }
 
         <!-- Módulos -->
         @for (row of moduleRows(); track row.code) {
           <div class="border-b border-line px-4 py-3 text-xs text-twilight">{{ row.label }}</div>
-          @for (plan of plans(); track plan.code) {
+          @for (plan of columns(); track plan.code) {
             <div class="flex items-center border-b border-l border-line px-4 py-3 text-xs" [class.bg-sand]="isCurrent(plan)">
               @if (hasModule(plan, row.code)) {
                 <ion-icon name="checkmark" class="text-base text-star"></ion-icon>

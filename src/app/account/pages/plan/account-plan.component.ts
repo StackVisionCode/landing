@@ -12,6 +12,7 @@ import { TranslationStore } from '@core/i18n/translation.store';
 import { moduleLabel } from '@core/plans/module-labels';
 import { PlanResponse } from '@core/plans/plans.models';
 import { PlansService } from '@core/plans/plans.service';
+import { byRank } from '@core/plans/plan-pricing';
 import { StepUpDialogComponent } from '../../shared/step-up-dialog.component';
 import { ActionCooldown } from '@core/http/action-cooldown';
 import { formatClock } from '@core/http/throttling';
@@ -77,7 +78,40 @@ export class AccountPlanComponent {
 
   readonly currentCode = computed(() => this.subscription()?.plan.code ?? null);
   readonly cycle = computed(() => this.subscription()?.plan.billingCycle ?? 'Monthly');
-  readonly isEmpty = computed(() => this.plans().length === 0);
+  readonly isEmpty = computed(() => this.columns().length === 0);
+
+  /**
+   * Columnas de la comparación: los planes a la venta más el contratado, aunque ya no se venda (F8). Ese se
+   * arma con lo que la oficina firmó; su almacenamiento no viaja en la cuenta y se muestra "—".
+   */
+  readonly columns = computed(() => {
+    const onSale = this.plans();
+    const current = this.subscription()?.plan;
+    if (!current || onSale.some(plan => plan.code === current.code)) {
+      return onSale;
+    }
+    const price = current.currentCyclePriceCents / 100;
+    const contracted: PlanResponse = {
+      id: '',
+      code: current.code,
+      name: current.name,
+      description: '',
+      tier: '',
+      monthlyPriceUsd: current.billingCycle === 'Monthly' ? price : 0,
+      supportedBillingCycles: [current.billingCycle],
+      pricesUsdByCycle: { [current.billingCycle]: price },
+      maxUsers: this.subscription()?.seats.includedInPlan ?? 0,
+      maxPendingInvitations: 0,
+      storageQuotaBytes: 0,
+      enabledModules: current.enabledModules,
+      rank: current.rank,
+      isFeatured: false,
+    };
+    return [...onSale, contracted].sort(byRank);
+  });
+
+  /** Destinos posibles: solo los planes a la venta que no son el actual. */
+  readonly destinations = computed(() => this.plans().filter(plan => !this.isCurrent(plan)));
   /** Upgrade a medio pagar: mientras la sesión viva, se retoma en vez de abrir otro cobro. */
   readonly openUpgrade = computed(() => this.subscription()?.pendingPlanChange?.checkoutUrl ?? null);
   readonly cancelScheduled = computed(() => this.subscription()?.period.cancelAtPeriodEnd === true);
@@ -153,7 +187,7 @@ export class AccountPlanComponent {
     }).subscribe({
       next: ({ subscription, plans, billingPreference }) => {
         this.subscription.set(subscription);
-        this.plans.set([...plans].sort((a, b) => a.monthlyPriceUsd - b.monthlyPriceUsd));
+        this.plans.set([...plans].sort(byRank));
         this.billingPreference.set(billingPreference);
         this.billingPreferenceFailed.set(billingPreference === null);
         this.loading.set(false);
@@ -552,7 +586,7 @@ export class AccountPlanComponent {
   /** Presentational: every module offered by any plan, as comparison rows. */
   readonly moduleRows = computed(() => {
     const codes: string[] = [];
-    for (const plan of this.plans()) {
+    for (const plan of this.columns()) {
       for (const code of plan.enabledModules) {
         if (!codes.includes(code)) {
           codes.push(code);
@@ -569,8 +603,16 @@ export class AccountPlanComponent {
   readonly storageRowLabel = computed(() => (this.i18n.lang() === 'es' ? 'Almacenamiento' : 'Storage'));
 
   storageLabel(plan: PlanResponse): string {
+    if (!plan.id) {
+      return '—';
+    }
     const gb = plan.storageQuotaBytes / 1024 ** 3;
     return gb >= 1 ? `${Math.round(gb * 10) / 10} GB` : `${Math.round(plan.storageQuotaBytes / 1024 ** 2)} MB`;
+  }
+
+  /** Nombre visible de un plan; si ya no se vende, el código. */
+  planName(code: string): string {
+    return this.columns().find(plan => plan.code === code)?.name ?? code;
   }
 
   isCurrent(plan: PlanResponse): boolean {
@@ -593,7 +635,7 @@ export class AccountPlanComponent {
 
   readonly pendingLabel = computed(() => {
     const pending = this.subscription()?.pendingPlanChange;
-    return pending ? this.t().accPlanPendingBody.replace('{plan}', pending.toPlanCode) : '';
+    return pending ? this.t().accPlanPendingBody.replace('{plan}', this.planName(pending.toPlanCode)) : '';
   });
 
   readonly seatsAfterLabel = computed(() => {
