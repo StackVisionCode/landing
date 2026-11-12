@@ -212,6 +212,17 @@ export interface TranslationKeys {
   payReceivedWelcomeHeadline: string;
   regHaveCodeToggle: string;
   regReferralCodeLabel: string;
+  regReferralCodeHint: string;
+  regReferralCodeInactive: string;
+  regGiftCodeHint: string;
+  regCodeApply: string;
+  regCodeInvalid: string;
+  regCodeCovered: string;
+  regPricePlan: string;
+  regPriceDiscount: string;
+  regPriceTotal: string;
+  regGiftCodeLabelShort: string;
+  regPromoCodeLabelShort: string;
   regPromoCodeLabel: string;
   regGiftCodeLabel: string;
   regDiscountApplied: string;

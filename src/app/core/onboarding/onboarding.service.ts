@@ -12,6 +12,7 @@ import {
   CreateOnboardingRequest,
   CreateOnboardingResponse,
   OnboardingPaymentOptionsResponse,
+  PricingPreview,
   OnboardingStatusResponse,
   PreviewRegistrationResponse,
   ReconcileOnboardingPaymentResponse,
@@ -115,6 +116,29 @@ export class OnboardingService {
     return this.http.get<OnboardingPaymentOptionsResponse>(`${this.base}/onboarding/payment-options`, {
       ...this.credentialOptions,
       params: { planId, billingCycle, currency },
+    });
+  }
+
+  /** ¿El código de referido sirve hoy? Público y sin sesión; responde solo `{ isActive }` (un código reemplazado da false). */
+  validateReferralCode(code: string): Observable<{ isActive: boolean }> {
+    return this.http.get<{ isActive: boolean }>(
+      `${this.base}/growth/public/referrals/codes/${encodeURIComponent(code)}/validate`
+    );
+  }
+
+  /** Vista previa del precio con promo/gift antes de pagar (cotiza sin reservar). Exige la sesión post-OTP. */
+  previewPricing(
+    planId: string,
+    billingCycle: string,
+    promoCode?: string,
+    giftCode?: string
+  ): Observable<PricingPreview> {
+    const params: Record<string, string> = { planId, billingCycle };
+    if (promoCode) params['promoCode'] = promoCode;
+    if (giftCode) params['giftCode'] = giftCode;
+    return this.http.get<PricingPreview>(`${this.base}/onboarding/pricing-preview`, {
+      ...this.credentialOptions,
+      params,
     });
   }
 

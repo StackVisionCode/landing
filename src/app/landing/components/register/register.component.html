@@ -315,11 +315,16 @@
                         <input
                           type="text"
                           [ngModel]="referralCode()"
-                          (ngModelChange)="referralCode.set($event)"
+                          (ngModelChange)="referralCode.set($event); referralCodeActive.set(null)"
+                          (blur)="validateReferral()"
                           name="referralCode"
                           [disabled]="isSubmittingDetails()"
                           class="w-full rounded-xl border border-line bg-white px-3 py-2.5 text-sm focus:border-star focus:outline-none focus:ring-2 focus:ring-star/25 disabled:opacity-50"
                         />
+                        <p class="mt-1 text-xs text-muted">{{ t().regReferralCodeHint }}</p>
+                        @if (referralCodeActive() === false) {
+                          <p class="mt-1 text-xs text-red-600" role="status">{{ t().regReferralCodeInactive }}</p>
+                        }
                       </div>
                       <div>
                         <label class="mb-1 block text-xs font-medium text-muted">{{ t().regPromoCodeLabel }}</label>
@@ -327,6 +332,7 @@
                           type="text"
                           [ngModel]="promoCode()"
                           (ngModelChange)="promoCode.set($event)"
+                          (blur)="previewCodes()"
                           name="promoCode"
                           [disabled]="isSubmittingDetails()"
                           class="w-full rounded-xl border border-line bg-white px-3 py-2.5 text-sm focus:border-star focus:outline-none focus:ring-2 focus:ring-star/25 disabled:opacity-50"
@@ -338,11 +344,54 @@
                           type="text"
                           [ngModel]="giftCode()"
                           (ngModelChange)="giftCode.set($event)"
+                          (blur)="previewCodes()"
                           name="giftCode"
                           [disabled]="isSubmittingDetails()"
                           class="w-full rounded-xl border border-line bg-white px-3 py-2.5 text-sm focus:border-star focus:outline-none focus:ring-2 focus:ring-star/25 disabled:opacity-50"
                         />
+                        <p class="mt-1 text-xs text-muted">{{ t().regGiftCodeHint }}</p>
                       </div>
+
+                      <button
+                        type="button"
+                        (click)="previewCodes()"
+                        [disabled]="isSubmittingDetails() || pricingPreviewBusy() || (!promoCode().trim() && !giftCode().trim())"
+                        class="rounded-full border border-line bg-white px-4 py-1.5 text-xs font-semibold text-twilight hover:bg-white/70 disabled:opacity-50"
+                      >
+                        {{ t().regCodeApply }}
+                      </button>
+
+                      <!-- Desglose: bruto → descuento → neto. Informativo; el cobro vuelve a validar los códigos. -->
+                      @if (pricingPreview(); as pv) {
+                        <div class="rounded-xl border border-line bg-white p-3 text-sm" aria-live="polite">
+                          @for (line of pv.lines; track $index) {
+                            <p class="flex items-center justify-between gap-2" [class.text-red-600]="!line.valid">
+                              <span>
+                                {{ line.kind === 'Gift' ? t().regGiftCodeLabelShort : t().regPromoCodeLabelShort }}
+                                <span class="font-mono text-xs text-muted">{{ line.codeHint }}</span>
+                              </span>
+                              <span>{{ line.valid ? '−' + money(line.discountAmountCents, pv.currency) : t().regCodeInvalid }}</span>
+                            </p>
+                          }
+                          <p class="mt-2 flex items-center justify-between border-t border-line pt-2 text-muted">
+                            <span>{{ t().regPricePlan }}</span>
+                            <span>{{ money(pv.grossAmountCents, pv.currency) }}</span>
+                          </p>
+                          @if (pv.discountAmountCents > 0) {
+                            <p class="flex items-center justify-between text-muted">
+                              <span>{{ t().regPriceDiscount }}</span>
+                              <span>−{{ money(pv.discountAmountCents, pv.currency) }}</span>
+                            </p>
+                          }
+                          <p class="mt-1 flex items-center justify-between font-semibold text-twilight">
+                            <span>{{ t().regPriceTotal }}</span>
+                            <span>{{ money(pv.netAmountCents, pv.currency) }}</span>
+                          </p>
+                          @if (pv.fullyCovered) {
+                            <p class="mt-1 text-xs text-emerald-700">{{ t().regCodeCovered }}</p>
+                          }
+                        </div>
+                      }
                     </div>
                   }
                 </div>

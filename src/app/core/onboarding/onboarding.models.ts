@@ -49,6 +49,10 @@ export interface StartCheckoutRequest {
   provider?: string;
   method?: string;
   referralCode?: string;
+  /** Canal por el que llegó el enlace de referido (?ch=). Solo atribución, nunca descuento. */
+  referralChannel?: string;
+  /** Id del envío del código (?sid=, GUID): la atribución del referido guarda el canal real. */
+  referralShareId?: string;
   promoCode?: string;
   giftCode?: string;
   /** True pide al provider guardar la tarjeta para cobros off-session (Automatic renewal). */
@@ -88,6 +92,26 @@ export interface ReconcileOnboardingPaymentResponse {
   failureMessage: string | null;
   // Presente solo en el camino de la cookie: habilita reintentar el pago sobre el mismo onboarding.
   payerEmail: string | null;
+}
+
+/** Una línea de la vista previa: un código (promo/gift) con su descuento, o por qué no sirve. */
+export interface PricingPreviewLine {
+  kind: 'Promo' | 'Gift' | string;
+  /** Pista del código (primeros caracteres); el backend nunca lo devuelve completo. */
+  codeHint: string;
+  valid: boolean;
+  discountAmountCents: number;
+  errorCode: string | null;
+}
+
+/** Bruto del plan → descuento de los códigos → neto a pagar (GET /onboarding/pricing-preview). */
+export interface PricingPreview {
+  grossAmountCents: number;
+  discountAmountCents: number;
+  netAmountCents: number;
+  currency: string;
+  fullyCovered: boolean;
+  lines: PricingPreviewLine[];
 }
 
 export interface OnboardingPaymentOptionsResponse {
