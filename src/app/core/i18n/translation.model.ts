@@ -560,6 +560,13 @@ export interface TranslationKeys {
   accPlanSeatsAfter: string;
   accPlanBlockedSeats: string;
   accPlanSame: string;
+  accPlanCycleMonthly: string;
+  accPlanCycleYearly: string;
+  accPlanCycleLabel: string;
+  accPlanSwitchCycle: string;
+  accPlanCycleUnavailable: string;
+  accPlanBreakdown: string;
+  accPlanSavings: string;
   accPlanUpgradeStarted: string;
   accPlanDowngradeScheduled: string;
   accPlanChangeError: string;

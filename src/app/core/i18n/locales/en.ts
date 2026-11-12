@@ -580,6 +580,13 @@ export const en: TranslationKeys = {
   accPlanSeatsAfter: 'The new plan gives you {seats} seats and you are using {used}.',
   accPlanBlockedSeats: "That plan doesn't fit your office yet: remove users or buy seats first.",
   accPlanSame: "That's the plan you already have.",
+  accPlanCycleMonthly: 'Monthly',
+  accPlanCycleYearly: 'Yearly',
+  accPlanCycleLabel: 'Billing cycle',
+  accPlanSwitchCycle: 'Switch to {cycle} billing',
+  accPlanCycleUnavailable: 'Your plan edition is only billed {cycle}.',
+  accPlanBreakdown: 'This charge includes:',
+  accPlanSavings: 'You save {amount} a year compared to paying monthly.',
   accPlanUpgradeStarted:
     "We're charging your upgrade. It applies as soon as the payment goes through.",
   accPlanDowngradeScheduled: 'Done. Your plan changes at the end of the current period.',
