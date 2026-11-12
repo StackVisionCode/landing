@@ -6,6 +6,7 @@ import { of, throwError } from 'rxjs';
 import { AccountSubscription, TenantLimits } from '@core/account/account-subscription.models';
 import { AccountSubscriptionService } from '@core/account/account-subscription.service';
 import { AccountSessionStore } from '@core/auth/account-session.store';
+import { PlansService } from '@core/plans/plans.service';
 import { AccountOverviewComponent } from './account-overview.component';
 
 const me = {
@@ -30,6 +31,7 @@ function subscription(overrides: Partial<AccountSubscription> = {}): AccountSubs
       currency: 'USD',
       enabledModules: ['documents'],
       billingAccessBlocked: false,
+      rank: 2,
     },
     period: {
       currentPeriodStartUtc: '2026-09-01T00:00:00Z',
@@ -90,6 +92,7 @@ describe('AccountOverviewComponent', () => {
         provideRouter([]),
         { provide: AccountSubscriptionService, useValue: api },
         { provide: AccountSessionStore, useValue: { me: signal(me) } },
+        { provide: PlansService, useValue: { getPlans: () => of([]) } },
       ],
     });
     const fixture = TestBed.createComponent(AccountOverviewComponent);

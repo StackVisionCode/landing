@@ -40,6 +40,7 @@ function subscription(overrides: Partial<AccountSubscription> = {}): AccountSubs
       currency: 'USD',
       enabledModules: [],
       billingAccessBlocked: false,
+      rank: 2,
     },
     period: {
       currentPeriodStartUtc: '2026-09-01T00:00:00Z',

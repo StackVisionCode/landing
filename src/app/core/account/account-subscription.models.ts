@@ -10,6 +10,8 @@ export interface AccountPlan {
   currency: string;
   enabledModules: string[];
   billingAccessBlocked: boolean;
+  /** Rango de venta del plan contratado, aunque ya no esté a la venta. */
+  rank: number;
 }
 
 export interface AccountPeriod {

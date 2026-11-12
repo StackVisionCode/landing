@@ -21,6 +21,8 @@ const PLAN: PlanResponse = {
   maxPendingInvitations: 5,
   storageQuotaBytes: 0,
   enabledModules: [],
+  rank: 2,
+  isFeatured: false,
 };
 
 const CARD = { provider: 'Stripe', method: 'Card', displayName: 'Card', enabled: true, priority: 1, disabledReason: null };
