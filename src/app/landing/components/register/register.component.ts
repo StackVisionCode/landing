@@ -15,7 +15,7 @@ import { apiErrorCode } from '@core/http/api-error';
 import { ActionCooldown } from '@core/http/action-cooldown';
 import { formatClock, readThrottle, type ThrottleKind } from '@core/http/throttling';
 import type { PlanResponse } from '@core/plans/plans.models';
-import type { BillingCycle, OnboardingPaymentOption } from '@core/onboarding/onboarding.models';
+import type { BillingCycle, OnboardingPaymentOption, PricingPreview } from '@core/onboarding/onboarding.models';
 import {
   BILLING_PREFERENCE_CONSENT_VERSION,
   type BillingPreferenceMode,
@@ -33,6 +33,8 @@ export interface PendingBillingPreferenceConsent {
   consentTextVersion: string;
   capturedAtUtc: string;
 }
+
+const GUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 type RegisterStep =
   | 'loading'
@@ -119,8 +121,12 @@ export class RegisterComponent implements OnInit, OnDestroy {
   // Null hasta que el usuario tilde una de las dos opciones; sin eso el botón de pagar sigue deshabilitado.
   protected readonly billingPreferenceMode = signal<BillingPreferenceMode | null>(null);
 
-  protected readonly showCodeFields = signal(false);
+  // Abierto por defecto: el comprador debe ver dónde poner el código de referido y el gift code.
+  protected readonly showCodeFields = signal(true);
   protected readonly referralCode = signal('');
+  /** Canal y envío del enlace de referido (?ch=&sid=): solo viajan en el alta para atribuir el canal. */
+  private referralChannel: string | undefined;
+  private referralShareId: string | undefined;
   protected readonly promoCode = signal('');
   protected readonly giftCode = signal('');
 
@@ -219,6 +225,18 @@ export class RegisterComponent implements OnInit, OnDestroy {
     const referral = params.get('referral')?.trim();
     if (referral) {
       this.referralCode.set(referral);
+      this.showCodeFields.set(true);
+      const channel = params.get('ch')?.trim().toLowerCase();
+      this.referralChannel = channel && /^[a-z]{2,20}$/.test(channel) ? channel : undefined;
+      const shareId = params.get('sid')?.trim();
+      this.referralShareId = shareId && GUID_PATTERN.test(shareId) ? shareId : undefined;
+    }
+
+    // Link de una giftcard (?gift=CODE): el código llega en su campo, listo para canjear. Es un descuento, a diferencia
+    // del código de referido, que solo atribuye.
+    const gift = params.get('gift')?.trim();
+    if (gift && /^[A-Za-z0-9-]{4,40}$/.test(gift)) {
+      this.giftCode.set(gift.toUpperCase());
       this.showCodeFields.set(true);
     }
 
@@ -385,6 +403,57 @@ export class RegisterComponent implements OnInit, OnDestroy {
     });
   }
 
+  /** false = el código de referido escrito ya no sirve (reemplazado, vencido o inexistente); null = sin dato. */
+  protected readonly referralCodeActive = signal<boolean | null>(null);
+
+  /** Valida el código de referido (público): solo avisa; nunca bloquea el alta (el referido paga igual el precio completo). */
+  protected validateReferral(): void {
+    const code = this.referralCode().trim();
+    if (!code) {
+      this.referralCodeActive.set(null);
+      return;
+    }
+    this.onboarding.validateReferralCode(code).subscribe({
+      next: (res) => this.referralCodeActive.set(res.isActive),
+      error: () => this.referralCodeActive.set(null),
+    });
+  }
+
+  /** Desglose bruto → descuento → neto con los códigos escritos; null si no hay códigos o no se pudo calcular. */
+  protected readonly pricingPreview = signal<PricingPreview | null>(null);
+  protected readonly pricingPreviewBusy = signal(false);
+
+  /**
+   * Cotiza (sin reservar) el precio con el promo y el gift escritos. Es informativo: si falla, no bloquea el pago;
+   * el cobro real vuelve a validar los códigos. El referido no entra: no es un descuento.
+   */
+  protected previewCodes(): void {
+    const plan = this.plan();
+    const promo = this.promoCode().trim();
+    const gift = this.giftCode().trim();
+    if (!plan || (!promo && !gift)) {
+      this.pricingPreview.set(null);
+      return;
+    }
+
+    this.pricingPreviewBusy.set(true);
+    this.onboarding.previewPricing(plan.id, this.cycle(), promo || undefined, gift || undefined).subscribe({
+      next: (preview) => {
+        this.pricingPreview.set(preview);
+        this.pricingPreviewBusy.set(false);
+      },
+      error: () => {
+        this.pricingPreview.set(null);
+        this.pricingPreviewBusy.set(false);
+      },
+    });
+  }
+
+  /** Centavos a texto de dinero ("$104.00"). */
+  protected money(cents: number, currency = 'USD'): string {
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(cents / 100);
+  }
+
   /** Volver del paso OTP al de correo — por si se equivocó al escribirlo.
    *  El challenge en curso se deja morir solo (nunca se cancela server-side). */
   backToEmail(): void {
@@ -473,6 +542,8 @@ export class RegisterComponent implements OnInit, OnDestroy {
         provider: paymentOption?.provider,
         method: paymentOption?.method,
         referralCode: this.referralCode().trim() || undefined,
+        referralChannel: this.referralChannel,
+        referralShareId: this.referralShareId,
         promoCode: this.promoCode().trim() || undefined,
         giftCode: this.giftCode().trim() || undefined,
         storeMethodForOffSession: this.billingPreferenceMode() === 'Automatic',
@@ -504,7 +575,9 @@ export class RegisterComponent implements OnInit, OnDestroy {
   /** Volver de un checkout cancelado conserva plan, ciclo y referido. */
   private cancelUrl(origin: string, planId: string): string {
     const referral = this.referralCode().trim();
-    const referralParam = referral ? `&referral=${encodeURIComponent(referral)}` : '';
+    const channelParam = referral && this.referralChannel ? `&ch=${encodeURIComponent(this.referralChannel)}` : '';
+    const shareParam = referral && this.referralShareId ? `&sid=${encodeURIComponent(this.referralShareId)}` : '';
+    const referralParam = referral ? `&referral=${encodeURIComponent(referral)}${channelParam}${shareParam}` : '';
     return `${origin}/register?plan=${planId}&cycle=${this.cycle()}&cancelled=1${referralParam}`;
   }
 
@@ -550,6 +623,9 @@ export class RegisterComponent implements OnInit, OnDestroy {
           return;
         }
         this.step.set('details');
+        // Un gift/promo que llegó por el enlace se valida y se muestra de una vez.
+        this.previewCodes();
+        this.validateReferral();
       },
       error: (err) => {
         this.isVerifying.set(false);

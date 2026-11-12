@@ -21,6 +21,8 @@ const PLAN: PlanResponse = {
   maxPendingInvitations: 5,
   storageQuotaBytes: 0,
   enabledModules: [],
+  rank: 2,
+  isFeatured: false,
 };
 
 const CARD = { provider: 'Stripe', method: 'Card', displayName: 'Card', enabled: true, priority: 1, disabledReason: null };
@@ -105,6 +107,72 @@ describe('RegisterComponent', () => {
     const request = onboarding.startCheckout.mock.calls[0]?.[0];
     expect(request?.referralCode).toBe('FRIEND10');
     expect(request?.cancelUrl).toBe('http://localhost:4200/register?plan=plan-1&cycle=Monthly&cancelled=1&referral=FRIEND10');
+  });
+
+  it('sends the referral channel and share id from the link, only for attribution', () => {
+    const shareId = '3f1c8a52-7d4e-4b1a-9c0e-5a6b7c8d9e0f';
+    const onboarding = onboardingMock();
+    const component = create({ plan: 'plan-1', referral: 'FRIEND10', ch: 'WhatsApp', sid: shareId }, onboarding);
+    reachDetails(component);
+
+    component.submitDetails();
+
+    const request = onboarding.startCheckout.mock.calls[0]?.[0];
+    expect(request?.referralChannel).toBe('whatsapp');
+    expect(request?.referralShareId).toBe(shareId);
+    expect(request?.cancelUrl).toContain(`&ch=whatsapp&sid=${shareId}`);
+  });
+
+  it('ignores a malformed share id or channel instead of sending them', () => {
+    const onboarding = onboardingMock();
+    const component = create({ plan: 'plan-1', referral: 'FRIEND10', ch: 'x'.repeat(40), sid: 'not-a-guid' }, onboarding);
+    reachDetails(component);
+
+    component.submitDetails();
+
+    const request = onboarding.startCheckout.mock.calls[0]?.[0];
+    expect(request?.referralChannel).toBeUndefined();
+    expect(request?.referralShareId).toBeUndefined();
+  });
+
+  it('prefills the gift code from a gift card link', () => {
+    const component = create({ plan: 'plan-1', gift: ' gift-7k3q9m2x ' });
+
+    expect(component.giftCode()).toBe('GIFT-7K3Q9M2X');
+    expect(component.showCodeFields()).toBe(true);
+  });
+
+  it('shows the gross, discount and net quoted for the typed gift code', () => {
+    const preview = {
+      grossAmountCents: 12900,
+      discountAmountCents: 2500,
+      netAmountCents: 10400,
+      currency: 'USD',
+      fullyCovered: false,
+      lines: [{ kind: 'Gift', codeHint: 'GIFT…', valid: true, discountAmountCents: 2500, errorCode: null }],
+    };
+    const previewPricing = vi.fn().mockReturnValue(of(preview));
+    const component = create({ plan: 'plan-1', gift: 'GIFT25ABC' }, onboardingMock({ previewPricing }));
+
+    (component as unknown as { previewCodes(): void }).previewCodes();
+
+    expect(previewPricing).toHaveBeenCalledWith('plan-1', 'Monthly', undefined, 'GIFT25ABC');
+    expect((component as unknown as { pricingPreview(): unknown }).pricingPreview()).toEqual(preview);
+  });
+
+  it('does not ask for a quote when there are no codes', () => {
+    const previewPricing = vi.fn();
+    const component = create({ plan: 'plan-1' }, onboardingMock({ previewPricing }));
+
+    (component as unknown as { previewCodes(): void }).previewCodes();
+
+    expect(previewPricing).not.toHaveBeenCalled();
+  });
+
+  it('ignores a malformed gift code in the link', () => {
+    const component = create({ plan: 'plan-1', gift: '<script>' });
+
+    expect(component.giftCode()).toBe('');
   });
 
   it('blocks sending the code while the backend asks to wait, without showing an error', () => {

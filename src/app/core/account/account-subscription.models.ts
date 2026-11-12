@@ -10,6 +10,10 @@ export interface AccountPlan {
   currency: string;
   enabledModules: string[];
   billingAccessBlocked: boolean;
+  /** Rango de venta del plan contratado, aunque ya no esté a la venta. */
+  rank: number;
+  /** Ciclos con precio en la edición contratada; solo a estos se puede pasar. */
+  billingCycles?: string[];
 }
 
 export interface AccountPeriod {
@@ -265,6 +269,20 @@ export interface PlanChangePreview {
   occupiedSeats: number | null;
   blocked: boolean;
   blockedReason: string | null;
+  /** Lo que se cobra ahora, cosa por cosa (plan y, si cambia el ciclo, cada add-on y los asientos). */
+  lines?: PlanChangePreviewLine[];
+  /** Ahorro anual frente a seguir pagando mes a mes; 0 si no aplica. */
+  savingsCents?: number;
+  /** Por qué no se puede confirmar, en palabras del backend (p. ej. un add-on con un pago pendiente). */
+  blockedMessage?: string | null;
+}
+
+export interface PlanChangePreviewLine {
+  kind: string;
+  description: string;
+  quantity: number;
+  unitAmountCents: number;
+  amountCents: number;
 }
 
 /** Una línea del historial de pagos (`GET /payments-app/saas-payments`). Los montos vienen en centavos. */

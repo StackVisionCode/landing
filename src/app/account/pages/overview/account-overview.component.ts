@@ -11,6 +11,7 @@ import { AccountSubscriptionService } from '@core/account/account-subscription.s
 import { apiErrorCode } from '@core/http/api-error';
 import { TranslationStore } from '@core/i18n/translation.store';
 import { moduleLabel } from '@core/plans/module-labels';
+import { PlanCatalogStore } from '@core/plans/plan-catalog.store';
 
 /** Chip de estado: el tono lo decide el estado de la suscripción, no el texto. */
 type StatusTone = 'ok' | 'warn' | 'danger';
@@ -25,6 +26,8 @@ export class AccountOverviewComponent {
   private readonly session = inject(AccountSessionStore);
   private readonly api = inject(AccountSubscriptionService);
   private readonly i18n = inject(TranslationStore);
+  /** Para nombrar el plan de un cambio pendiente (los planes a la venta). */
+  private readonly catalog = inject(PlanCatalogStore);
 
   readonly t = this.i18n.t;
   readonly loading = signal(true);
@@ -43,6 +46,7 @@ export class AccountOverviewComponent {
   );
 
   constructor() {
+    this.catalog.load();
     this.load();
   }
 
@@ -208,11 +212,11 @@ export class AccountOverviewComponent {
     const t = this.t();
     if (pending.kind === 'Downgrade') {
       return t.accOvPendingDowngrade
-        .replace('{plan}', pending.toPlanCode)
+        .replace('{plan}', this.catalog.nameOf(pending.toPlanCode))
         .replace('{date}', pending.effectiveAtUtc ? this.date(pending.effectiveAtUtc) : '');
     }
     const template = pending.status === 'PaymentFailed' ? t.accOvPendingUpgradeFailed : t.accOvPendingUpgrade;
-    return template.replace('{plan}', pending.toPlanCode);
+    return template.replace('{plan}', this.catalog.nameOf(pending.toPlanCode));
   });
 
   /** Mismo criterio que la pantalla de Add-ons: el nombre visible sale de `MODULE_LABELS`. */

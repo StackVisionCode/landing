@@ -18,10 +18,18 @@
 
         <div class="m-2 flex min-h-[150px] items-center justify-center rounded-2xl bg-sand p-6" aria-hidden="true">
           @if (i === 0) {
-            <a routerLink="/register" class="inline-flex items-center gap-2 rounded-full bg-star px-5 py-2.5 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(5,123,193,0.35)]">
-              <ion-icon name="business-outline"></ion-icon>
-              {{ t().steps.createOffice }}
-            </a>
+            @if (singlePlan(); as plan) {
+              <a data-create-office routerLink="/register" [queryParams]="{ plan: plan.id, cycle: 'Monthly' }" class="inline-flex items-center gap-2 rounded-full bg-star px-5 py-2.5 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(5,123,193,0.35)]">
+                <ion-icon name="business-outline"></ion-icon>
+                {{ t().steps.createOffice }}
+              </a>
+            } @else {
+              <!-- Varios planes (o el catálogo sin cargar): primero se elige en Precios. -->
+              <a data-create-office href="#pricing" class="inline-flex items-center gap-2 rounded-full bg-star px-5 py-2.5 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(5,123,193,0.35)]">
+                <ion-icon name="business-outline"></ion-icon>
+                {{ t().steps.createOffice }}
+              </a>
+            }
           } @else if (i === 1) {
             <div class="flex w-full max-w-[240px] flex-col gap-2">
               @for (row of t().steps.mockRows; track row) {

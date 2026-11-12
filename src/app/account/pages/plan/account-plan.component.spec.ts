@@ -33,11 +33,11 @@ const me = {
   permissions: ['subscription.plan.change'],
 };
 
-function plan(code: string, monthly: number, maxUsers: number): PlanResponse {
+function plan(code: string, monthly: number, maxUsers: number, rank = 0, name = code): PlanResponse {
   return {
     id: code,
     code,
-    name: code,
+    name,
     description: '',
     tier: 'Standard',
     monthlyPriceUsd: monthly,
@@ -47,6 +47,8 @@ function plan(code: string, monthly: number, maxUsers: number): PlanResponse {
     maxPendingInvitations: 5,
     storageQuotaBytes: 0,
     enabledModules: ['documents'],
+    rank,
+    isFeatured: false,
   };
 }
 
@@ -61,6 +63,7 @@ function subscription(): AccountSubscription {
       currency: 'USD',
       enabledModules: ['documents'],
       billingAccessBlocked: false,
+      rank: 2,
     },
     period: {
       currentPeriodStartUtc: '2026-09-01T00:00:00Z',
@@ -98,7 +101,11 @@ function preview(overrides: Partial<PlanChangePreview> = {}): PlanChangePreview 
 }
 
 describe('AccountPlanComponent', () => {
-  function create(overrides: object = {}, queryParam: string | null = null) {
+  function create(
+    overrides: object = {},
+    queryParam: string | null = null,
+    onSale: PlanResponse[] = [plan('pro', 49, 10, 2), plan('starter', 19, 3, 1)],
+  ) {
     const api = {
       get: vi.fn(() => of(subscription())),
       planChangePreview: vi.fn(() => of(preview())),
@@ -107,7 +114,7 @@ describe('AccountPlanComponent', () => {
       resumeSubscription: vi.fn(() => of(void 0)),
       ...overrides,
     };
-    const plansApi = { getPlans: vi.fn(() => of([plan('pro', 49, 10), plan('starter', 19, 3)])) };
+    const plansApi = { getPlans: vi.fn(() => of(onSale)) };
     const billingPref = {
       get: vi.fn(() =>
         of({
@@ -167,6 +174,40 @@ describe('AccountPlanComponent', () => {
     expect(page.textContent).not.toContain(component.t().accRenewCta);
   });
 
+
+  // F8: un plan retirado de la venta sigue siendo el de la oficina; solo los que se venden son destino.
+  it('muestra el plan contratado aunque ya no esté a la venta, como "Your plan"', () => {
+    const { component, page } = create({}, null, [plan('enterprise', 99, 3, 3, 'Enterprise')]);
+
+    expect(component.columns().map(p => p.code)).toEqual(['pro', 'enterprise']);
+    expect(component.isCurrent(component.columns()[0])).toBe(true);
+    expect(page.textContent).toContain('Pro');
+    expect(page.textContent).toContain(component.t().accPlanCurrent);
+    expect(page.querySelectorAll('button').length).toBeGreaterThan(0);
+    expect(component.destinations().map(p => p.code)).toEqual(['enterprise']);
+  });
+
+  it('el cambio pendiente dice el nombre del plan, no su código', () => {
+    const pending = subscription();
+    pending.pendingPlanChange = {
+      kind: 'Upgrade',
+      id: 'r1',
+      fromPlanCode: 'pro',
+      toPlanCode: 'enterprise',
+      toBillingCycle: 'Monthly',
+      status: 'AwaitingPayment',
+      requestedAtUtc: '2026-09-10T00:00:00Z',
+      effectiveAtUtc: null,
+      chargeAmountCents: 9900,
+      chargeCurrency: 'USD',
+      checkoutUrl: null,
+    };
+
+    const { component } = create({ get: vi.fn(() => of(pending)) }, null, [plan('enterprise', 99, 3, 3, 'Enterprise')]);
+
+    expect(component.pendingLabel()).toContain('Enterprise');
+    expect(component.pendingLabel()).not.toContain('enterprise');
+  });
 
   it('lista los planes de más barato a más caro y marca el contratado', () => {
     const { component, page } = create();
@@ -332,6 +373,128 @@ describe('AccountPlanComponent', () => {
 
     expect(api.resumeSubscription).toHaveBeenCalled();
     expect(component.outcome()).toBe('Your subscription continues as normal.');
+  });
+
+  describe('cambiar de mensual a anual', () => {
+    const yearlyPro = (): PlanResponse => ({
+      ...plan('pro', 49, 10, 2),
+      supportedBillingCycles: ['Monthly', 'Yearly'],
+      pricesUsdByCycle: { Monthly: 49, Yearly: 490 },
+    });
+
+    it('el selector muestra los precios del ciclo elegido', () => {
+      const { component } = create({}, null, [yearlyPro()]);
+
+      component.setCycle('Yearly');
+
+      expect(component.priceLabel(component.plans()[0])).toContain('$490');
+    });
+
+    it('con otro ciclo, el plan actual se puede elegir y pide la vista previa de ese ciclo', () => {
+      const { component, api, fixture } = create({}, null, [yearlyPro()]);
+
+      component.setCycle('Yearly');
+      fixture.detectChanges();
+      component.choose(component.plans()[0]);
+
+      expect(api.planChangePreview).toHaveBeenCalledWith('pro', 'Yearly');
+      expect(fixture.nativeElement.textContent).toContain('Switch to yearly billing');
+    });
+
+    it('la vista previa detalla cada cosa que se cobra y el ahorro', () => {
+      const { component, fixture } = create(
+        {
+          planChangePreview: vi.fn(() =>
+            of(
+              preview({
+                direction: 'Upgrade',
+                chargedNow: true,
+                effectiveAtUtc: null,
+                amountCents: 78_000,
+                savingsCents: 13_200,
+                lines: [
+                  { kind: 'Plan', description: 'Pro — yearly', quantity: 1, unitAmountCents: 49_000, amountCents: 49_000 },
+                  { kind: 'AddOn', description: 'Email — yearly', quantity: 1, unitAmountCents: 29_000, amountCents: 29_000 },
+                ],
+              })
+            )
+          ),
+        },
+        null,
+        [yearlyPro()]
+      );
+
+      component.setCycle('Yearly');
+      component.choose(component.plans()[0]);
+      fixture.detectChanges();
+
+      const text = fixture.nativeElement.textContent as string;
+      expect(text).toContain('Pro — yearly');
+      expect(text).toContain('Email — yearly');
+      expect(text).toContain('$290.00');
+      expect(text).toContain('You save $132.00 a year');
+    });
+
+    it('si un extra lo impide, dice por qué y no se puede confirmar', () => {
+      const { component, api, fixture } = create(
+        {
+          planChangePreview: vi.fn(() =>
+            of(
+              preview({
+                direction: 'Upgrade',
+                chargedNow: true,
+                blocked: true,
+                blockedReason: 'Subscription.CycleSwitch.ExtraPastDue',
+                blockedMessage: 'An add-on or seat has a pending payment. Settle it before changing the billing cycle.',
+              })
+            )
+          ),
+        },
+        null,
+        [yearlyPro()]
+      );
+
+      component.setCycle('Yearly');
+      component.choose(component.plans()[0]);
+      fixture.detectChanges();
+      component.confirm();
+
+      expect(api.changePlan).not.toHaveBeenCalled();
+      expect(fixture.nativeElement.textContent).toContain('has a pending payment');
+    });
+
+    it('si la edición contratada no tiene precio anual, no ofrece el cambio y dice por qué', () => {
+      const monthlyOnly = { ...subscription(), plan: { ...subscription().plan, billingCycles: ['Monthly'] } };
+      const { component, fixture } = create({ get: vi.fn(() => of(monthlyOnly)) }, null, [yearlyPro()]);
+
+      component.setCycle('Yearly');
+      fixture.detectChanges();
+
+      const text = fixture.nativeElement.textContent as string;
+      expect(component.switchesCycle(component.plans()[0])).toBe(false);
+      expect(text).not.toContain('Switch to yearly billing');
+      expect(text).toContain('Your plan edition is only billed monthly');
+    });
+
+    it('si el backend rechaza el cambio, muestra su motivo y no el genérico', () => {
+      const rejected = new HttpErrorResponse({
+        status: 400,
+        error: { code: 'Plan.NoPriceTier', message: 'Plan pro has no price for billing cycle Yearly.' },
+      });
+      const { component, fixture } = create(
+        { planChangePreview: vi.fn(() => throwError(() => rejected)) },
+        null,
+        [yearlyPro()]
+      );
+
+      component.setCycle('Yearly');
+      component.choose(component.plans()[0]);
+      fixture.detectChanges();
+
+      const text = fixture.nativeElement.textContent as string;
+      expect(text).toContain('Plan pro has no price for billing cycle Yearly.');
+      expect(text).not.toContain("We couldn't change your plan");
+    });
   });
 
   it('el plan que ya tiene no se puede elegir', () => {

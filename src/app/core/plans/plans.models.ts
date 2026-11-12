@@ -17,4 +17,8 @@ export interface PlanResponse {
   maxPendingInvitations: number;
   storageQuotaBytes: number;
   enabledModules: string[];
+  /** Orden de venta que fija el backend (menor = más básico). */
+  rank: number;
+  /** El plan que se destaca en la grilla; lo decide el backend. */
+  isFeatured: boolean;
 }

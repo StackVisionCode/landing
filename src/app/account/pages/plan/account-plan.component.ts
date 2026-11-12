@@ -1,4 +1,5 @@
 import { CUSTOM_ELEMENTS_SCHEMA, Component, computed, inject, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { catchError, forkJoin, of } from 'rxjs';
 import {
@@ -12,6 +13,7 @@ import { TranslationStore } from '@core/i18n/translation.store';
 import { moduleLabel } from '@core/plans/module-labels';
 import { PlanResponse } from '@core/plans/plans.models';
 import { PlansService } from '@core/plans/plans.service';
+import { byRank } from '@core/plans/plan-pricing';
 import { StepUpDialogComponent } from '../../shared/step-up-dialog.component';
 import { ActionCooldown } from '@core/http/action-cooldown';
 import { formatClock } from '@core/http/throttling';
@@ -77,7 +79,47 @@ export class AccountPlanComponent {
 
   readonly currentCode = computed(() => this.subscription()?.plan.code ?? null);
   readonly cycle = computed(() => this.subscription()?.plan.billingCycle ?? 'Monthly');
-  readonly isEmpty = computed(() => this.plans().length === 0);
+  /** Ciclo que la oficina está mirando; por defecto el que tiene. */
+  readonly selectedCycle = signal<string | null>(null);
+  readonly viewCycle = computed(() => this.selectedCycle() ?? this.cycle());
+  /** El selector aparece si algún plan se vende en los dos ciclos. */
+  readonly offersCycleChoice = computed(() =>
+    this.columns().some(plan => plan.pricesUsdByCycle['Monthly'] != null && plan.pricesUsdByCycle['Yearly'] != null)
+  );
+  readonly isEmpty = computed(() => this.columns().length === 0);
+
+  /**
+   * Columnas de la comparación: los planes a la venta más el contratado, aunque ya no se venda (F8). Ese se
+   * arma con lo que la oficina firmó; su almacenamiento no viaja en la cuenta y se muestra "—".
+   */
+  readonly columns = computed(() => {
+    const onSale = this.plans();
+    const current = this.subscription()?.plan;
+    if (!current || onSale.some(plan => plan.code === current.code)) {
+      return onSale;
+    }
+    const price = current.currentCyclePriceCents / 100;
+    const contracted: PlanResponse = {
+      id: '',
+      code: current.code,
+      name: current.name,
+      description: '',
+      tier: '',
+      monthlyPriceUsd: current.billingCycle === 'Monthly' ? price : 0,
+      supportedBillingCycles: [current.billingCycle],
+      pricesUsdByCycle: { [current.billingCycle]: price },
+      maxUsers: this.subscription()?.seats.includedInPlan ?? 0,
+      maxPendingInvitations: 0,
+      storageQuotaBytes: 0,
+      enabledModules: current.enabledModules,
+      rank: current.rank,
+      isFeatured: false,
+    };
+    return [...onSale, contracted].sort(byRank);
+  });
+
+  /** Destinos posibles: solo los planes a la venta que no son el actual. */
+  readonly destinations = computed(() => this.plans().filter(plan => !this.isCurrent(plan)));
   /** Upgrade a medio pagar: mientras la sesión viva, se retoma en vez de abrir otro cobro. */
   readonly openUpgrade = computed(() => this.subscription()?.pendingPlanChange?.checkoutUrl ?? null);
   readonly cancelScheduled = computed(() => this.subscription()?.period.cancelAtPeriodEnd === true);
@@ -153,7 +195,7 @@ export class AccountPlanComponent {
     }).subscribe({
       next: ({ subscription, plans, billingPreference }) => {
         this.subscription.set(subscription);
-        this.plans.set([...plans].sort((a, b) => a.monthlyPriceUsd - b.monthlyPriceUsd));
+        this.plans.set([...plans].sort(byRank));
         this.billingPreference.set(billingPreference);
         this.billingPreferenceFailed.set(billingPreference === null);
         this.loading.set(false);
@@ -165,16 +207,54 @@ export class AccountPlanComponent {
     });
   }
 
+  setCycle(cycle: string): void {
+    this.selectedCycle.set(cycle);
+    this.preview.set(null);
+    this.error.set(null);
+  }
+
+  /** El plan actual con otro ciclo: se ofrece pasar de ciclo si la edición contratada tiene ese precio. */
+  switchesCycle(plan: PlanResponse): boolean {
+    return this.looksAtOtherCycle(plan) && this.contractedOffers(this.viewCycle()) && plan.pricesUsdByCycle[this.viewCycle()] != null;
+  }
+
+  /** El plan actual con otro ciclo que su edición no tiene: se explica en vez del botón. */
+  cycleUnavailable(plan: PlanResponse): boolean {
+    return this.looksAtOtherCycle(plan) && !this.contractedOffers(this.viewCycle());
+  }
+
+  cycleUnavailableLabel(): string {
+    return this.t().accPlanCycleUnavailable.replace('{cycle}', this.cycleWord(this.cycle()));
+  }
+
+  private looksAtOtherCycle(plan: PlanResponse): boolean {
+    return this.isCurrent(plan) && this.viewCycle() !== this.cycle();
+  }
+
+  // D6: la oficina se queda en la edición que firmó; sin el dato (backend viejo) no se bloquea.
+  private contractedOffers(cycle: string): boolean {
+    const cycles = this.subscription()?.plan.billingCycles;
+    return !cycles || cycles.includes(cycle);
+  }
+
+  switchCycleLabel(): string {
+    return this.t().accPlanSwitchCycle.replace('{cycle}', this.cycleWord(this.viewCycle()));
+  }
+
+  private cycleWord(cycle: string): string {
+    return (cycle === 'Yearly' ? this.t().accPlanCycleYearly : this.t().accPlanCycleMonthly).toLowerCase();
+  }
+
   /** Nada se pide sin ver antes qué pasaría: el total y la fecha los calcula el backend. */
   choose(plan: PlanResponse): void {
-    if (plan.code === this.currentCode()) {
+    if (plan.code === this.currentCode() && this.viewCycle() === this.cycle()) {
       this.error.set(this.t().accPlanSame);
       return;
     }
     this.stage.set('previewing');
     this.error.set(null);
     this.outcome.set(null);
-    this.api.planChangePreview(plan.code, this.cycle()).subscribe({
+    this.api.planChangePreview(plan.code, this.viewCycle()).subscribe({
       next: preview => this.preview.set(preview),
       error: err => {
         this.stage.set('browsing');
@@ -536,9 +616,10 @@ export class AccountPlanComponent {
   }
 
   priceLabel(plan: PlanResponse): string {
-    const price = plan.pricesUsdByCycle[this.cycle()] ?? plan.monthlyPriceUsd;
-    const template = this.cycle() === 'Yearly' ? this.t().accOvPerYear : this.t().accOvPerMonth;
-    return template.replace('{price}', this.usd(price));
+    const price = plan.pricesUsdByCycle[this.viewCycle()] ?? plan.monthlyPriceUsd;
+    // "$490 per year": el texto del ciclo no trae el precio (antes solo se veía "per month").
+    const cycle = this.viewCycle() === 'Yearly' ? this.t().accOvPerYear : this.t().accOvPerMonth;
+    return `${this.usd(price)} ${cycle}`;
   }
 
   seatsLabel(plan: PlanResponse): string {
@@ -552,7 +633,7 @@ export class AccountPlanComponent {
   /** Presentational: every module offered by any plan, as comparison rows. */
   readonly moduleRows = computed(() => {
     const codes: string[] = [];
-    for (const plan of this.plans()) {
+    for (const plan of this.columns()) {
       for (const code of plan.enabledModules) {
         if (!codes.includes(code)) {
           codes.push(code);
@@ -569,13 +650,44 @@ export class AccountPlanComponent {
   readonly storageRowLabel = computed(() => (this.i18n.lang() === 'es' ? 'Almacenamiento' : 'Storage'));
 
   storageLabel(plan: PlanResponse): string {
+    if (!plan.id) {
+      return '—';
+    }
     const gb = plan.storageQuotaBytes / 1024 ** 3;
     return gb >= 1 ? `${Math.round(gb * 10) / 10} GB` : `${Math.round(plan.storageQuotaBytes / 1024 ** 2)} MB`;
+  }
+
+  /** Nombre visible de un plan; si ya no se vende, el código. */
+  planName(code: string): string {
+    return this.columns().find(plan => plan.code === code)?.name ?? code;
   }
 
   isCurrent(plan: PlanResponse): boolean {
     return plan.code === this.currentCode();
   }
+
+  /** Cada cosa que se cobra ahora, con su importe, para mostrarla antes de confirmar. */
+  readonly previewLines = computed(() =>
+    (this.preview()?.lines ?? []).map(line => ({
+      description: line.description,
+      detail: line.quantity > 1 ? `${line.quantity} × ${this.money(line.unitAmountCents, this.preview()!.currency)}` : '',
+      amount: this.money(line.amountCents, this.preview()!.currency),
+    }))
+  );
+
+  readonly savingsLabel = computed(() => {
+    const preview = this.preview();
+    return preview?.savingsCents ? this.t().accPlanSavings.replace('{amount}', this.money(preview.savingsCents, preview.currency)) : '';
+  });
+
+  /** Por qué no se puede confirmar: el cupo de usuarios tiene su texto; lo demás lo explica el backend. */
+  readonly blockedLabel = computed(() => {
+    const preview = this.preview();
+    if (!preview?.blocked) return '';
+    return preview.blockedReason === 'Subscription.DowngradeExceedsSeats' || !preview.blockedMessage
+      ? this.t().accPlanBlockedSeats
+      : preview.blockedMessage;
+  });
 
   /** Qué dice la vista previa, en una frase. */
   readonly previewLabel = computed(() => {
@@ -593,7 +705,7 @@ export class AccountPlanComponent {
 
   readonly pendingLabel = computed(() => {
     const pending = this.subscription()?.pendingPlanChange;
-    return pending ? this.t().accPlanPendingBody.replace('{plan}', pending.toPlanCode) : '';
+    return pending ? this.t().accPlanPendingBody.replace('{plan}', this.planName(pending.toPlanCode)) : '';
   });
 
   readonly seatsAfterLabel = computed(() => {
@@ -617,8 +729,15 @@ export class AccountPlanComponent {
       case 'PlanChangeRequest.PaymentInProgress':
         return t.accPlanInProgress;
       default:
-        return t.accPlanChangeError;
+        return this.rejectionMessage(err) ?? t.accPlanChangeError;
     }
+  }
+
+  /** Un rechazo de regla (4xx con Error del dominio) se explica con el motivo del backend. */
+  private rejectionMessage(err: unknown): string | null {
+    if (!(err instanceof HttpErrorResponse) || err.status < 400 || err.status >= 500) return null;
+    const message = (err.error as { message?: unknown } | null)?.message;
+    return typeof message === 'string' && message.trim() ? message : null;
   }
 
   private usd(amount: number): string {
