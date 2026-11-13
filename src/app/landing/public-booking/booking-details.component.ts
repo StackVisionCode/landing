@@ -26,14 +26,22 @@ import type { DetailsForm, FieldError, FieldKey } from './booking-flow.store';
 
 /** Fábrica del widget anti-bot: las pruebas la cambian por una que no carga Cloudflare. */
 export interface BotWidget {
-  mount(container: HTMLElement, siteKey: string): Promise<void>;
+  mount(container: HTMLElement, siteKey: string, language?: string): Promise<void>;
   next(): Promise<string | null>;
   reset(): void;
   destroy(): void;
 }
 export const BOT_WIDGET_FACTORY = new InjectionToken<() => BotWidget>('BOT_WIDGET_FACTORY', {
   providedIn: 'root',
-  factory: () => () => new TurnstileWidget(),
+  factory: () => () => {
+    const widget = new TurnstileWidget();
+    return {
+      mount: (container, siteKey, language) => widget.mount(container, siteKey, undefined, language),
+      next: () => widget.next(),
+      reset: () => widget.reset(),
+      destroy: () => widget.destroy(),
+    };
+  },
 });
 
 /** Un tramo del aviso de privacidad: texto o un enlace interno (`[Privacy Policy](/privacy)`). */
@@ -86,6 +94,7 @@ export class BookingDetailsComponent implements OnDestroy {
   readonly fieldBlur = output<FieldKey>();
 
   protected readonly t = inject(TranslationStore).c;
+  private readonly lang = inject(TranslationStore).lang;
   protected readonly sizes = OFFICE_SIZES;
   protected readonly notice = computed(() => noticeParts(this.page().privacyNotice));
   /** Lo opcional se pliega; lo que la página exige queda a la vista. */
@@ -215,7 +224,7 @@ export class BookingDetailsComponent implements OnDestroy {
     const siteKey = this.page().turnstileSiteKey;
     const container = this.botContainer()?.nativeElement;
     if (siteKey && container && this.widget) {
-      this.mounting = this.widget.mount(container, siteKey).then(
+      this.mounting = this.widget.mount(container, siteKey, this.lang()).then(
         () => true,
         () => false,
       );

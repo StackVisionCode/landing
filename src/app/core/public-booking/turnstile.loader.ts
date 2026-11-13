@@ -8,7 +8,10 @@ interface TurnstileApi {
     options: {
       sitekey: string;
       action: string;
-      appearance: 'interaction-only';
+      appearance: 'always';
+      size: 'flexible' | 'compact';
+      theme: 'light';
+      language?: string;
       callback: (token: string) => void;
       'error-callback': (code?: string) => void;
       'expired-callback': () => void;
@@ -72,8 +75,8 @@ export function resetTurnstileLoaderForTests(): void {
 }
 
 /**
- * Widget invisible salvo que Cloudflare pida interacción. Entrega cada token nuevo: el token sirve una vez,
- * así que después de cada envío se pide otro con `reset`.
+ * Checkbox de Cloudflare siempre visible (igual que los intake links): el visitante ve que hay una
+ * verificación. Entrega cada token nuevo: el token sirve una vez, así que tras cada envío se pide otro con `reset`.
  */
 export class TurnstileWidget {
   private api: TurnstileApi | null = null;
@@ -83,7 +86,12 @@ export class TurnstileWidget {
   /** El script no cargó: `next()` no espera un token que no va a llegar. */
   failed = false;
 
-  async mount(container: HTMLElement, siteKey: string, timeoutMs?: number): Promise<void> {
+  async mount(
+    container: HTMLElement,
+    siteKey: string,
+    timeoutMs?: number,
+    language?: string,
+  ): Promise<void> {
     this.failed = false;
     try {
       this.api = await loadTurnstile(document, timeoutMs);
@@ -94,7 +102,11 @@ export class TurnstileWidget {
     this.widgetId = this.api.render(container, {
       sitekey: siteKey,
       action: TURNSTILE_ACTION,
-      appearance: 'interaction-only',
+      appearance: 'always',
+      // Ocupa el ancho del formulario; con menos de 300 px libres (mínimo de Cloudflare) va compacto.
+      size: container.clientWidth > 0 && container.clientWidth < 300 ? 'compact' : 'flexible',
+      theme: 'light',
+      ...(language ? { language } : {}),
       callback: (token) => this.settle(token),
       'error-callback': (code) => {
         console.warn('Turnstile error', code);

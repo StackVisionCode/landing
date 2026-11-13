@@ -1,3 +1,4 @@
+import { TranslationStore } from '@core/i18n/translation.store';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { resetPlatformRuntimeForTests } from '@core/config/platform-runtime';
@@ -17,8 +18,11 @@ class FakeBot implements BotWidget {
   tokens: (string | null)[] = [];
   private pending: ((token: string | null) => void) | null = null;
 
-  async mount(): Promise<void> {
+  language: string | undefined;
+
+  async mount(_container: HTMLElement, _siteKey: string, language?: string): Promise<void> {
     this.mounts++;
+    this.language = language;
     if (this.mountFails) {
       throw new Error('turnstile');
     }
@@ -159,4 +163,18 @@ describe('BookingDetailsComponent', () => {
     expect(bot.mounts).toBe(2);
     expect(fixture.nativeElement.querySelector('[data-testid="bot-problem"]')).toBeNull();
   });
+
+  it('el checkbox va visible antes del botón, con su espacio reservado y en el idioma de la página', async () => {
+    const { fixture } = await render();
+    const root = fixture.nativeElement as HTMLElement;
+    const check = root.querySelector<HTMLElement>('[data-testid="bot-check"]')!;
+    expect(check).toBeTruthy();
+    // Reserva el alto del widget: el botón no salta cuando aparece.
+    expect(check.className).toContain('min-h-[65px]');
+    expect(check.className).toContain('w-full');
+    const next = check.nextElementSibling?.querySelector('button[type="submit"]');
+    expect(next).toBeTruthy();
+    expect(bot.language).toBe(TestBed.inject(TranslationStore).lang());
+  });
 });
+
