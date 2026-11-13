@@ -1,0 +1,116 @@
+@let copy = t().demoBooking;
+<canvas #confetti class="pointer-events-none fixed inset-0 z-50" aria-hidden="true"></canvas>
+<div class="flex max-w-xl flex-col gap-6" aria-live="polite">
+  <div class="flex flex-col gap-4">
+    <span
+      class="flex h-16 w-16 items-center justify-center rounded-full bg-lime text-twilight motion-safe:animate-[pop_.5s_cubic-bezier(.2,1.4,.4,1)_both]"
+      aria-hidden="true"
+    >
+      <svg viewBox="0 0 34 34" class="h-8 w-8">
+        <path
+          d="M8 18l6 6 12-13"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="4"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+    </span>
+    <h3 class="font-display text-3xl font-extrabold tracking-tight">
+      {{ copy.allSet(firstName()) }}
+    </h3>
+  </div>
+
+  <div class="overflow-hidden rounded-[22px] border border-line">
+    <div class="flex items-center gap-3 bg-cream px-5 py-4">
+      <span
+        class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-azure text-sm font-bold text-twilight"
+        aria-hidden="true"
+        >{{ initials() }}</span
+      >
+      <div>
+        <p class="font-semibold">{{ confirmation().hostName }}</p>
+        <p class="text-sm text-muted">
+          {{ copy.confirmed.status }} · {{ copy.minutes(confirmation().durationMinutes) }}
+        </p>
+      </div>
+    </div>
+    <div class="flex flex-col gap-1 border-t border-dashed border-line px-5 py-4">
+      <p class="font-display text-xl font-bold">{{ day() }}</p>
+      <p class="text-muted">{{ range() }} · {{ zone() }}</p>
+    </div>
+  </div>
+
+  <section class="flex flex-col gap-2" aria-labelledby="add-to-calendar-title">
+    <p id="add-to-calendar-title" class="text-xs font-bold uppercase tracking-[0.08em] text-muted">
+      {{ copy.addToCalendar }}
+    </p>
+    <div class="flex flex-wrap gap-2">
+      <a
+        class="inline-flex min-h-12 items-center rounded-full bg-twilight px-5 text-sm font-semibold text-white hover:bg-star"
+        [href]="google()"
+        target="_blank"
+        rel="noopener noreferrer"
+        >Google Calendar</a
+      >
+      <a
+        class="inline-flex min-h-12 items-center rounded-full border border-twilight/20 bg-white px-5 text-sm font-semibold hover:border-twilight/40"
+        [href]="outlook()"
+        target="_blank"
+        rel="noopener noreferrer"
+        >Outlook</a
+      >
+      <button
+        type="button"
+        class="inline-flex min-h-12 items-center rounded-full border border-twilight/20 bg-white px-5 text-sm font-semibold hover:border-twilight/40"
+        (click)="downloadIcs()"
+      >
+        {{ copy.apple }}
+      </button>
+    </div>
+  </section>
+
+  <section class="flex flex-col gap-2" aria-labelledby="prep-title">
+    <p id="prep-title" class="text-xs font-bold uppercase tracking-[0.08em] text-muted">
+      {{ copy.prepTitle }}
+    </p>
+    <ul class="flex flex-col gap-2 text-sm">
+      @for (tip of copy.prep; track $index) {
+        <li class="flex items-start gap-2">
+          <span
+            class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border border-line text-xs"
+            aria-hidden="true"
+            >✓</span
+          >
+          <span>{{ tip }}</span>
+        </li>
+      }
+      <li class="flex items-start gap-2">
+        <span
+          class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border border-line text-xs"
+          aria-hidden="true"
+          >✓</span
+        >
+        <span>{{ copy.sentTo(email()) }}</span>
+      </li>
+    </ul>
+  </section>
+
+  <div class="flex flex-wrap items-center gap-4">
+    <a
+      class="min-h-11 py-2 font-semibold text-star underline underline-offset-2"
+      [href]="confirmation().meetingUrl"
+      target="_blank"
+      rel="noopener noreferrer"
+      >{{ copy.joinLater }}</a
+    >
+    <button
+      type="button"
+      class="min-h-11 rounded-full border border-twilight/20 bg-white px-5 text-sm font-semibold hover:border-twilight/40"
+      (click)="done.emit()"
+    >
+      {{ copy.backToSite }}
+    </button>
+  </div>
+</div>

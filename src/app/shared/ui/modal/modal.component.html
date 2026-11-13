@@ -1,13 +1,18 @@
 @if (isOpen) {
-  <div class="modal-backdrop fixed inset-0 z-50 flex items-center justify-center bg-black/20 p-4" (click)="close()">
+  <div class="modal-backdrop fixed inset-0 z-50 flex items-stretch justify-center bg-black/20 sm:items-center sm:p-4" (click)="onBackdrop()">
     <div
-      class="modal-panel max-h-[90vh] w-full overflow-y-auto rounded-[28px] bg-white p-6 shadow-xl"
+      #panel
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-labelledby]="heading ? titleId : null"
+      tabindex="-1"
+      class="modal-panel h-full w-full overflow-y-auto bg-white p-6 shadow-xl focus:outline-none sm:h-auto sm:max-h-[90vh] sm:rounded-[28px]"
       [class]="sizeClass"
       (click)="$event.stopPropagation()"
     >
-      <div class="flex items-start justify-between">
+      <div class="flex items-start justify-between gap-3">
         <div>
-          <h2 class="text-xl font-bold text-gray-900">{{ heading }}</h2>
+          <h2 [id]="titleId" class="text-xl font-bold text-gray-900">{{ heading }}</h2>
           @if (subheading) {
             <p class="mt-1 text-sm text-gray-500">{{ subheading }}</p>
           }
@@ -15,10 +20,10 @@
         <button
           type="button"
           (click)="close()"
-          class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-900 transition-colors"
-          aria-label="Cerrar"
+          class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+          [attr.aria-label]="closeLabel"
         >
-          <ion-icon name="close-outline" class="text-lg"></ion-icon>
+          <ion-icon name="close-outline" class="text-lg" aria-hidden="true"></ion-icon>
         </button>
       </div>
 

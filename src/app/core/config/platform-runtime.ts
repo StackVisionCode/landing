@@ -21,8 +21,16 @@ export const PLATFORM_FALLBACK: PlatformRuntime = {
 
 let current: PlatformRuntime = { ...PLATFORM_FALLBACK, domain: domainFromHost(currentHostname()) };
 
+// Aparte de PlatformRuntime para no cambiar su forma: solo lo usa el aviso "Escríbenos" de la demo.
+let supportEmail: string | null = null;
+
 export function platformRuntime(): PlatformRuntime {
   return current;
+}
+
+/** Email de soporte publicado; sin respuesta de la API, `support@{dominio}`. */
+export function platformSupportEmail(): string {
+  return supportEmail ?? `support@${current.domain}`;
 }
 
 /** Dominio de la plataforma a partir del host del landing; null-safe y con respaldo. */
@@ -36,9 +44,13 @@ export function domainFromHost(hostname: string | null): string {
 }
 
 /** Aplica marca y razón social publicadas. Ignora valores vacíos. */
-export function applyPlatformSettings(settings: { brandName?: unknown; legalName?: unknown }): void {
+export function applyPlatformSettings(settings: { brandName?: unknown; legalName?: unknown; supportEmail?: unknown }): void {
   const brandName = typeof settings.brandName === 'string' ? settings.brandName.trim() : '';
   const legalName = typeof settings.legalName === 'string' ? settings.legalName.trim() : '';
+  const email = typeof settings.supportEmail === 'string' ? settings.supportEmail.trim() : '';
+  if (email.includes('@')) {
+    supportEmail = email;
+  }
   current = {
     ...current,
     brandName: brandName || current.brandName,
@@ -76,6 +88,7 @@ export function apiBaseFor(hostname: string | null): string {
 /** Solo tests. */
 export function resetPlatformRuntimeForTests(hostname: string | null = null): void {
   current = { ...PLATFORM_FALLBACK, domain: domainFromHost(hostname) };
+  supportEmail = null;
 }
 
 function currentHostname(): string | null {

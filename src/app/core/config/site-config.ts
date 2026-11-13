@@ -1,13 +1,11 @@
 import { apiBaseFor, platformRuntime } from './platform-runtime';
 
 /**
- * URLs de salida hacia el producto real y los IDs de calendario de
- * LeadConnector. Todo host público sale de PLATFORM_DOMAIN, que a su vez sale
- * del host que sirve el landing (ver platform-runtime): cambiar de dominio no
- * exige recompilar. La API no lleva sufijo /api: las rutas cuelgan directo de
- * la raíz (p.ej. GET /plans, POST /auth/login). Los IDs de booking son
- * placeholders — reemplazar por los reales de la cuenta de LeadConnector antes
- * de publicar.
+ * URLs de salida hacia el producto real. Todo host público sale de
+ * PLATFORM_DOMAIN, que a su vez sale del host que sirve el landing (ver
+ * platform-runtime): cambiar de dominio no exige recompilar. La API no lleva
+ * sufijo /api: las rutas cuelgan directo de la raíz (p.ej. GET /plans,
+ * POST /auth/login).
  */
 export const PLATFORM_DOMAIN = platformRuntime().domain;
 
@@ -26,11 +24,6 @@ export const SITE_CONFIG = {
   clientPortalUrl: `https://client.${PLATFORM_DOMAIN}`,
   /** Lo que sigue al slug en el host de una oficina (`.<dominio>`). */
   subdomainSuffix: `.${PLATFORM_DOMAIN}`,
-  booking: {
-    hero: 'REPLACE_ME_HERO_BOOKING_ID',
-    cta: 'REPLACE_ME_CTA_BOOKING_ID',
-    faq: 'REPLACE_ME_FAQ_BOOKING_ID',
-  },
 } as const;
 
 /** Espacio de trabajo de una oficina: `https://<slug>.<dominio>`, opcionalmente con una ruta (`/company/settings`). */

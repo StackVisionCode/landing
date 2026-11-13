@@ -29,6 +29,15 @@ export const serverRoutes: ServerRoute[] = [
     renderMode: RenderMode.Client
   },
   {
+    // La demo pide horarios reales y la gestión lee el token del fragmento: nada que prerenderizar.
+    path: 'demo',
+    renderMode: RenderMode.Client
+  },
+  {
+    path: 'demo/manage',
+    renderMode: RenderMode.Client
+  },
+  {
     // Account: todo depende de la sesión del navegador (cookie + token en memoria). Prerenderizarlo
     // hornearía la pantalla de "sin sesión" para todos.
     path: 'account/**',

@@ -1,0 +1,185 @@
+@let copy = t().demoBooking;
+<div class="flex flex-col gap-6">
+  @if (quickPicks().length > 0) {
+    <section class="flex flex-col gap-3" aria-labelledby="next-available-title">
+      <p id="next-available-title" class="text-xs font-bold uppercase tracking-[0.08em] text-muted">
+        {{ copy.nextAvailable }}
+      </p>
+      <div class="flex flex-wrap gap-2" data-testid="next-available">
+        @for (slot of quickPicks(); track slot) {
+          <button
+            type="button"
+            class="group min-h-14 rounded-2xl border px-4 py-2 text-left transition hover:-translate-y-0.5 hover:border-star disabled:opacity-60"
+            [class]="
+              slot === selectedSlot()
+                ? 'border-twilight bg-twilight text-white'
+                : 'border-line bg-cream'
+            "
+            [disabled]="busy()"
+            (click)="slotChange.emit(slot)"
+          >
+            <span class="block text-sm font-semibold">{{ quickDay(slot) }}</span
+            >&ngsp;<span class="block text-sm opacity-80">{{ time(slot) }}</span>
+          </button>
+        }
+      </div>
+    </section>
+  }
+
+  <div class="flex flex-wrap items-center justify-between gap-2 text-sm text-muted">
+    @if (!editingZone()) {
+      <p>
+        {{ copy.timeZoneShown(zoneName()) }} ·
+        <button
+          type="button"
+          class="min-h-11 font-semibold text-star underline-offset-2 hover:underline"
+          (click)="editingZone.set(true)"
+        >
+          {{ copy.changeZone }}
+        </button>
+      </p>
+    } @else {
+      <label class="flex items-center gap-2">
+        <span>{{ copy.timeZoneLabel }}</span>
+        <select
+          class="rounded-xl border border-line bg-white px-3 py-2 text-sm text-twilight focus:outline-none focus:ring-2 focus:ring-star/25"
+          [value]="timeZone()"
+          (change)="changeZone($any($event.target).value)"
+        >
+          @for (zone of zones(); track zone) {
+            <option [value]="zone" [selected]="zone === timeZone()">{{ zone }}</option>
+          }
+        </select>
+      </label>
+    }
+    <div class="flex gap-2">
+      @if (canGoBack()) {
+        <button
+          type="button"
+          class="flex h-11 w-11 items-center justify-center rounded-full border border-line bg-white text-lg hover:border-twilight/40"
+          [attr.aria-label]="copy.previousWeeks"
+          (click)="previous.emit()"
+        >
+          <span aria-hidden="true">‹</span>
+        </button>
+      }
+      @if (canGoForward()) {
+        <button
+          type="button"
+          class="flex h-11 w-11 items-center justify-center rounded-full border border-line bg-white text-lg hover:border-twilight/40"
+          [attr.aria-label]="copy.nextWeeks"
+          (click)="next.emit()"
+        >
+          <span aria-hidden="true">›</span>
+        </button>
+      }
+    </div>
+  </div>
+
+  @if (loading()) {
+    <p class="py-8 text-center text-sm text-muted" aria-live="polite">{{ copy.loading }}</p>
+  } @else if (!hasSlots()) {
+    <div class="rounded-[20px] border border-line bg-cream/60 p-6 text-center" aria-live="polite">
+      <p class="font-semibold">{{ copy.noSlots }}</p>
+      @if (canGoForward()) {
+        <button
+          type="button"
+          class="mt-3 min-h-11 rounded-full bg-twilight px-5 text-sm font-semibold text-white hover:bg-star"
+          (click)="next.emit()"
+        >
+          {{ copy.nextWeeks }}
+        </button>
+      }
+    </div>
+  } @else {
+    <div role="grid" [attr.aria-label]="copy.daysLabel" class="flex flex-col gap-2">
+      @for (row of rows(); track $index; let r = $index) {
+        <div role="row" class="grid grid-cols-5 gap-2">
+          @for (day of row; track day.key; let i = $index) {
+            @let s = short(day);
+            <div role="gridcell" [attr.aria-selected]="day.key === selectedDay()">
+              <button
+                type="button"
+                data-day
+                class="flex min-h-[72px] w-full flex-col items-center justify-center gap-0.5 rounded-2xl border px-1 py-2 transition-colors"
+                [class]="
+                  day.key === selectedDay()
+                    ? 'border-twilight bg-twilight text-white'
+                    : day.slots.length > 0
+                      ? 'border-line bg-white text-twilight hover:border-star'
+                      : 'cursor-not-allowed border-transparent bg-transparent text-muted/50'
+                "
+                [attr.aria-label]="dayAria(day)"
+                [attr.aria-disabled]="day.slots.length === 0"
+                [attr.tabindex]="
+                  day.key === selectedDay() || (!selectedDay() && r === 0 && i === 0) ? 0 : -1
+                "
+                (click)="pickDay(day)"
+                (keydown)="onGridKey($event, r * 5 + i)"
+              >
+                <span class="text-[11px] font-bold uppercase tracking-wider opacity-80">{{
+                  s.weekday
+                }}</span>
+                <span class="font-display text-xl font-bold">{{ s.day }}</span>
+                <span class="text-[11px] opacity-70">{{
+                  day.slots.length > 0 ? copy.timesCount(day.slots.length) : copy.full
+                }}</span>
+              </button>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    @if (activeDay()) {
+      <div class="grid gap-5 sm:grid-cols-2">
+        <p class="sr-only">{{ copy.timesFor(activeDayLabel()) }}</p>
+        @for (part of parts(); track part.key) {
+          <div class="flex flex-col gap-2">
+            <p
+              [id]="'slot-part-' + part.key"
+              class="text-xs font-bold uppercase tracking-[0.08em] text-muted"
+            >
+              {{ part.label }}
+            </p>
+            @if (part.slots.length > 0) {
+              <div
+                role="radiogroup"
+                [attr.aria-labelledby]="'slot-part-' + part.key"
+                [attr.data-part]="part.key"
+                class="grid gap-2"
+              >
+                @for (slot of part.slots; track slot; let i = $index) {
+                  <button
+                    type="button"
+                    role="radio"
+                    data-slot
+                    class="min-h-12 rounded-2xl border text-sm font-semibold transition-colors disabled:opacity-60"
+                    [class]="
+                      slot === selectedSlot()
+                        ? 'border-twilight bg-twilight text-white'
+                        : 'border-twilight/20 bg-white text-twilight hover:border-star hover:text-star'
+                    "
+                    [attr.aria-checked]="slot === selectedSlot()"
+                    [attr.tabindex]="
+                      slot === selectedSlot() || (!selectedSlot() && i === 0) ? 0 : -1
+                    "
+                    [disabled]="busy()"
+                    (click)="slotChange.emit(slot)"
+                    (keydown)="onSlotKey($event, part.key, i, part.slots.length)"
+                  >
+                    {{ time(slot) }}
+                  </button>
+                }
+              </div>
+            } @else {
+              <p class="text-sm text-muted">{{ copy.noTimes }}</p>
+            }
+          </div>
+        }
+      </div>
+    } @else {
+      <p class="text-sm text-muted">{{ copy.pickDay }}</p>
+    }
+  }
+</div>

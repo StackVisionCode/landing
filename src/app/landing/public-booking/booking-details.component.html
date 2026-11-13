@@ -1,0 +1,342 @@
+@let copy = t().demoBooking;
+@let f = form();
+@let p = page();
+@let input =
+  'w-full min-h-12 rounded-2xl border border-line bg-white px-4 py-3 text-base font-normal transition focus:border-star focus:outline-none focus:ring-4 focus:ring-star/15 aria-[invalid=true]:border-red-600';
+
+<form class="flex max-w-xl flex-col gap-5" novalidate (submit)="submit($event)">
+  <p class="text-sm text-muted">
+    <span>{{ copy.yourTime }}:</span>&ngsp;<strong class="text-twilight">{{ slotLabel() }}</strong
+    >&ngsp;·&ngsp;<button
+      type="button"
+      class="min-h-11 font-semibold text-star underline underline-offset-2"
+      (click)="back.emit()"
+    >
+      {{ copy.changeTime }}
+    </button>
+  </p>
+
+  <div class="flex flex-col gap-1.5" data-field="name" [attr.data-valid]="valid('name') || null">
+    <label for="demo-name" class="text-sm font-semibold">{{ copy.fields.name }}</label>
+    <div class="relative">
+      <input
+        id="demo-name"
+        type="text"
+        name="name"
+        autocomplete="name"
+        maxlength="200"
+        [class]="input"
+        [value]="f.name"
+        [attr.aria-invalid]="!!errors().name"
+        [attr.aria-describedby]="errors().name ? 'demo-name-error' : null"
+        (input)="set('name', $any($event.target).value)"
+        (blur)="blur('name')"
+      />
+      @if (valid('name')) {
+        <span
+          class="pointer-events-none absolute right-4 top-3 font-bold text-emerald-700"
+          aria-hidden="true"
+          >✓</span
+        >
+      }
+    </div>
+    @if (errorText('name'); as message) {
+      <span id="demo-name-error" class="text-xs text-red-700">{{ message }}</span>
+    }
+  </div>
+
+  <div class="flex flex-col gap-1.5" data-field="email" [attr.data-valid]="valid('email') || null">
+    <label for="demo-email" class="text-sm font-semibold">{{ copy.fields.email }}</label>
+    <div class="relative">
+      <input
+        id="demo-email"
+        type="email"
+        name="email"
+        autocomplete="email"
+        inputmode="email"
+        maxlength="320"
+        [class]="input"
+        [value]="f.email"
+        [attr.aria-invalid]="!!errors().email"
+        [attr.aria-describedby]="errors().email ? 'demo-email-error' : null"
+        (input)="set('email', $any($event.target).value)"
+        (blur)="blur('email')"
+      />
+      @if (valid('email')) {
+        <span
+          class="pointer-events-none absolute right-4 top-3 font-bold text-emerald-700"
+          aria-hidden="true"
+          >✓</span
+        >
+      }
+    </div>
+    @if (errorText('email'); as message) {
+      <span id="demo-email-error" class="text-xs text-red-700">{{ message }}</span>
+    }
+    @if (emailSuggestion(); as suggestion) {
+      <p
+        class="rounded-xl bg-sand px-3 py-2 text-sm"
+        data-testid="email-suggestion"
+        aria-live="polite"
+      >
+        {{ copy.didYouMean }}&ngsp;<button
+          type="button"
+          class="font-semibold text-star underline underline-offset-2"
+          (click)="applySuggestion(suggestion)"
+        >
+          {{ suggestion }}</button
+        >?
+      </p>
+    }
+  </div>
+
+  <div
+    class="flex flex-col gap-1.5"
+    data-field="company"
+    [attr.data-valid]="valid('company') || null"
+  >
+    <label for="demo-company" class="text-sm font-semibold">{{ copy.fields.company }}</label>
+    <div class="relative">
+      <input
+        id="demo-company"
+        type="text"
+        name="company"
+        autocomplete="organization"
+        maxlength="200"
+        [class]="input"
+        [value]="f.company"
+        [attr.aria-invalid]="!!errors().company"
+        [attr.aria-describedby]="errors().company ? 'demo-company-error' : null"
+        (input)="set('company', $any($event.target).value)"
+        (blur)="blur('company')"
+      />
+      @if (valid('company')) {
+        <span
+          class="pointer-events-none absolute right-4 top-3 font-bold text-emerald-700"
+          aria-hidden="true"
+          >✓</span
+        >
+      }
+    </div>
+    @if (errorText('company'); as message) {
+      <span id="demo-company-error" class="text-xs text-red-700">{{ message }}</span>
+    }
+  </div>
+
+  <div
+    class="flex flex-col gap-1.5"
+    data-field="heardAbout"
+    [attr.data-valid]="valid('heardAbout') || null"
+  >
+    <label for="demo-heard" class="text-sm font-semibold">{{ copy.fields.heardAbout }}</label>
+    <select
+      id="demo-heard"
+      name="heardAbout"
+      required
+      [class]="input"
+      [attr.aria-invalid]="!!errors().heardAbout"
+      [attr.aria-describedby]="errors().heardAbout ? 'demo-heard-error' : null"
+      (change)="choose('heardAboutCode', $any($event.target).value, 'heardAbout')"
+    >
+      <option value="" [selected]="!f.heardAboutCode">{{ copy.fields.choose }}</option>
+      @for (option of p.heardAboutOptions; track option.code) {
+        <option [value]="option.code" [selected]="f.heardAboutCode === option.code">
+          {{ option.label }}
+        </option>
+      }
+    </select>
+    @if (errorText('heardAbout'); as message) {
+      <span id="demo-heard-error" class="text-xs text-red-700">{{ message }}</span>
+    }
+  </div>
+
+  @if (selectedOption()?.allowsDetail) {
+    <div class="flex flex-col gap-1.5" data-field="heardAboutDetail">
+      <label for="demo-heard-detail" class="text-sm font-semibold">{{
+        copy.fields.heardAboutDetail
+      }}</label>
+      <input
+        id="demo-heard-detail"
+        type="text"
+        name="heardAboutDetail"
+        maxlength="100"
+        [class]="input"
+        [value]="f.heardAboutDetail"
+        [attr.aria-invalid]="!!errors().heardAboutDetail"
+        [attr.aria-describedby]="errors().heardAboutDetail ? 'demo-detail-error' : null"
+        (input)="set('heardAboutDetail', $any($event.target).value)"
+        (blur)="blur('heardAboutDetail')"
+      />
+      @if (errorText('heardAboutDetail'); as message) {
+        <span id="demo-detail-error" class="text-xs text-red-700">{{ message }}</span>
+      }
+    </div>
+  }
+
+  <ng-template #officeSizeField>
+    <div class="flex flex-col gap-1.5" data-field="officeSize">
+      <label for="demo-size" class="text-sm font-semibold">
+        {{ copy.fields.officeSize }}
+        @if (p.officeSizeField === 'Optional') {
+          <span class="font-normal text-muted">{{ copy.fields.optional }}</span>
+        }
+      </label>
+      <select
+        id="demo-size"
+        name="officeSize"
+        [class]="input"
+        [attr.aria-invalid]="!!errors().officeSize"
+        [attr.aria-describedby]="errors().officeSize ? 'demo-size-error' : null"
+        (change)="choose('officeSize', $any($event.target).value, 'officeSize')"
+      >
+        <option value="" [selected]="!f.officeSize">{{ copy.fields.choose }}</option>
+        @for (size of sizes; track size) {
+          <option [value]="size" [selected]="f.officeSize === size">{{ sizeLabel(size) }}</option>
+        }
+      </select>
+      @if (errorText('officeSize'); as message) {
+        <span id="demo-size-error" class="text-xs text-red-700">{{ message }}</span>
+      }
+    </div>
+  </ng-template>
+
+  <ng-template #phoneField>
+    <div
+      class="flex flex-col gap-1.5"
+      data-field="phone"
+      [attr.data-valid]="valid('phone') || null"
+    >
+      <label for="demo-phone" class="text-sm font-semibold">
+        {{ copy.fields.phone }}
+        @if (p.phoneField === 'Optional') {
+          <span class="font-normal text-muted">{{ copy.fields.optional }}</span>
+        }
+      </label>
+      <input
+        id="demo-phone"
+        type="tel"
+        name="phone"
+        autocomplete="tel"
+        inputmode="tel"
+        maxlength="30"
+        [class]="input"
+        [value]="f.phone"
+        [attr.aria-invalid]="!!errors().phone"
+        [attr.aria-describedby]="errors().phone ? 'demo-phone-error' : null"
+        (input)="set('phone', $any($event.target).value)"
+        (blur)="blur('phone')"
+      />
+      @if (errorText('phone'); as message) {
+        <span id="demo-phone-error" class="text-xs text-red-700">{{ message }}</span>
+      }
+    </div>
+  </ng-template>
+
+  <ng-template #interestField>
+    <div class="flex flex-col gap-1.5" data-field="interest">
+      <label for="demo-interest" class="text-sm font-semibold">
+        {{ copy.fields.interest }}
+        @if (p.interestField === 'Optional') {
+          <span class="font-normal text-muted">{{ copy.fields.optional }}</span>
+        }
+      </label>
+      <textarea
+        id="demo-interest"
+        name="interest"
+        rows="3"
+        maxlength="500"
+        [class]="input"
+        [value]="f.interest"
+        [attr.aria-invalid]="!!errors().interest"
+        [attr.aria-describedby]="errors().interest ? 'demo-interest-error' : null"
+        (input)="set('interest', $any($event.target).value)"
+        (blur)="blur('interest')"
+      ></textarea>
+      @if (errorText('interest'); as message) {
+        <span id="demo-interest-error" class="text-xs text-red-700">{{ message }}</span>
+      }
+    </div>
+  </ng-template>
+
+  @if (p.officeSizeField === 'Required') {
+    <ng-container [ngTemplateOutlet]="officeSizeField" />
+  }
+  @if (p.phoneField === 'Required') {
+    <ng-container [ngTemplateOutlet]="phoneField" />
+  }
+  @if (p.interestField === 'Required') {
+    <ng-container [ngTemplateOutlet]="interestField" />
+  }
+
+  @if (hasOptional()) {
+    <details
+      class="group rounded-2xl border border-dashed border-line px-4 py-3 open:flex open:flex-col open:gap-4"
+      data-testid="optional-details"
+    >
+      <summary class="min-h-8 cursor-pointer font-semibold">
+        {{ copy.addDetails }} <span class="font-normal text-muted">{{ copy.fields.optional }}</span>
+      </summary>
+      @if (optionalFields().officeSize) {
+        <ng-container [ngTemplateOutlet]="officeSizeField" />
+      }
+      @if (optionalFields().phone) {
+        <ng-container [ngTemplateOutlet]="phoneField" />
+      }
+      @if (optionalFields().interest) {
+        <ng-container [ngTemplateOutlet]="interestField" />
+      }
+    </details>
+  }
+
+  @if (p.marketingConsent) {
+    <label class="flex items-start gap-3 text-sm text-muted">
+      <input
+        type="checkbox"
+        name="marketingOptIn"
+        class="mt-0.5 h-5 w-5 shrink-0 rounded border-line accent-twilight"
+        [checked]="f.marketingOptIn"
+        (change)="set('marketingOptIn', $any($event.target).checked)"
+      />
+      <span>{{ p.marketingConsent }}</span>
+    </label>
+  }
+
+  <div #bot></div>
+
+  <div class="flex flex-col gap-3">
+    <button
+      type="submit"
+      class="min-h-12 rounded-full bg-twilight px-6 text-base font-semibold text-white transition-colors hover:bg-star disabled:cursor-not-allowed disabled:opacity-60"
+      [disabled]="busy() || blocked() || checking()"
+    >
+      {{ busy() || checking() ? copy.sending : copy.submit }}
+    </button>
+    @if (botProblem()) {
+      <div
+        class="flex flex-col gap-2 rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm"
+        role="alert"
+        data-testid="bot-problem"
+      >
+        <span>{{ copy.errors.botLoad(supportEmail) }}</span>
+        <span class="flex flex-wrap gap-4">
+          <button
+            type="button"
+            class="min-h-11 font-semibold text-star underline"
+            (click)="retryBot($event)"
+          >
+            {{ copy.errors.retry }}
+          </button>
+          <a
+            class="inline-flex min-h-11 items-center font-semibold text-star underline"
+            [href]="'mailto:' + supportEmail"
+            >{{ copy.writeUs }}</a
+          >
+        </span>
+      </div>
+    }
+    @if (p.privacyNotice) {
+      <!-- prettier-ignore -->
+      <p class="text-xs text-muted">@for (part of notice(); track $index) {@if (part.link) {<a class="font-semibold text-star underline" [routerLink]="part.link" target="_blank">{{ part.text }}</a>} @else {<span>{{ part.text }}</span>}}</p>
+    }
+  </div>
+</form>

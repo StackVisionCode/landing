@@ -1,0 +1,81 @@
+@let copy = t().demoBooking;
+<form class="flex max-w-xl flex-col gap-5" novalidate (submit)="submit($event)">
+  <p class="text-base">
+    {{ copy.verify.sent(email()) }}&ngsp;<button
+      type="button"
+      class="min-h-11 font-semibold text-star underline underline-offset-2"
+      (click)="editDetails.emit()"
+    >
+      {{ copy.editEmail }}
+    </button>
+  </p>
+
+  <div class="flex items-center gap-3 rounded-2xl bg-cream px-4 py-3 text-sm">
+    <svg class="h-10 w-10 shrink-0" viewBox="0 0 40 40" aria-hidden="true">
+      <circle cx="20" cy="20" r="18" fill="none" stroke-width="4" class="stroke-line" />
+      <circle
+        cx="20"
+        cy="20"
+        r="18"
+        fill="none"
+        stroke-width="4"
+        stroke-linecap="round"
+        class="origin-center -rotate-90 stroke-star transition-[stroke-dashoffset] duration-1000 ease-linear motion-reduce:transition-none"
+        [attr.stroke-dasharray]="ring"
+        [attr.stroke-dashoffset]="ringOffset()"
+      />
+    </svg>
+    <p aria-live="off">{{ copy.heldSlot(slotLabel(), clock(heldSeconds())) }}</p>
+  </div>
+
+  <fieldset class="flex flex-col gap-3">
+    <legend class="mb-2 text-xs font-bold uppercase tracking-[0.08em] text-muted">
+      {{ copy.verify.code }}
+    </legend>
+    <div class="flex gap-2">
+      @for (i of indexes; track i) {
+        <input
+          data-otp
+          type="text"
+          inputmode="numeric"
+          pattern="[0-9]*"
+          maxlength="6"
+          class="h-14 w-11 rounded-2xl border border-line bg-white text-center font-display text-2xl font-bold focus:border-star focus:outline-none focus:ring-4 focus:ring-star/15 sm:h-16 sm:w-14"
+          [attr.autocomplete]="i === 0 ? 'one-time-code' : 'off'"
+          [attr.aria-label]="copy.digitOf(i + 1)"
+          [attr.aria-invalid]="invalid()"
+          [attr.aria-describedby]="invalid() ? 'demo-code-error' : null"
+          [value]="digits()[i]"
+          (input)="onInput(i, $event)"
+          (keydown)="onKeydown(i, $event)"
+          (paste)="onPaste(i, $event)"
+        />
+      }
+    </div>
+    @if (invalid()) {
+      <span id="demo-code-error" class="text-sm text-red-700" role="alert">{{
+        copy.errors.invalidCode
+      }}</span>
+    }
+  </fieldset>
+
+  <div class="flex flex-wrap items-center gap-3">
+    <button
+      type="submit"
+      class="min-h-12 rounded-full bg-twilight px-6 text-base font-semibold text-white transition-colors hover:bg-star disabled:cursor-not-allowed disabled:opacity-60"
+      [disabled]="busy() || blocked() || digits().join('').length !== 6"
+    >
+      {{ busy() ? copy.verify.verifying : copy.verify.submit }}
+    </button>
+    <button
+      type="button"
+      class="min-h-11 rounded-full border border-twilight/20 bg-white px-4 text-sm font-semibold hover:border-twilight/40 disabled:opacity-60"
+      [disabled]="resendSeconds() > 0 || blocked()"
+      (click)="resend.emit()"
+    >
+      {{ resendSeconds() > 0 ? copy.verify.resendIn(clock(resendSeconds())) : copy.verify.resend }}
+    </button>
+  </div>
+
+  <p class="text-xs text-muted">{{ copy.verify.already }}</p>
+</form>
