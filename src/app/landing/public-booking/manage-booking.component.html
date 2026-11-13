@@ -1,0 +1,200 @@
+@let copy = t().demoBooking;
+<div class="flex min-h-screen flex-col bg-cream font-sans text-twilight">
+  <header class="sticky top-0 z-20 border-b border-line bg-white/80 backdrop-blur-md">
+    <div class="mx-auto flex h-16 max-w-3xl items-center justify-between gap-3 px-4 sm:px-6">
+      <a routerLink="/" class="flex items-center gap-2" [attr.aria-label]="brand">
+        <img src="img/logo-mark.png" alt="" class="h-7 w-auto" />
+        <span class="ml-0.5 font-display text-[22px] font-extrabold tracking-tight text-twilight"
+          >Tax<span class="text-star">offix</span></span
+        >
+      </a>
+      <a
+        routerLink="/"
+        class="min-h-11 py-3 text-sm font-semibold text-star underline underline-offset-2"
+        >{{ copy.backToSite }}</a
+      >
+    </div>
+  </header>
+
+  <main class="mx-auto w-full max-w-2xl flex-1 px-4 py-10 sm:px-6">
+    <div class="rounded-[28px] bg-white p-6 shadow-[0_24px_60px_-24px_rgba(8,54,69,.35)] sm:p-8">
+      <h1 class="font-display text-3xl font-extrabold tracking-tight">{{ copy.manage.title }}</h1>
+
+      @switch (state()) {
+        @case ('loading') {
+          <p class="mt-6 text-sm text-muted" aria-live="polite">{{ copy.manage.loading }}</p>
+        }
+        @case ('invalid') {
+          <div class="mt-6 flex flex-col gap-3" data-testid="manage-invalid">
+            <p class="font-semibold">{{ copy.manage.invalid }}</p>
+            <p class="text-sm text-muted">{{ copy.manage.invalidHint }}</p>
+            <a
+              routerLink="/demo"
+              class="inline-flex min-h-11 items-center self-start rounded-full bg-twilight px-5 text-sm font-semibold text-white hover:bg-star"
+            >
+              {{ copy.manage.bookNew }}
+            </a>
+          </div>
+        }
+        @case ('error') {
+          <div class="mt-6 flex flex-col gap-3" role="alert">
+            <p class="font-semibold">{{ copy.errors.network }}</p>
+            <button
+              type="button"
+              class="min-h-11 self-start rounded-full bg-twilight px-5 text-sm font-semibold text-white hover:bg-star"
+              (click)="load()"
+            >
+              {{ copy.errors.retry }}
+            </button>
+          </div>
+        }
+        @case ('ready') {
+          @if (view(); as booking) {
+            @if (noticeText(); as text) {
+              <div
+                class="mt-5 rounded-xl border border-line bg-cream/60 px-4 py-3 text-sm"
+                role="status"
+                aria-live="polite"
+                data-testid="manage-notice"
+              >
+                {{ text }}
+              </div>
+            }
+
+            <div class="mt-6 overflow-hidden rounded-[22px] border border-line">
+              <div class="flex items-center gap-3 bg-cream px-5 py-4">
+                <span
+                  class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-azure text-sm font-bold text-twilight"
+                  aria-hidden="true"
+                  >{{ initials() }}</span
+                >
+                <div class="min-w-0 flex-1">
+                  <p class="font-semibold">{{ copy.manage.with(booking.hostName) }}</p>
+                  <p class="text-sm text-muted">
+                    {{ booking.title }} · {{ copy.minutes(booking.durationMinutes) }}
+                  </p>
+                </div>
+                <span
+                  class="rounded-full border border-line bg-white px-3 py-0.5 text-xs font-semibold"
+                  >{{ statusLabel() }}</span
+                >
+              </div>
+              <div class="flex flex-col gap-3 border-t border-dashed border-line px-5 py-4">
+                <p class="font-display text-lg font-bold">{{ when() }}</p>
+                @if (booking.status === 'Confirmed' && booking.meetingUrl) {
+                  <a
+                    class="inline-flex min-h-11 items-center self-start rounded-full bg-twilight px-5 text-sm font-semibold text-white hover:bg-star"
+                    [href]="booking.meetingUrl"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {{ copy.confirmed.join }}
+                  </a>
+                }
+              </div>
+            </div>
+
+            @switch (mode()) {
+              @case ('view') {
+                @if (booking.canChange) {
+                  <div class="mt-6 flex flex-wrap gap-3">
+                    <button
+                      type="button"
+                      class="min-h-11 rounded-full border border-twilight/20 bg-white px-5 text-sm font-semibold hover:border-twilight/40"
+                      (click)="startReschedule()"
+                    >
+                      {{ copy.manage.reschedule }}
+                    </button>
+                    <button
+                      type="button"
+                      class="min-h-11 rounded-full border border-red-200 bg-white px-5 text-sm font-semibold text-red-700 hover:border-red-400"
+                      (click)="startCancel()"
+                    >
+                      {{ copy.manage.cancel }}
+                    </button>
+                  </div>
+                }
+              }
+              @case ('reschedule') {
+                <section class="mt-6 flex flex-col gap-4" aria-labelledby="manage-reschedule-title">
+                  <h2 id="manage-reschedule-title" class="font-semibold">
+                    {{ copy.manage.pickNew }}
+                  </h2>
+                  <app-slot-picker
+                    [days]="picker.calendarDays()"
+                    [selectedDay]="picker.selectedDay()"
+                    [selectedSlot]="selectedSlot()"
+                    [timeZone]="picker.timeZone()"
+                    [loading]="picker.loading()"
+                    [busy]="busy()"
+                    [canGoBack]="picker.canGoBack()"
+                    [canGoForward]="picker.canGoForward()"
+                    (dayChange)="picker.selectDay($event)"
+                    (slotChange)="selectedSlot.set($event)"
+                    (zoneChange)="picker.setTimeZone($event)"
+                    (previous)="picker.previous()"
+                    (next)="picker.next()"
+                  />
+                  <div class="flex flex-wrap items-center gap-3">
+                    <button
+                      type="button"
+                      class="min-h-12 rounded-full bg-twilight px-6 text-sm font-semibold text-white hover:bg-star disabled:cursor-not-allowed disabled:opacity-60"
+                      [disabled]="!selectedSlot() || busy() || cooldown.active()"
+                      (click)="confirmReschedule()"
+                    >
+                      {{ busy() ? copy.manage.saving : copy.manage.confirmReschedule }}
+                    </button>
+                    @if (newWhen()) {
+                      <span class="text-sm text-muted">{{ newWhen() }}</span>
+                    }
+                    <button
+                      type="button"
+                      class="min-h-11 text-sm font-semibold text-star underline-offset-2 hover:underline"
+                      (click)="backToView()"
+                    >
+                      {{ copy.back }}
+                    </button>
+                  </div>
+                </section>
+              }
+              @case ('cancel') {
+                <section class="mt-6 flex flex-col gap-3" aria-labelledby="manage-cancel-title">
+                  <h2 id="manage-cancel-title" class="font-semibold">
+                    {{ copy.manage.cancelTitle }}
+                  </h2>
+                  <label class="flex flex-col gap-1 text-sm font-semibold">
+                    {{ copy.manage.reasonLabel }}
+                    <textarea
+                      rows="3"
+                      [attr.maxlength]="maxReason"
+                      class="rounded-xl border border-line bg-white px-4 py-3 text-base font-normal focus:outline-none focus:ring-2 focus:ring-star/25"
+                      [value]="reason()"
+                      (input)="reason.set($any($event.target).value)"
+                    ></textarea>
+                  </label>
+                  <div class="flex flex-wrap gap-3">
+                    <button
+                      type="button"
+                      class="min-h-11 rounded-full bg-red-700 px-5 text-sm font-semibold text-white hover:bg-red-800 disabled:opacity-60"
+                      [disabled]="busy() || cooldown.active()"
+                      (click)="confirmCancel()"
+                    >
+                      {{ busy() ? copy.manage.saving : copy.manage.confirmCancel }}
+                    </button>
+                    <button
+                      type="button"
+                      class="min-h-11 rounded-full border border-twilight/20 bg-white px-5 text-sm font-semibold"
+                      (click)="backToView()"
+                    >
+                      {{ copy.manage.keep }}
+                    </button>
+                  </div>
+                </section>
+              }
+            }
+          }
+        }
+      }
+    </div>
+  </main>
+</div>

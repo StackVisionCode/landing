@@ -1,0 +1,229 @@
+@let copy = t().demoBooking;
+@let page = store.page();
+@switch (store.pageState()) {
+  @case ('loading') {
+    <p class="py-16 text-center text-sm text-muted" aria-live="polite">{{ copy.loading }}</p>
+  }
+  @case ('error') {
+    <div
+      class="mx-auto max-w-xl rounded-[24px] border border-line bg-white p-8 text-center"
+      role="alert"
+    >
+      <p class="font-semibold">{{ copy.errors.network }}</p>
+      <button
+        type="button"
+        class="mt-4 min-h-11 rounded-full bg-twilight px-5 text-sm font-semibold text-white hover:bg-star"
+        (click)="retry()"
+      >
+        {{ copy.errors.retry }}
+      </button>
+    </div>
+  }
+  @case ('unavailable') {
+    <div
+      class="mx-auto max-w-xl rounded-[24px] border border-line bg-white p-8"
+      data-testid="demo-unavailable"
+    >
+      <p class="text-lg">{{ copy.unavailable(supportEmail) }}</p>
+      <a
+        class="mt-5 inline-flex min-h-11 items-center rounded-full bg-twilight px-5 text-sm font-semibold text-white hover:bg-star"
+        [href]="'mailto:' + supportEmail"
+      >
+        {{ copy.writeUs }}
+      </a>
+    </div>
+  }
+  @case ('ready') {
+    @if (page) {
+      <div class="grid items-start gap-6 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)] lg:gap-8">
+        <aside
+          class="relative flex flex-col gap-5 overflow-hidden rounded-[28px] bg-twilight p-6 text-white lg:sticky lg:top-24 lg:p-7"
+          data-testid="demo-context"
+        >
+          <div
+            class="pointer-events-none absolute -right-28 -top-28 h-64 w-64 rounded-full bg-[radial-gradient(circle,rgba(77,216,255,.35),transparent_70%)]"
+            aria-hidden="true"
+          ></div>
+          <div class="flex flex-wrap gap-2 text-xs font-semibold">
+            <span class="rounded-full bg-lime px-3 py-1 text-twilight">{{ copy.free }}</span>
+            <span class="rounded-full border border-white/20 bg-white/10 px-3 py-1">{{
+              copy.minutes(page.durationMinutes)
+            }}</span>
+            <span class="rounded-full border border-white/20 bg-white/10 px-3 py-1">{{
+              copy.liveCall
+            }}</span>
+          </div>
+          <h1
+            class="font-display text-3xl font-extrabold leading-tight tracking-tight text-balance"
+          >
+            {{ page.title }}
+          </h1>
+          @if (hostsLine()) {
+            <div class="flex items-center gap-3">
+              <div class="flex" aria-hidden="true">
+                @for (initials of hostInitials(); track $index) {
+                  <span
+                    class="flex h-11 w-11 items-center justify-center rounded-full border-[3px] border-twilight text-sm font-bold text-twilight"
+                    [class]="$index % 2 === 0 ? 'bg-azure' : 'bg-lime'"
+                    [class.-ml-3]="$index > 0"
+                    >{{ initials }}</span
+                  >
+                }
+              </div>
+              <div>
+                <p class="font-semibold">{{ hostsLine() }}</p>
+                <p class="text-sm text-white/70">{{ copy.specialists }}</p>
+              </div>
+            </div>
+          }
+          <ul class="hidden flex-col gap-3 sm:flex">
+            @for (item of copy.agenda; track $index) {
+              <li class="grid grid-cols-[28px_1fr] items-start gap-3 text-sm text-white/85">
+                <span
+                  class="flex h-7 w-7 items-center justify-center rounded-full bg-lime/15 text-xs font-bold text-lime"
+                  aria-hidden="true"
+                  >{{ $index + 1 }}</span
+                >
+                <span
+                  ><b class="block text-[15px] text-white">{{ item.title }}</b
+                  >{{ item.text }}</span
+                >
+              </li>
+            }
+          </ul>
+          <dl
+            class="flex flex-col gap-2 border-t border-white/15 pt-4 text-sm"
+            data-testid="demo-summary"
+            aria-live="polite"
+          >
+            <div class="flex justify-between gap-3">
+              <dt class="text-white/70">{{ copy.summaryWhen }}</dt>
+              <dd class="text-right font-semibold">{{ summaryWhen() }}</dd>
+            </div>
+            <div class="flex justify-between gap-3">
+              <dt class="text-white/70">{{ copy.summaryZone }}</dt>
+              <dd class="text-right font-semibold">{{ summaryZone() }}</dd>
+            </div>
+            <div class="flex justify-between gap-3">
+              <dt class="text-white/70">{{ copy.summaryWith }}</dt>
+              <dd class="text-right font-semibold">{{ summaryWith() }}</dd>
+            </div>
+          </dl>
+        </aside>
+
+        <section
+          class="flex min-w-0 flex-col gap-6 rounded-[28px] bg-white p-5 shadow-[0_24px_60px_-24px_rgba(8,54,69,.35)] sm:p-8"
+        >
+          @if (store.step() !== 'confirmed') {
+            <div class="flex flex-col gap-3">
+              <div class="flex gap-1.5" aria-hidden="true">
+                @for (n of [1, 2, 3]; track n) {
+                  <span
+                    class="h-1.5 flex-1 rounded-full transition-colors duration-300"
+                    [class]="n <= stepNumber() ? 'bg-star' : 'bg-line'"
+                  ></span>
+                }
+              </div>
+              <div class="flex flex-wrap items-baseline justify-between gap-2">
+                <h2 class="font-display text-2xl font-bold tracking-tight">{{ stepTitle() }}</h2>
+                <p class="text-sm text-muted" aria-live="polite">
+                  {{ copy.stepOf(stepNumber(), totalSteps()) }}
+                </p>
+              </div>
+            </div>
+          }
+
+          @if (noticeText(); as text) {
+            <div
+              class="flex flex-wrap items-center justify-between gap-2 rounded-2xl border px-4 py-3 text-sm"
+              [class]="
+                store.notice() === 'resent'
+                  ? 'border-line bg-cream/60'
+                  : 'border-amber-300 bg-amber-50'
+              "
+              #notice
+              tabindex="-1"
+              role="status"
+              aria-live="polite"
+              data-testid="demo-notice"
+            >
+              <span>{{ text }}</span>
+              @if (store.notice() === 'network') {
+                <button
+                  type="button"
+                  class="min-h-11 font-semibold text-star underline"
+                  (click)="retry()"
+                >
+                  {{ copy.errors.retry }}
+                </button>
+              }
+            </div>
+          }
+
+          @switch (store.step()) {
+            @case ('slot') {
+              <app-slot-picker
+                [days]="store.picker.calendarDays()"
+                [selectedDay]="store.picker.selectedDay()"
+                [selectedSlot]="store.selectedSlot()"
+                [quickPicks]="store.quickPicks()"
+                [timeZone]="store.picker.timeZone()"
+                [loading]="store.picker.loading()"
+                [busy]="store.busy()"
+                [canGoBack]="store.picker.canGoBack()"
+                [canGoForward]="store.picker.canGoForward()"
+                (dayChange)="store.picker.selectDay($event)"
+                (slotChange)="store.selectSlot($event)"
+                (zoneChange)="store.picker.setTimeZone($event)"
+                (previous)="store.picker.previous()"
+                (next)="store.picker.next()"
+              />
+            }
+            @case ('details') {
+              <app-booking-details
+                [page]="page"
+                [form]="store.form()"
+                [errors]="store.fieldErrors()"
+                [validFields]="store.validFields()"
+                [emailSuggestion]="store.emailSuggestion()"
+                [busy]="store.busy()"
+                [blocked]="store.cooldown.active()"
+                [slotLabel]="slotLabel()"
+                (formChange)="store.updateForm($event)"
+                (fieldBlur)="store.checkField($event)"
+                (submitted)="store.submit($event)"
+                (back)="store.backToSlots()"
+              />
+            }
+            @case ('verify') {
+              <app-verify-code
+                [email]="store.form().email"
+                [slotLabel]="slotLabel()"
+                [heldSeconds]="store.holdSecondsLeft()"
+                [invalid]="!!store.fieldErrors().code"
+                [busy]="store.busy()"
+                [blocked]="store.cooldown.active()"
+                [resendSeconds]="store.resendCooldown.secondsLeft()"
+                (verified)="store.verify($event)"
+                (resend)="store.resend()"
+                (editDetails)="store.editDetails()"
+              />
+            }
+            @case ('confirmed') {
+              @if (store.confirmation(); as confirmation) {
+                <app-booking-confirmation
+                  [confirmation]="confirmation"
+                  [title]="page.title"
+                  [email]="store.form().email"
+                  [timeZone]="store.picker.timeZone()"
+                  [firstName]="store.firstName()"
+                  (done)="done.emit()"
+                />
+              }
+            }
+          }
+        </section>
+      </div>
+    }
+  }
+}

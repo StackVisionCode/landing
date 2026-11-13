@@ -25,6 +25,15 @@ describe('Rutas del landing', () => {
     expect(mode('account/**')).toBe(RenderMode.Client);
   });
 
+  it('la demo y su gestión son del cliente y se cargan perezosas', () => {
+    const mode = (path: string) => serverRoutes.find(route => route.path === path)?.renderMode;
+
+    expect(mode('demo')).toBe(RenderMode.Client);
+    expect(mode('demo/manage')).toBe(RenderMode.Client);
+    expect(routes.find(route => route.path === 'demo')?.loadComponent).toBeDefined();
+    expect(routes.find(route => route.path === 'demo/manage')?.loadComponent).toBeDefined();
+  });
+
   it('nginx cae al shell vacío, no al home pre-renderizado', () => {
     const conf = readFileSync(resolve(process.cwd(), 'nginx.conf'), 'utf8');
 
