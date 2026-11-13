@@ -64,4 +64,42 @@ describe('Turnstile', () => {
     expect(widget.failed).toBe(true);
     expect(await widget.next()).toBeNull();
   });
+
+  it('el checkbox se ve siempre, ocupa el ancho del formulario y habla el idioma de la página', async () => {
+    let options: Record<string, unknown> | null = null;
+    (window as { turnstile?: unknown }).turnstile = {
+      render: (_: HTMLElement, o: Record<string, unknown>) => {
+        options = o;
+        return 'w1';
+      },
+      reset: () => undefined,
+      remove: () => undefined,
+    };
+    await new TurnstileWidget().mount(document.createElement('div'), 'site-key', undefined, 'es');
+    expect(options).toMatchObject({
+      sitekey: 'site-key',
+      action: 'public_booking',
+      appearance: 'always',
+      size: 'flexible',
+      theme: 'light',
+      language: 'es',
+    });
+  });
+
+  it('en un teléfono angosto (menos de 300 px libres) usa el tamaño compacto para no desbordarse', async () => {
+    let options: Record<string, unknown> | null = null;
+    (window as { turnstile?: unknown }).turnstile = {
+      render: (_: HTMLElement, o: Record<string, unknown>) => {
+        options = o;
+        return 'w1';
+      },
+      reset: () => undefined,
+      remove: () => undefined,
+    };
+    const narrow = document.createElement('div');
+    Object.defineProperty(narrow, 'clientWidth', { value: 288 });
+    await new TurnstileWidget().mount(narrow, 'site-key');
+    expect(options).toMatchObject({ size: 'compact' });
+  });
 });
+
