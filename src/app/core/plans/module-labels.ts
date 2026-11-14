@@ -18,6 +18,8 @@ export const MODULE_LABELS: Record<string, { es: string; en: string }> = {
   miles: { es: 'Registro de millaje', en: 'Mileage tracking' },
   builder: { es: 'Constructor de formularios', en: 'Form builder' },
   irs: { es: 'Herramientas para el IRS', en: 'IRS tools' },
+  // Nombre comercial: igual en los dos idiomas.
+  financial_insights: { es: 'Financial Insights', en: 'Financial Insights' },
 };
 
 /**
@@ -39,6 +41,7 @@ export const OFFERED_MODULES: readonly string[] = [
   'meetings',
   'email',
   'campaigns',
+  'financial_insights',
 ];
 
 export function moduleLabel(key: string, lang: Lang): string {
@@ -62,6 +65,7 @@ export const MODULE_ICONS: Record<string, string> = {
   miles: 'car-outline',
   builder: 'construct-outline',
   irs: 'shield-checkmark-outline',
+  financial_insights: 'analytics-outline',
 };
 
 export function moduleIcon(key: string): string {

@@ -274,6 +274,15 @@ describe('AccountAddOnsComponent', () => {
     expect(page.textContent).not.toContain('Correo');
   });
 
+  it('el add-on de Financial Insights se nombra bien, nunca con el código', () => {
+    const { page } = create([
+      addOn('addon-financial', 'Available', { name: 'financial_insights', modules: ['financial_insights'] }),
+    ]);
+
+    expect(page.textContent).toContain('Financial Insights');
+    expect(page.textContent).not.toContain('financial_insights');
+  });
+
   it('si el complemento no aporta módulos, cae al nombre del catálogo', () => {
     // Un add-on de solo cupos (sin `module.*`) no tiene etiqueta que buscar.
     const { page } = create([
