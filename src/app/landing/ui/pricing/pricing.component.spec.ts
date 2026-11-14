@@ -5,7 +5,7 @@ import { PlansService } from '@core/plans/plans.service';
 import type { PlanResponse } from '@core/plans/plans.models';
 import { PricingComponent } from './pricing.component';
 
-function plan(code: string, monthly: number, rank: number, isFeatured = false): PlanResponse {
+function plan(code: string, monthly: number, rank: number, isFeatured = false, enabledModules: string[] = []): PlanResponse {
   return {
     id: `${code}-id`,
     code,
@@ -18,7 +18,7 @@ function plan(code: string, monthly: number, rank: number, isFeatured = false): 
     maxUsers: 3,
     maxPendingInvitations: 5,
     storageQuotaBytes: 15 * 1024 ** 3,
-    enabledModules: [],
+    enabledModules,
     rank,
     isFeatured,
   };
@@ -82,5 +82,12 @@ describe('PricingComponent', () => {
     expect(page.textContent).toContain('16');
     expect(page.textContent).not.toContain('2 months free');
     expect(page.textContent).not.toContain('2 meses gratis');
+  });
+
+  it('un plan con Financial Insights lo nombra, sin el código interno', () => {
+    const { page } = create([plan('enterprise', 99, 3, true, ['customers', 'financial_insights'])]);
+
+    expect(page.textContent).toContain('Financial Insights');
+    expect(page.textContent).not.toContain('financial_insights');
   });
 });
