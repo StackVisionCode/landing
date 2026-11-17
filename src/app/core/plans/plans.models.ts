@@ -12,7 +12,8 @@ export interface PlanResponse {
   tier: string;
   monthlyPriceUsd: number;
   supportedBillingCycles: string[];
-  pricesUsdByCycle: Record<string, number>;
+  /** Solo trae los ciclos que el plan vende; un ciclo sin precio no está. */
+  pricesUsdByCycle: Partial<Record<string, number>>;
   maxUsers: number;
   maxPendingInvitations: number;
   storageQuotaBytes: number;

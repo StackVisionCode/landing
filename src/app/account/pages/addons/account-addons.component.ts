@@ -1,8 +1,11 @@
 import { CUSTOM_ELEMENTS_SCHEMA, Component, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { catchError, of } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { AccountAddOn, AccountOpenAddOnCheckout, AccountSubscription } from '@core/account/account-subscription.models';
 import { AccountSubscriptionService } from '@core/account/account-subscription.service';
-import { AccountPaymentOption } from '@core/account/account-payment-options.service';
+import { AccountPaymentOption, AccountPaymentOptionsService } from '@core/account/account-payment-options.service';
+import { checkoutProviderName, otherCheckoutOption } from '@core/account/checkout-provider';
 import { AccountSessionStore } from '@core/auth/account-session.store';
 import { apiErrorCode } from '@core/http/api-error';
 import { nextPollDelayMs } from '@core/http/polling';
@@ -158,7 +161,6 @@ export class AccountAddOnsComponent {
         addOnCode: addOn.code,
         quantity: 1,
         autoRenew: true,
-        payerEmail: email,
         successUrl: `${back}?checkout=success`,
         cancelUrl: `${back}?checkout=cancelled`,
         provider: option.provider,
@@ -219,6 +221,58 @@ export class AccountAddOnsComponent {
         this.cancelNotice.set({ kind: 'error' });
       },
     });
+  }
+
+  /** Métodos habilitados, para ofrecer el otro sobre una compra abierta. */
+  private readonly paymentOptions = toSignal(
+    inject(AccountPaymentOptionsService)
+      .getEnabled()
+      .pipe(catchError(() => of([] as AccountPaymentOption[]))),
+    { initialValue: [] as AccountPaymentOption[] },
+  );
+
+  /** Con qué se empezó la compra; vacío si no se sabe. */
+  providerNameOf(checkout: AccountOpenAddOnCheckout): string {
+    return checkoutProviderName(checkout.checkoutProvider, this.t().accCheckoutProviderCard);
+  }
+
+  /** El otro método; un cambio de tamaño se reabre desde el CRM, aquí solo se cancela o se retoma. */
+  otherOptionFor(checkout: AccountOpenAddOnCheckout): AccountPaymentOption | null {
+    if (checkout.upgradesTenantAddOnId || !checkout.addOnCode) return null;
+    return otherCheckoutOption(checkout.checkoutProvider, this.paymentOptions());
+  }
+
+  otherProviderNameFor(checkout: AccountOpenAddOnCheckout): string {
+    return checkoutProviderName(this.otherOptionFor(checkout)?.provider, this.t().accCheckoutProviderCard);
+  }
+
+  /** La misma compra con el otro método: el backend cierra la abierta y abre la nueva. */
+  payWithOtherProvider(checkout: AccountOpenAddOnCheckout): void {
+    const option = this.otherOptionFor(checkout);
+    if (!option || this.buyingCode() !== null || this.cancellingId() !== null) return;
+    this.buyingCode.set(checkout.addOnCode);
+    const back = `${window.location.origin}/account/add-ons`;
+    this.api
+      .startAddOnCheckout({
+        addOnCode: checkout.addOnCode,
+        quantity: checkout.quantity || 1,
+        autoRenew: true,
+        successUrl: `${back}?checkout=success`,
+        cancelUrl: `${back}?checkout=cancelled`,
+        provider: option.provider,
+        method: option.method,
+      })
+      .subscribe({
+        next: started => {
+          this.storeIntent(started.addOnPurchaseIntentId);
+          window.location.assign(started.checkoutUrl);
+        },
+        error: err => {
+          this.buyingCode.set(null);
+          this.buyError.set(this.messageFor(err));
+          this.load();
+        },
+      });
   }
 
   /** Pasa al proveedor para terminar de pagar un intent todavía abierto. */

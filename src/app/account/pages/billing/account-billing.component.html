@@ -2,6 +2,32 @@
   <h1 class="text-2xl font-semibold tracking-tight text-twilight">{{ t().accBillingTitle }}</h1>
   <p class="mt-1 text-[13px] text-muted">{{ t().accBillingSubtitle }}</p>
 
+  <app-due-payment (dueIds)="dueIds.set($event)" />
+
+  <article class="mt-6 rounded-xl border border-line bg-white p-5" aria-labelledby="discount-title">
+    <div class="flex flex-wrap items-baseline justify-between gap-2">
+      <h2 id="discount-title" class="text-sm font-semibold text-twilight">{{ t().accDiscountTitle }}</h2>
+      <p class="text-sm" [class.text-twilight]="discount()" [class.text-muted]="!discount()">{{ discountLabel() }}</p>
+    </div>
+    <form class="mt-4 flex flex-col gap-2 sm:flex-row sm:items-end" (submit)="$event.preventDefault(); redeem()">
+      <label class="flex min-w-0 flex-1 flex-col gap-1 text-[13px] text-muted">
+        {{ t().accDiscountHaveCode }}
+        <input type="text" name="discountCode" autocomplete="off" [attr.aria-label]="t().accDiscountCodeLabel"
+          [value]="codeInput()" (input)="codeInput.set($any($event.target).value)" [disabled]="redeeming()"
+          class="rounded-lg border border-line px-3 py-2 text-sm text-twilight uppercase placeholder:normal-case" />
+      </label>
+      <button type="submit" [disabled]="redeeming() || !codeInput().trim() || waiting()"
+        class="rounded-lg bg-twilight px-4 py-2 text-[13px] font-semibold text-white hover:bg-star disabled:opacity-50">
+        {{ redeeming() ? t().accDiscountApplying : t().accDiscountApply }}
+      </button>
+    </form>
+    @if (redeemError(); as message) {
+      <p role="alert" class="mt-3 text-[13px] text-twilight">{{ message }}</p>
+    } @else if (redeemDone()) {
+      <p role="status" class="mt-3 text-[13px] text-muted">{{ t().accDiscountApplied }}</p>
+    }
+  </article>
+
   @if (receiptError(); as message) {
     <p role="alert" class="mt-4 rounded-xl border border-twilight/40 bg-sand px-4 py-3 text-sm text-twilight">{{ message }}</p>
   }
@@ -42,6 +68,9 @@
               </div>
               <div class="shrink-0 text-right">
                 <p class="text-sm font-semibold text-twilight tabular-nums">{{ amountOf(row) }}</p>
+                @if (paymentDiscountOf(row); as discounted) {
+                  <p class="text-xs text-muted">{{ discounted }}</p>
+                }
                 @if (refundLabel(row); as refunded) {
                   <p class="text-xs text-muted">{{ refunded }}</p>
                 }
@@ -96,6 +125,9 @@
                 <td class="px-6 py-3 text-twilight">{{ descriptionOf(row) }}</td>
                 <td class="whitespace-nowrap px-6 py-3 text-right font-semibold text-twilight tabular-nums">
                   {{ amountOf(row) }}
+                  @if (paymentDiscountOf(row); as discounted) {
+                    <span class="block text-xs font-normal text-muted">{{ discounted }}</span>
+                  }
                   @if (refundLabel(row); as refunded) {
                     <span class="block text-xs font-normal text-muted">{{ refunded }}</span>
                   }
@@ -137,13 +169,22 @@
         </table>
       </div>
 
-      @if (hasMore()) {
-        <div class="border-t border-line px-6 py-4 text-center">
-          <button type="button" (click)="loadMore()" [disabled]="loadingMore()"
-            class="rounded-lg border border-line bg-white px-4 py-2 text-[13px] font-semibold text-twilight hover:bg-cream disabled:opacity-60">
-            {{ loadingMore() ? t().accBillingLoadingMore : t().accBillingMore }}
-          </button>
-        </div>
+      @if (totalPages() > 1) {
+        <nav class="flex flex-wrap items-center justify-between gap-3 border-t border-line px-5 py-4 md:px-6"
+          [attr.aria-label]="t().accBillingPagination">
+          <p class="text-xs text-muted tabular-nums">{{ rangeLabel() }}</p>
+          <div class="flex items-center gap-2">
+            <button type="button" (click)="goToPage(page() - 1)" [disabled]="!hasPrevious() || loadingPage()"
+              class="rounded-lg border border-line bg-white px-3 py-1.5 text-[13px] font-semibold text-twilight hover:bg-cream disabled:opacity-50">
+              {{ t().accBillingPrevious }}
+            </button>
+            <span class="text-xs text-muted tabular-nums" aria-live="polite">{{ pageLabel() }}</span>
+            <button type="button" (click)="goToPage(page() + 1)" [disabled]="!hasNext() || loadingPage()"
+              class="rounded-lg border border-line bg-white px-3 py-1.5 text-[13px] font-semibold text-twilight hover:bg-cream disabled:opacity-50">
+              {{ t().accBillingNext }}
+            </button>
+          </div>
+        </nav>
       }
     </article>
   }

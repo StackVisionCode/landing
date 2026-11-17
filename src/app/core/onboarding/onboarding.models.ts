@@ -102,6 +102,11 @@ export interface PricingPreviewLine {
   valid: boolean;
   discountAmountCents: number;
   errorCode: string | null;
+  /** Lo que da el código y cuánto dura; ausentes en un backend viejo. */
+  percentageBasisPoints?: number | null;
+  fixedAmountCents?: number | null;
+  duration?: 'Once' | 'Months' | 'Forever' | null;
+  durationMonths?: number | null;
 }
 
 /** Bruto del plan → descuento de los códigos → neto a pagar (GET /onboarding/pricing-preview). */

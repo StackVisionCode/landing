@@ -1,0 +1,44 @@
+@if (items().length > 0) {
+  <article id="due" class="mt-6 rounded-xl border border-twilight/40 bg-sand p-5" aria-labelledby="due-title">
+    <h2 id="due-title" class="text-sm font-semibold text-twilight">{{ t().accDueTitle }}</h2>
+    <p class="mt-1 text-[13px] text-muted">
+      {{ due()?.planRequired ? t().accDuePlanRequired : t().accDueIntro }}
+    </p>
+
+    <ul class="mt-4 divide-y divide-line rounded-lg border border-line bg-white">
+      @for (item of items(); track item.id) {
+        <li class="flex items-center justify-between gap-3 px-4 py-3">
+          <label class="flex min-w-0 items-center gap-3 text-sm text-twilight">
+            <input type="checkbox" [checked]="isChecked(item)" [disabled]="isRequired(item) || paying()"
+              (change)="toggle(item)" class="h-4 w-4 shrink-0 accent-twilight" />
+            <span class="min-w-0">
+              <span class="block truncate font-medium">{{ item.description }}</span>
+              <span class="block text-xs text-muted">{{ untilOf(item) }}</span>
+            </span>
+          </label>
+          <span class="shrink-0 text-sm font-semibold tabular-nums text-twilight">{{ amountOf(item) }}</span>
+        </li>
+      }
+    </ul>
+
+    <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
+      <button type="button" (click)="removeUnchecked()" [disabled]="uncheckedSeats().length === 0 || removing() || paying()"
+        class="rounded-lg border border-line bg-white px-3 py-2 text-[13px] font-semibold text-twilight hover:bg-cream disabled:opacity-50">
+        {{ removeLabel() }}
+      </button>
+      <button type="button" (click)="pay()" [disabled]="totalCents() <= 0 || paying() || cooldown.active()"
+        class="rounded-lg bg-twilight px-4 py-2 text-[13px] font-semibold text-white hover:bg-star disabled:opacity-50">
+        {{ paying() ? t().accDuePaying : payLabel() }}
+      </button>
+    </div>
+
+    @if (error(); as message) {
+      <p role="alert" class="mt-3 text-[13px] text-twilight">{{ message }}</p>
+    } @else if (notice(); as message) {
+      <p role="status" class="mt-3 text-[13px] text-muted">{{ message }}</p>
+    }
+  </article>
+
+  <app-payment-provider-picker [open]="pickerOpen" (confirmed)="onProviderPicked($event)"
+    (dismissed)="onProviderDismissed()" />
+}

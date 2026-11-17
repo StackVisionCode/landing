@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { SITE_CONFIG } from '@core/config/site-config';
 import {
+  DuePayment,
   RenewCheckoutStatus,
   StartRenewCheckoutRequest,
   StartRenewCheckoutResponse,
@@ -23,6 +24,7 @@ import {
   StartSeatCheckoutResponse,
   StartSeatReactivationCheckoutRequest,
   StartSeatReactivationCheckoutResponse,
+  SubscriptionDiscount,
   TenantLimits,
 } from './account-subscription.models';
 
@@ -35,6 +37,16 @@ export class AccountSubscriptionService {
   /** Plan contratado, período, cambio pendiente, asientos y add-ons, en una sola llamada. */
   get(): Observable<AccountSubscription> {
     return this.http.get<AccountSubscription>(`${this.base}/subscriptions/me/account`);
+  }
+
+  /** El descuento vigente; null si no hay (el backend responde 204). */
+  discount(): Observable<SubscriptionDiscount | null> {
+    return this.http.get<SubscriptionDiscount | null>(`${this.base}/subscriptions/me/discount`);
+  }
+
+  /** Canjea un código: queda como descuento de la suscripción. 409 si ya hay uno vigente. */
+  redeemDiscountCode(code: string): Observable<SubscriptionDiscount> {
+    return this.http.post<SubscriptionDiscount>(`${this.base}/subscriptions/me/discount/redeem`, { code });
   }
 
   /** Solo Auth sabe cuántos usuarios activos hay: es el "usados" de los asientos. */
@@ -118,6 +130,16 @@ export class AccountSubscriptionService {
 
   /** Deshace la cancelación programada. No cobra nada. */
   /** Renovar a mano una suscripción vencida: devuelve la URL del proveedor. */
+  /** Lo vencido para "Pay what's due". */
+  due(): Observable<DuePayment> {
+    return this.http.get<DuePayment>(`${this.base}/subscriptions/me/due`);
+  }
+
+  /** Quita asientos suspendidos que no se van a pagar (todo o nada). */
+  removeUnusedSeats(seatIds: string[]): Observable<{ removed: number }> {
+    return this.http.post<{ removed: number }>(`${this.base}/seats/remove-unused`, { seatIds });
+  }
+
   startRenewCheckout(request: StartRenewCheckoutRequest): Observable<StartRenewCheckoutResponse> {
     return this.http.post<StartRenewCheckoutResponse>(`${this.base}/subscriptions/me/renew-checkout`, request);
   }

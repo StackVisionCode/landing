@@ -263,7 +263,7 @@ describe('AccountPlanComponent', () => {
     component.confirm();
 
     expect(api.changePlan).toHaveBeenCalledWith(
-      expect.objectContaining({ planCode: 'starter', billingCycle: 'Monthly', payerEmail: null })
+      expect.objectContaining({ planCode: 'starter', billingCycle: 'Monthly', successUrl: null })
     );
     expect(component.outcome()).toBe('Done. Your plan changes at the end of the current period.');
   });
@@ -296,7 +296,7 @@ describe('AccountPlanComponent', () => {
     component.onProviderPicked(PICKED);
 
     expect(api.changePlan).toHaveBeenCalledWith(
-      expect.objectContaining({ payerEmail: 'ada@example.com', successUrl: expect.stringContaining('checkout=success') })
+      expect.objectContaining({ successUrl: expect.stringContaining('checkout=success') })
     );
     expect(assign).toHaveBeenCalledWith('https://pay/upgrade');
     vi.unstubAllGlobals();
@@ -433,6 +433,38 @@ describe('AccountPlanComponent', () => {
       expect(text).toContain('Email — yearly');
       expect(text).toContain('$290.00');
       expect(text).toContain('You save $132.00 a year');
+    });
+
+    it('con un descuento vigente, la vista previa lo muestra y el total ya lo descuenta', () => {
+      const { component, fixture } = create(
+        {
+          planChangePreview: vi.fn(() =>
+            of(
+              preview({
+                direction: 'Upgrade',
+                chargedNow: true,
+                effectiveAtUtc: null,
+                amountCents: 39_200,
+                discountCents: 9_800,
+                discountLabel: 'Promo code SPRI...0420 \u00b7 20% off',
+                lines: [
+                  { kind: 'Plan', description: 'Pro \u2014 yearly', quantity: 1, unitAmountCents: 49_000, amountCents: 49_000 },
+                ],
+              })
+            )
+          ),
+        },
+        null,
+        [yearlyPro()]
+      );
+
+      component.setCycle('Yearly');
+      component.choose(component.plans()[0]);
+      fixture.detectChanges();
+
+      const text = fixture.nativeElement.textContent as string;
+      expect(text).toContain('Promo code SPRI...0420 \u00b7 20% off (\u2212$98.00)');
+      expect(text).toContain('$392.00');
     });
 
     it('si un extra lo impide, dice por qué y no se puede confirmar', () => {

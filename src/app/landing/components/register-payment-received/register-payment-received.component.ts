@@ -1,4 +1,5 @@
 import { InfinityLoaderComponent } from '@shared/infinity-loader/infinity-loader.component';
+import { apiErrorCode } from '@core/http/api-error';
 import { Component, CUSTOM_ELEMENTS_SCHEMA, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { RegisterShellComponent } from '../register-shell/register-shell.component';
@@ -144,8 +145,11 @@ export class RegisterPaymentReceivedComponent implements OnInit, OnDestroy {
   // Solo cuando el reconcile llegó por cookie (trae el email): permite reintentar el pago sobre el
   // mismo onboarding (el backend lo reabre). Sin email (camino por referencia) se ofrece empezar de nuevo.
   protected canRetry(): boolean {
-    return !!this.onboardingId && !!this.payerEmail;
+    return !!this.onboardingId && !!this.payerEmail && !this.codeNoLongerAvailable();
   }
+
+  /** El código de descuento ya no se puede volver a reservar: reintentar no sirve, solo empezar de nuevo. */
+  protected readonly codeNoLongerAvailable = signal(false);
 
   protected retryPayment(): void {
     if (!this.onboardingId || !this.payerEmail || typeof window === 'undefined' || this.retryCooldown.active()) return;
@@ -175,6 +179,11 @@ export class RegisterPaymentReceivedComponent implements OnInit, OnDestroy {
             this.throttleKind.set(throttle.kind);
             this.retryError.set('');
             this.retryCooldown.start(throttle.retryAfterSeconds);
+            return;
+          }
+          if (apiErrorCode(err) === 'Onboarding.CodeNoLongerAvailable') {
+            this.codeNoLongerAvailable.set(true);
+            this.retryError.set(this.t().payReceivedCodeNoLongerAvailable);
             return;
           }
           this.retryError.set(this.t().payReceivedRetryError);

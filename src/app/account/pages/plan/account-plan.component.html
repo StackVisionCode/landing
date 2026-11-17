@@ -154,6 +154,10 @@
         </ul>
       }
 
+      @if (planDiscountLabel(); as discount) {
+        <p class="mt-2 text-xs font-medium text-twilight">{{ discount }}</p>
+      }
+
       @if (savingsLabel(); as savings) {
         <p class="mt-2 text-xs font-medium text-twilight">{{ savings }}</p>
       }

@@ -1,6 +1,6 @@
 import { Component, CUSTOM_ELEMENTS_SCHEMA, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { SaaSPaymentRow } from '@core/account/account-subscription.models';
+import { SaaSPaymentRow, SubscriptionDiscount } from '@core/account/account-subscription.models';
 import { AccountSubscriptionService } from '@core/account/account-subscription.service';
 import { AccountPaymentOption } from '@core/account/account-payment-options.service';
 import { AccountSessionStore } from '@core/auth/account-session.store';
@@ -10,8 +10,9 @@ import { ActionCooldown } from '@core/http/action-cooldown';
 import { formatClock } from '@core/http/throttling';
 import { throttleNotice } from '@account/shared/account-throttle';
 import { PaymentProviderPickerComponent } from '@account/shared/payment-provider-picker.component';
+import { DuePaymentComponent } from './due-payment.component';
 
-const PAGE_SIZE = 25;
+const PAGE_SIZE = 10;
 
 /** Qué hacer cuando el user toca "Pay now" en una fila fallida — depende del `type` del pago. */
 type PayNowKind = 'subscription-renewal' | 'seat' | 'addon' | 'other';
@@ -19,7 +20,7 @@ type PayNowKind = 'subscription-renewal' | 'seat' | 'addon' | 'other';
 @Component({
   selector: 'app-account-billing',
   standalone: true,
-  imports: [PaymentProviderPickerComponent, RouterLink],
+  imports: [PaymentProviderPickerComponent, RouterLink, DuePaymentComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: './account-billing.component.html',
 })
@@ -32,7 +33,8 @@ export class AccountBillingComponent {
   readonly t = this.i18n.t;
   readonly loading = signal(true);
   readonly failed = signal(false);
-  readonly loadingMore = signal(false);
+  readonly loadingPage = signal(false);
+  readonly page = signal(1);
   readonly rows = signal<SaaSPaymentRow[]>([]);
   readonly total = signal(0);
   readonly openingReceipt = signal<string | null>(null);
@@ -43,7 +45,21 @@ export class AccountBillingComponent {
   readonly waitLabel = computed(() => `${this.t().accWaitPrefix} ${formatClock(this.cooldown.secondsLeft())}`);
 
   readonly isEmpty = computed(() => this.rows().length === 0);
-  readonly hasMore = computed(() => this.rows().length < this.total());
+  readonly totalPages = computed(() => Math.max(1, Math.ceil(this.total() / PAGE_SIZE)));
+  readonly hasPrevious = computed(() => this.page() > 1);
+  readonly hasNext = computed(() => this.page() < this.totalPages());
+  readonly pageLabel = computed(() =>
+    this.t().accBillingPageOf.replace('{page}', String(this.page())).replace('{pages}', String(this.totalPages())),
+  );
+  /** "Showing 11–20 of 23": qué parte del historial se ve. */
+  readonly rangeLabel = computed(() => {
+    const from = (this.page() - 1) * PAGE_SIZE + 1;
+    const to = Math.min(this.page() * PAGE_SIZE, this.total());
+    return this.t()
+      .accBillingRange.replace('{from}', String(from))
+      .replace('{to}', String(to))
+      .replace('{total}', String(this.total()));
+  });
 
   /** La fila que disparó "Pay now" — alimenta el picker y arranca el checkout al confirmar provider.
    * Solo tiene sentido para pagos de tipo SubscriptionRenewal: para seat/addon fallidos linkeamos a
@@ -53,8 +69,83 @@ export class AccountBillingComponent {
   readonly payingRowId = signal<string | null>(null);
   readonly payNowError = signal<string | null>(null);
 
+  /** El descuento vigente de la suscripción y el canje de un código ("Have a code?"). */
+  readonly discount = signal<SubscriptionDiscount | null>(null);
+  readonly codeInput = signal('');
+  readonly redeeming = signal(false);
+  readonly redeemError = signal<string | null>(null);
+  readonly redeemDone = signal(false);
+  readonly discountLabel = computed(() => {
+    const current = this.discount();
+    return current ? this.describeDiscount(current) : this.t().accDiscountNone;
+  });
+
   constructor() {
     this.load();
+    this.api.discount().subscribe({
+      next: current => this.discount.set(current ?? null),
+      error: () => this.discount.set(null),
+    });
+  }
+
+  /** Canjea el código: queda en la suscripción. El botón se bloquea mientras aplica (evita el doble canje). */
+  redeem(): void {
+    const code = this.codeInput().trim();
+    if (!code || this.redeeming()) {
+      return;
+    }
+    this.redeeming.set(true);
+    this.redeemError.set(null);
+    this.redeemDone.set(false);
+    this.api.redeemDiscountCode(code).subscribe({
+      next: applied => {
+        this.discount.set(applied);
+        this.codeInput.set('');
+        this.redeeming.set(false);
+        this.redeemDone.set(true);
+      },
+      error: (err: unknown) => {
+        this.redeeming.set(false);
+        this.redeemError.set(throttleNotice(err, this.cooldown, this.t()) ?? this.redeemErrorOf(apiErrorCode(err)));
+      },
+    });
+  }
+
+  /** "20% off · until Mar 15, 2027", "10% off · forever" o "$5.00 off your next payment". */
+  private describeDiscount(current: SubscriptionDiscount): string {
+    const label =
+      current.percentBasisPoints != null
+        ? `${current.percentBasisPoints / 100}%`
+        : this.money(current.amountCents ?? 0, current.currency ?? 'USD');
+    if (current.duration === 'Once') {
+      return this.t().accDiscountOnce.replace('{label}', label);
+    }
+    if (current.duration === 'Forever' || !current.endsAtUtc) {
+      return this.t().accDiscountForever.replace('{label}', label);
+    }
+    const date = new Date(current.endsAtUtc).toLocaleDateString(this.i18n.lang(), {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+    return this.t().accDiscountUntil.replace('{label}', label).replace('{date}', date);
+  }
+
+  // Los errores de Growth (Codes.*) pasan tal cual por Subscription.
+  private redeemErrorOf(code: string | null): string {
+    if (code === 'Subscription.Discount.AlreadyActive') {
+      return this.t().accDiscountAlreadyActive;
+    }
+    if (code?.endsWith('Expired')) {
+      return this.t().accDiscountExpired;
+    }
+    if (code?.endsWith('LimitReached')) {
+      return this.t().accDiscountUsed;
+    }
+    if (code?.startsWith('Codes.') || code === 'Subscription.DiscountCode.Required') {
+      return this.t().accDiscountInvalid;
+    }
+    return this.t().accDiscountError;
   }
 
   load(): void {
@@ -64,6 +155,7 @@ export class AccountBillingComponent {
       next: page => {
         this.rows.set(page.items);
         this.total.set(page.totalCount);
+        this.page.set(1);
         this.loading.set(false);
       },
       error: () => {
@@ -73,20 +165,20 @@ export class AccountBillingComponent {
     });
   }
 
-  /** Página siguiente: se suma a lo que ya se ve, no lo reemplaza. */
-  loadMore(): void {
-    if (this.loadingMore() || !this.hasMore()) {
+  /** Cambia de página: la nueva reemplaza a la que se ve. Fuera de rango no pide nada. */
+  goToPage(target: number): void {
+    if (this.loadingPage() || target < 1 || target > this.totalPages() || target === this.page()) {
       return;
     }
-    this.loadingMore.set(true);
-    const next = Math.floor(this.rows().length / PAGE_SIZE) + 1;
-    this.api.payments(next, PAGE_SIZE).subscribe({
+    this.loadingPage.set(true);
+    this.api.payments(target, PAGE_SIZE).subscribe({
       next: page => {
-        this.rows.update(current => [...current, ...page.items]);
+        this.rows.set(page.items);
         this.total.set(page.totalCount);
-        this.loadingMore.set(false);
+        this.page.set(target);
+        this.loadingPage.set(false);
       },
-      error: () => this.loadingMore.set(false),
+      error: () => this.loadingPage.set(false),
     });
   }
 
@@ -144,6 +236,16 @@ export class AccountBillingComponent {
       : '';
   }
 
+  /** "Promo code SPRI…0420 · 20% off (−$3.00)"; vacío sin descuento. */
+  paymentDiscountOf(row: SaaSPaymentRow): string {
+    if (!row.discountAmountCents || row.discountAmountCents <= 0) {
+      return '';
+    }
+    return this.t()
+      .accBillingDiscount.replace('{label}', row.discountLabel?.trim() || this.t().accBillingDiscountDefault)
+      .replace('{amount}', this.money(row.discountAmountCents, row.currency));
+  }
+
   amountOf(row: SaaSPaymentRow): string {
     return this.money(row.amountCents, row.currency);
   }
@@ -170,36 +272,36 @@ export class AccountBillingComponent {
    * mismo target que la haya saldado (si existe, "Pay now" sería un cobro doble). */
   canPayNow(row: SaaSPaymentRow): boolean {
     if (row.status !== 'Failed' && row.status !== 'ChargedBack') return false;
-    if (this.payNowKind(row) === 'other') return false;
+    const kind = this.payNowKind(row);
+    if (kind === 'other') return false;
+    // Asiento o add-on: "Pay now" lleva a "Pay what's due"; solo si ese mismo sigue vencido (no pagado ni quitado).
+    if (kind === 'seat' || kind === 'addon') {
+      return row.canRetry && !!row.targetId && (this.dueIds()?.has(row.targetId) ?? false);
+    }
     return row.canRetry;
   }
 
-  payNowLabel(row: SaaSPaymentRow): string {
-    switch (this.payNowKind(row)) {
-      case 'seat':
-        return this.t().accBillingPayNowSeat;
-      case 'addon':
-        return this.t().accBillingPayNowAddOn;
-      default:
-        return this.t().accBillingPayNow;
-    }
+  /** Lo vencido ahora, según "Pay what's due"; null mientras no se sabe (no se ofrece pagar asientos ni add-ons). */
+  readonly dueIds = signal<ReadonlySet<string> | null>(null);
+
+  /** Todo "Pay now" paga: el de asientos y add-ons lleva a "Pay what's due". */
+  payNowLabel(_row: SaaSPaymentRow): string {
+    return this.t().accBillingPayNow;
   }
 
-  /** Para seat/addon devuelve el routerLink target; para subscription-renewal el botón abre el picker en lugar de navegar. */
-  payNowRouterLink(row: SaaSPaymentRow): string[] | null {
-    switch (this.payNowKind(row)) {
-      case 'seat':
-        return ['/account/seats'];
-      case 'addon':
-        return ['/account/addons'];
-      default:
-        return null;
-    }
+  /** Asientos y add-ons se pagan en "Pay what's due", en esta misma página: no hay a dónde navegar. */
+  payNowRouterLink(_row: SaaSPaymentRow): string[] | null {
+    return null;
   }
 
   /** Click en Pay now para una renovación de suscripción fallida: abre el picker. El provider elegido
    * decide con qué método reintenta el cobro — no se asume Stripe. */
   startPayNow(row: SaaSPaymentRow): void {
+    // Asiento o add-on vencido: se paga junto con lo demás en "Pay what's due".
+    if (this.payNowKind(row) === 'seat' || this.payNowKind(row) === 'addon') {
+      document.getElementById('due')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
     if (this.payNowKind(row) !== 'subscription-renewal') return;
     if (this.payingRowId() !== null) return;
     this.payNowError.set(null);
@@ -221,7 +323,6 @@ export class AccountBillingComponent {
     const back = `${window.location.origin}/account/billing`;
     this.api
       .startRenewCheckout({
-        payerEmail: email,
         successUrl: `${back}?checkout=success`,
         cancelUrl: `${back}?checkout=cancelled`,
         provider: option.provider,

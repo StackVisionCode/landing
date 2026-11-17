@@ -10,8 +10,13 @@ import {
   AccountSeatSlotService,
 } from '@core/account/account-seat-slot.service';
 import { AccountSessionStore } from '@core/auth/account-session.store';
-import { DEFAULT_PAYMENT_OPTION } from '@core/account/account-payment-options.service';
+import { AccountPaymentOptionsService, DEFAULT_PAYMENT_OPTION } from '@core/account/account-payment-options.service';
 import { AccountSeatsComponent } from './account-seats.component';
+
+const PAYMENT_OPTIONS = [
+  { provider: 'Stripe', method: 'Card', displayName: 'Card', enabled: true, priority: 0, disabledReason: null },
+  { provider: 'PayPal', method: 'Wallet', displayName: 'PayPal', enabled: true, priority: 1, disabledReason: null },
+];
 
 /** Minimal shape; the component only reads `isAccountAdmin()` and `me()`. */
 function sessionStub(admin = true) {
@@ -157,6 +162,7 @@ describe('AccountSeatsComponent', () => {
       imports: [AccountSeatsComponent],
       providers: [
         { provide: AccountSubscriptionService, useValue: api },
+        { provide: AccountPaymentOptionsService, useValue: { getEnabled: () => of(PAYMENT_OPTIONS) } },
         { provide: AccountSeatSlotService, useValue: slotApi },
         { provide: AccountSessionStore, useValue: sessionStub(isAdmin) },
         {
@@ -193,6 +199,31 @@ describe('AccountSeatsComponent', () => {
 
     expect(api.seatQuote).toHaveBeenCalledWith('Standard', 2);
     expect(component.quoteTotalLabel()).toContain('15');
+  });
+
+  it('con descuento vigente el resumen muestra la línea y el neto', () => {
+    const { component, fixture, page } = create(subscription(), null, {
+      seatQuote: vi.fn(() => of({ ...quote, discountCents: 300, netTotalCents: 1200 })),
+      discount: vi.fn(() =>
+        of({ percentBasisPoints: 2000, amountCents: null, currency: null, duration: 'Forever' }),
+      ),
+    });
+    component.quantity.set(2);
+
+    component.getQuote();
+    fixture.detectChanges();
+
+    expect(component.quoteTotalLabel()).toContain('$12.00');
+    expect(page.textContent).toContain('Discount (20%) −$3.00');
+  });
+
+  it('sin descuento no hay línea de descuento', () => {
+    const { component, fixture, page } = create(subscription());
+
+    component.getQuote();
+    fixture.detectChanges();
+
+    expect(page.textContent).not.toContain('Discount (');
   });
 
   it('cambiar la cantidad invalida la cotización anterior', () => {
@@ -290,6 +321,32 @@ describe('AccountSeatsComponent', () => {
         checkoutUrl: 'https://pay/x',
         expiresAtUtc: '2026-09-26T00:00:00Z',
       },
+    });
+
+    it('dice con qué proveedor empezó y ofrece pagar con el otro', () => {
+      const paypal = subscription({
+        openSeatCheckout: {
+          intentId: 'i1',
+          seatType: 'Standard',
+          quantity: 2,
+          totalCents: 1500,
+          currency: 'USD',
+          checkoutUrl: 'https://www.sandbox.paypal.com/x',
+          expiresAtUtc: '2026-09-26T00:00:00Z',
+          checkoutProvider: 'PayPal',
+        },
+      });
+      const { page, component, api } = create(paypal, null, { startSeatCheckout: vi.fn(() => new Subject()) });
+
+      expect(page.textContent).toContain('Resume with PayPal');
+      expect(page.textContent).toContain('Pay with card (Stripe) instead');
+
+      component.payWithOtherProvider();
+
+      expect(api.startSeatCheckout).toHaveBeenCalledWith(
+        expect.objectContaining({ provider: 'Stripe', method: 'Card', quantity: 2 }),
+      );
+      expect(api.cancelPendingSeatCheckout).not.toHaveBeenCalled();
     });
 
     it('la tarjeta pending ofrece Resume y Cancel', () => {

@@ -312,7 +312,6 @@ export class AccountPlanComponent {
         planCode: preview.toPlanCode,
         billingCycle: preview.billingCycle,
         // Un upgrade se paga por redirect: es el único camino sin método en archivo.
-        payerEmail: preview.chargedNow ? (this.session.me()?.email ?? null) : null,
         successUrl: preview.chargedNow ? `${back}?checkout=success` : null,
         cancelUrl: preview.chargedNow ? `${back}?checkout=cancelled` : null,
         provider: option?.provider,
@@ -388,7 +387,6 @@ export class AccountPlanComponent {
     const back = `${window.location.origin}/account/plan`;
     this.api
       .startRenewCheckout({
-        payerEmail: email,
         successUrl: `${back}?checkout=success`,
         cancelUrl: `${back}?checkout=cancelled`,
         provider: option.provider,
@@ -594,9 +592,8 @@ export class AccountPlanComponent {
     this.billingPreferenceSwitchError.set(null);
     this.pendingAction.set('update-card');
     const back = `${window.location.origin}/account/plan`;
-    const payerEmail = this.session.me()?.email ?? null;
     this.billingPrefApi
-      .startSetupSession(`${back}?checkout=success`, `${back}?checkout=cancelled`, payerEmail)
+      .startSetupSession(`${back}?checkout=success`, `${back}?checkout=cancelled`)
       .subscribe({
         next: (session) => window.location.assign(session.checkoutUrl),
         error: (err: unknown) => {
@@ -674,6 +671,15 @@ export class AccountPlanComponent {
       amount: this.money(line.amountCents, this.preview()!.currency),
     }))
   );
+
+  /** El descuento vigente que lleva el cobro: "Promo code ... · 20% off (−$98.00)". */
+  readonly planDiscountLabel = computed(() => {
+    const preview = this.preview();
+    if (!preview?.discountCents) return '';
+    return this.t()
+      .accPlanDiscount.replace('{label}', preview.discountLabel?.trim() || this.t().accBillingDiscountDefault)
+      .replace('{amount}', this.money(preview.discountCents, preview.currency));
+  });
 
   readonly savingsLabel = computed(() => {
     const preview = this.preview();

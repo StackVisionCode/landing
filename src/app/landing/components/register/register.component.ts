@@ -10,12 +10,19 @@ import {
   visibleOnboardingPaymentOptions,
 } from '@core/onboarding/onboarding-payment-options.util';
 import { PlansService } from '@core/plans/plans.service';
+import { clearReferralLink, parseReferralLink, readReferralLink } from '@core/referrals/referral-link';
+import { sessionStore } from '@core/public-booking/attribution';
 import { moduleLabel } from '@core/plans/module-labels';
 import { apiErrorCode } from '@core/http/api-error';
 import { ActionCooldown } from '@core/http/action-cooldown';
 import { formatClock, readThrottle, type ThrottleKind } from '@core/http/throttling';
 import type { PlanResponse } from '@core/plans/plans.models';
-import type { BillingCycle, OnboardingPaymentOption, PricingPreview } from '@core/onboarding/onboarding.models';
+import type {
+  BillingCycle,
+  OnboardingPaymentOption,
+  PricingPreview,
+  PricingPreviewLine,
+} from '@core/onboarding/onboarding.models';
 import {
   BILLING_PREFERENCE_CONSENT_VERSION,
   type BillingPreferenceMode,
@@ -34,10 +41,10 @@ export interface PendingBillingPreferenceConsent {
   capturedAtUtc: string;
 }
 
-const GUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 type RegisterStep =
   | 'loading'
+  | 'choose-plan'
   | 'invalid-plan'
   | 'load-error'
   | 'email'
@@ -48,6 +55,13 @@ type RegisterStep =
   | 'error';
 
 type ThrottledAction = 'send' | 'resend' | 'verify' | 'submit';
+
+/** Códigos de Auth para un cupón que esta persona no puede usar (correo desechable o ya usado por ella). */
+const CODE_REFUSED_FOR_BUYER = new Set([
+  'Onboarding.CodeNotAllowedForEmail',
+  'Onboarding.CodeAlreadyUsedByBuyer',
+  'Onboarding.CodeNotStackable',
+]);
 
 const OTP_LENGTH = 6;
 const OTP_DURATION_SECONDS = 600; // TTL real del challenge: 10 min (Onboarding_PayFirst_PasoAPaso.md §1.1)
@@ -89,6 +103,8 @@ export class RegisterComponent implements OnInit, OnDestroy {
 
   protected readonly step = signal<RegisterStep>('loading');
   protected readonly plan = signal<PlanResponse | null>(null);
+  /** Planes a elegir cuando el link no trae uno válido y se vende más de uno. */
+  protected readonly planChoices = signal<readonly PlanResponse[]>([]);
   protected readonly cycle = signal<BillingCycle>('Monthly');
   protected readonly showCancelledNotice = signal(false);
   // El link de reintento del email expiró/era inválido: se cae al flujo normal con este aviso.
@@ -221,15 +237,13 @@ export class RegisterComponent implements OnInit, OnDestroy {
     this.cycle.set(params.get('cycle') === 'Yearly' ? 'Yearly' : 'Monthly');
     this.showCancelledNotice.set(params.get('cancelled') === '1');
 
-    // Link de referido (?referral=CODE): se precarga en los códigos del checkout.
-    const referral = params.get('referral')?.trim();
+    // Link de referido: de la URL o el guardado al llegar (pudo pasar por los planes). Se valida su forma.
+    const referral = parseReferralLink(params) ?? readReferralLink(sessionStore());
     if (referral) {
-      this.referralCode.set(referral);
+      this.referralCode.set(referral.code);
       this.showCodeFields.set(true);
-      const channel = params.get('ch')?.trim().toLowerCase();
-      this.referralChannel = channel && /^[a-z]{2,20}$/.test(channel) ? channel : undefined;
-      const shareId = params.get('sid')?.trim();
-      this.referralShareId = shareId && GUID_PATTERN.test(shareId) ? shareId : undefined;
+      this.referralChannel = referral.channel;
+      this.referralShareId = referral.shareId;
     }
 
     // Link de una giftcard (?gift=CODE): el código llega en su campo, listo para canjear. Es un descuento, a diferencia
@@ -289,24 +303,33 @@ export class RegisterComponent implements OnInit, OnDestroy {
    *  recuperable con reintento, no lo mismo que un plan que nunca existió. */
   private loadPlan(): void {
     const planId = this.route.snapshot.queryParamMap.get('plan');
-    if (!planId) {
-      this.step.set('invalid-plan');
-      return;
-    }
-
     this.step.set('loading');
     this.plansService.getPlans().subscribe({
       next: (plans) => {
-        const found = plans.find((p) => p.id === planId);
-        if (!found) {
+        // El catálogo manda: un plan de la URL que no se vende no vale; sin plan válido se elige del catálogo.
+        const sold = plans.filter((p) => sellableCycles(p).length > 0);
+        const found = sold.find((p) => p.id === planId);
+        if (found) {
+          this.choosePlan(found);
+        } else if (sold.length === 1) {
+          this.choosePlan(sold[0]);
+        } else if (sold.length > 1) {
+          this.planChoices.set([...sold].sort((a, b) => a.rank - b.rank));
+          this.step.set('choose-plan');
+        } else {
           this.step.set('invalid-plan');
-          return;
         }
-        this.plan.set(found);
-        this.step.set('email');
       },
       error: () => this.step.set('load-error'),
     });
+  }
+
+  /** Fija el plan y un ciclo que ese plan venda (el de la URL si lo vende). */
+  choosePlan(plan: PlanResponse): void {
+    const cycles = sellableCycles(plan);
+    if (!cycles.includes(this.cycle())) this.cycle.set(cycles[0]);
+    this.plan.set(plan);
+    this.step.set('email');
   }
 
   ngOnDestroy(): void {
@@ -406,7 +429,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
   /** false = el código de referido escrito ya no sirve (reemplazado, vencido o inexistente); null = sin dato. */
   protected readonly referralCodeActive = signal<boolean | null>(null);
 
-  /** Valida el código de referido (público): solo avisa; nunca bloquea el alta (el referido paga igual el precio completo). */
+  /** Valida el código de referido (público) al salir del campo; Continue vuelve a validarlo y no sigue si no sirve. */
   protected validateReferral(): void {
     const code = this.referralCode().trim();
     if (!code) {
@@ -492,6 +515,36 @@ export class RegisterComponent implements OnInit, OnDestroy {
       this.detailsError.set(this.t().signupBillingPrefRequired);
       return;
     }
+    this.whenReferralUsable(() => this.createAndCheckout(plan));
+  }
+
+  /**
+   * Un referido escrito tiene que estar activo para seguir: así un cupón puesto en ese campo no termina en un cobro a
+   * precio completo sin aviso. Si la validación misma falla, no bloquea (el backend lo resuelve igual).
+   */
+  private whenReferralUsable(next: () => void): void {
+    const code = this.referralCode().trim();
+    if (!code) {
+      next();
+      return;
+    }
+
+    this.isSubmittingDetails.set(true);
+    this.onboarding.validateReferralCode(code).subscribe({
+      next: (res) => {
+        this.isSubmittingDetails.set(false);
+        this.referralCodeActive.set(res.isActive);
+        if (res.isActive) next();
+        else this.detailsError.set(this.t().regReferralCodeInactive);
+      },
+      error: () => {
+        this.isSubmittingDetails.set(false);
+        next();
+      },
+    });
+  }
+
+  private createAndCheckout(plan: PlanResponse): void {
     this.persistBillingPreferenceConsent();
 
     this.isSubmittingDetails.set(true);
@@ -550,6 +603,8 @@ export class RegisterComponent implements OnInit, OnDestroy {
       })
       .subscribe({
         next: (res) => {
+          // El referido ya quedó declarado: otra alta en esta pestaña no lo hereda.
+          clearReferralLink(sessionStore());
           if (res.fullyCovered) {
             this.discountAmountCents.set(res.discountAmountCents ?? null);
             this.step.set('no-payment');
@@ -565,6 +620,13 @@ export class RegisterComponent implements OnInit, OnDestroy {
           if (readThrottle(err)) {
             this.step.set('details');
             this.handleError(err, 'submit', this.detailsError, this.submitCooldown);
+            return;
+          }
+          // Un código que no sirve para esta persona: vuelve a los datos para quitarlo y seguir sin descuento.
+          const code = apiErrorCode(err);
+          if (code && CODE_REFUSED_FOR_BUYER.has(code)) {
+            this.step.set('details');
+            this.detailsError.set(this.mapError(code) ?? this.t().regErrorGeneric);
             return;
           }
           this.showError(err);
@@ -639,9 +701,47 @@ export class RegisterComponent implements OnInit, OnDestroy {
     this.selectedPaymentOption.set(option);
   }
 
+  /** Qué hace un código válido según su duración ("20% off for 3 months"). */
+  codeLineBenefit(line: PricingPreviewLine, currency: string): string {
+    if (!line.valid || !line.duration) {
+      return '';
+    }
+    const label =
+      line.percentageBasisPoints != null
+        ? `${line.percentageBasisPoints / 100}%`
+        : line.fixedAmountCents != null
+          ? this.money(line.fixedAmountCents, currency)
+          : null;
+    if (!label) {
+      return '';
+    }
+    const t = this.t();
+    switch (line.duration) {
+      case 'Once':
+        return t.regCodeBenefitOnce.replace('{label}', label);
+      case 'Forever':
+        return t.regCodeBenefitForever.replace('{label}', label);
+      default:
+        return line.durationMonths === 1
+          ? t.regCodeBenefitOneMonth.replace('{label}', label)
+          : t.regCodeBenefitMonths.replace('{label}', label).replace('{months}', String(line.durationMonths ?? ''));
+    }
+  }
+
+  /** Motivo de una línea de código que no aplicó en la vista previa. */
+  codeLineMessage(line: PricingPreviewLine): string {
+    return this.mapError(line.errorCode) ?? this.t().regCodeInvalid;
+  }
+
   private mapError(code: string | null): string | null {
     const t = this.t();
     switch (code) {
+      case 'Onboarding.CodeNotAllowedForEmail':
+        return t.regCodeNotAllowedForEmail;
+      case 'Onboarding.CodeAlreadyUsedByBuyer':
+        return t.regCodeAlreadyUsed;
+      case 'Onboarding.CodeNotStackable':
+        return t.regCodeNotStackable;
       case 'Onboarding.OtpMismatch':
         return t.regOtpMismatch;
       case 'Onboarding.OtpLocked':
@@ -801,4 +901,9 @@ export class RegisterComponent implements OnInit, OnDestroy {
       this.step.set('email');
     }
   }
+}
+
+/** Ciclos que el alta vende y que el plan tiene con precio. */
+function sellableCycles(plan: PlanResponse): BillingCycle[] {
+  return (['Monthly', 'Yearly'] as const).filter((cycle) => plan.pricesUsdByCycle?.[cycle] != null);
 }
