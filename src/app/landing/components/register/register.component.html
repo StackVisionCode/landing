@@ -254,7 +254,7 @@
                           [class.bg-sand]="selectedPaymentOption()?.provider === option.provider && selectedPaymentOption()?.method === option.method"
                           [class.ring-2]="selectedPaymentOption()?.provider === option.provider && selectedPaymentOption()?.method === option.method"
                         >
-                          <span class="font-semibold text-twilight">{{ option.displayName }}</span>
+                          <span class="font-semibold text-twilight">{{ methodName(option) }}</span>
                           @if (selectedPaymentOption()?.provider === option.provider && selectedPaymentOption()?.method === option.method) {
                             <ion-icon name="checkmark-circle" class="text-lg text-star"></ion-icon>
                           }
@@ -466,7 +466,7 @@
                   @if (submitCooldown.active()) {
                     {{ waitLabel(submitCooldown) }}
                   } @else {
-                    {{ isSubmittingDetails() ? t().regSendingCode : t().regContinueButton }}
+                    {{ isSubmittingDetails() ? t().payOpening : payLabel() }}
                   }
                 </button>
               </form>

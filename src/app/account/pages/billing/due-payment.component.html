@@ -39,6 +39,6 @@
     }
   </article>
 
-  <app-payment-provider-picker [open]="pickerOpen" (confirmed)="onProviderPicked($event)"
+  <app-payment-provider-picker [open]="pickerOpen" [amount]="totalLabel()" (confirmed)="onProviderPicked($event)"
     (dismissed)="onProviderDismissed()" />
 }

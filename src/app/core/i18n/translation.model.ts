@@ -454,6 +454,17 @@ export interface TranslationKeys {
   accCheckoutResumeWith: string;
   accCheckoutPayWithOther: string;
   accCheckoutProviderCard: string;
+  /** Textos de pago armados por tipo de método (core/account/payment-labels.ts). */
+  payMethodCard: string;
+  payMethodCardHint: string;
+  payMethodWalletHint: string;
+  payMethodBankHint: string;
+  payButton: string;
+  payButtonAmount: string;
+  payButtonWith: string;
+  payButtonBank: string;
+  payButtonBankAmount: string;
+  payOpening: string;
   accSeatsInProgressError: string;
   accSeatsPaidTitle: string;
   accSeatsSlowTitle: string;

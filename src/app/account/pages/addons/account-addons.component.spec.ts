@@ -476,7 +476,7 @@ describe('AccountAddOnsComponent', () => {
       ]);
 
       expect(page.textContent).toContain('Resume with PayPal');
-      expect(page.textContent).toContain('Pay with card (Stripe) instead');
+      expect(page.textContent).toContain('Pay with card instead');
 
       component.payWithOtherProvider(component.openCheckouts()[0]);
 

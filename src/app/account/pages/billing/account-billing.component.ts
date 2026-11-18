@@ -66,6 +66,11 @@ export class AccountBillingComponent {
    * la pantalla de administración (no hay endpoint "renew this specific seat/addon" todavía). */
   private readonly pendingPayNow = signal<SaaSPaymentRow | null>(null);
   readonly pickerOpen = computed(() => this.pendingPayNow() !== null);
+  /** Monto de la fila que se va a pagar, para el botón final del picker ("Pay $X"). */
+  readonly pickerAmount = computed(() => {
+    const row = this.pendingPayNow();
+    return row ? this.money(row.amountCents, row.currency) : null;
+  });
   readonly payingRowId = signal<string | null>(null);
   readonly payNowError = signal<string | null>(null);
 

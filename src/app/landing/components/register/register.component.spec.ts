@@ -184,6 +184,24 @@ describe('RegisterComponent', () => {
     expect(component.selectedPaymentOption()?.provider).toBe('PayPal');
   });
 
+  // El botón final dice cómo se va a pagar; sin monto, porque un código puede cambiarlo.
+  it('the final button says Pay for a card and Pay with PayPal for PayPal, without naming the processor', () => {
+    const PAYPAL = { ...CARD, provider: 'PayPal', method: 'Wallet', displayName: 'PayPal', priority: 2 };
+    const component = create({}, onboardingMock({ getPaymentOptions: vi.fn(() => of({ options: [CARD, PAYPAL] })) }));
+    reachDetails(component);
+    component.__render();
+    const submit = () => page.querySelector('button[type="submit"]')?.textContent?.trim();
+
+    expect(submit()).toBe('Pay');
+    expect(page.textContent).toContain('Credit or debit card');
+    expect(page.textContent).not.toContain('Stripe');
+
+    component.selectPaymentOption(PAYPAL);
+    component.__render();
+
+    expect(submit()).toBe('Pay with PayPal');
+  });
+
   it('choosing the same cycle again does not re-quote', () => {
     const onboarding: any = onboardingMock({ previewPricing: vi.fn(() => of(null)) });
     const component = create({ referral: 'TVR-EHNF0XF59R' }, onboarding, [BOTH_CYCLES]);
