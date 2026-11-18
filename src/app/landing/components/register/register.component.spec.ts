@@ -32,8 +32,16 @@ function rateLimited(retryAfterSeconds: number, code = 'RateLimit.Exceeded') {
   return new HttpErrorResponse({ status: 429, error: { code, retryAfterSeconds } });
 }
 
+/** Plan que vende los dos ciclos: 12 × 99 = 1188 contra 999 al año (ahorra 16 %). */
+const BOTH_CYCLES: PlanResponse = {
+  ...PLAN,
+  supportedBillingCycles: ['Monthly', 'Yearly'],
+  pricesUsdByCycle: { Monthly: 99, Yearly: 999 },
+};
+
 describe('RegisterComponent', () => {
   const originalLocation = window.location;
+  let page: HTMLElement;
 
   function create(params: Record<string, string>, onboarding: Record<string, unknown> = {}, plans: PlanResponse[] = [PLAN]) {
     TestBed.configureTestingModule({
@@ -47,7 +55,10 @@ describe('RegisterComponent', () => {
     });
     const fixture = TestBed.createComponent(RegisterComponent);
     fixture.detectChanges();
-    return fixture.componentInstance as any;
+    page = fixture.nativeElement as HTMLElement;
+    const component = fixture.componentInstance as any;
+    component.__render = () => fixture.detectChanges();
+    return component;
   }
 
   /** Lleva el registro hasta el paso de datos con el email ya verificado. */
@@ -122,6 +133,30 @@ describe('RegisterComponent', () => {
     const component = create({ plan: 'plan-1', cycle: 'Yearly' });
 
     expect(component.cycle()).toBe('Monthly');
+  });
+
+  it('lets the buyer switch to annual on the email step when the plan sells both cycles', () => {
+    const component = create({ referral: 'TVR-EHNF0XF59R' }, {}, [BOTH_CYCLES]);
+
+    expect(component.cycle()).toBe('Monthly');
+    expect(page.textContent).toContain('Annual');
+    expect(page.textContent).toContain('Save 16%');
+
+    component.selectCycle('Yearly');
+    component.__render();
+
+    expect(component.cycle()).toBe('Yearly');
+    expect(component.planPrice).toBe(999);
+    expect(page.textContent).toContain('Pro — $999');
+  });
+
+  it('does not offer a cycle the plan does not sell', () => {
+    const component = create({ referral: 'TVR-EHNF0XF59R' });
+
+    component.selectCycle('Yearly');
+
+    expect(component.cycle()).toBe('Monthly');
+    expect(page.querySelector('[data-cycle-switch]')).toBeNull();
   });
 
   it('ignores a referral code edited into an impossible shape', () => {

@@ -17,6 +17,7 @@ import { apiErrorCode } from '@core/http/api-error';
 import { ActionCooldown } from '@core/http/action-cooldown';
 import { formatClock, readThrottle, type ThrottleKind } from '@core/http/throttling';
 import type { PlanResponse } from '@core/plans/plans.models';
+import { annualSavings } from '@core/plans/plan-pricing';
 import type {
   BillingCycle,
   OnboardingPaymentOption,
@@ -200,6 +201,24 @@ export class RegisterComponent implements OnInit, OnDestroy {
     const seconds = this.otpSecondsLeft();
     const minutes = Math.floor(seconds / 60);
     return `${minutes}:${(seconds % 60).toString().padStart(2, '0')}`;
+  }
+
+  /** Ciclos que se pueden elegir en el paso del correo; con uno solo no hay selector. */
+  readonly cycleChoices = computed(() => {
+    const plan = this.plan();
+    return plan ? sellableCycles(plan) : [];
+  });
+
+  /** "Save 16%" en el anual, con los precios del catálogo. */
+  readonly annualSavingsLabel = computed(() => {
+    const plan = this.plan();
+    const savings = plan ? annualSavings(plan) : null;
+    return savings ? this.t().regSaveAnnual.replace('{percent}', String(savings.percent)) : '';
+  });
+
+  /** Mensual o anual antes de verificar el correo (un link de referido no trae ciclo). */
+  selectCycle(cycle: BillingCycle): void {
+    if (this.cycleChoices().includes(cycle)) this.cycle.set(cycle);
   }
 
   get planPrice(): number {

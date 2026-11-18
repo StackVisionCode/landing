@@ -151,6 +151,8 @@ export interface TranslationKeys {
   regInvalidPlanBody: string;
   regBackToPricing: string;
   regPlanBadge: string;
+  regCycleLabel: string;
+  regSaveAnnual: string;
   regEmailStepTitle: string;
   regEmailStepSubtitle: string;
   regStep1Title: string;
