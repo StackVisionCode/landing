@@ -85,6 +85,8 @@ export interface AccountOpenSeatCheckout {
   currency: string;
   checkoutUrl: string;
   expiresAtUtc: string;
+  /** Con qué proveedor se abrió (Stripe | PayPal); null en las de antes. */
+  checkoutProvider?: string | null;
 }
 
 /**
@@ -102,6 +104,10 @@ export interface AccountOpenAddOnCheckout {
   currency: string;
   checkoutUrl: string;
   expiresAtUtc: string;
+  /** Con qué proveedor se abrió (Stripe | PayPal); null en las de antes. */
+  checkoutProvider?: string | null;
+  /** Paquete que sube, si es un cambio de tamaño (se abre desde el CRM). */
+  upgradesTenantAddOnId?: string | null;
 }
 
 export interface AccountSubscription {
@@ -117,12 +123,35 @@ export interface AccountSubscription {
 
 /** Cuerpo de `POST /subscriptions/me/renew-checkout`: renovar a mano una suscripción vencida. */
 export interface StartRenewCheckoutRequest {
-  payerEmail: string;
   successUrl: string;
   cancelUrl: string;
   /** Provider del picker (Stripe/PayPal). Opcional por compat; el backend cae a Stripe si no viene. */
   provider?: string;
   method?: string;
+  /** "Pay what's due": asientos y add-ons elegidos. Sin ellos se renueva solo el plan. */
+  seatIds?: string[];
+  addOnIds?: string[];
+}
+
+/** Una cosa vencida (`GET /subscriptions/me/due`): el plan, un asiento o un add-on, con lo que cuesta. */
+export interface DuePaymentItem {
+  kind: 'Plan' | 'Seat' | 'AddOn' | string;
+  id: string;
+  description: string;
+  grossCents: number;
+  amountCents: number;
+  discountCents: number;
+  periodEndUtc: string;
+}
+
+/** Lo vencido de la oficina. `planRequired`: el plan está vencido y va siempre. */
+export interface DuePayment {
+  planRequired: boolean;
+  items: DuePaymentItem[];
+  totalCents: number;
+  discountCents: number;
+  currency: string;
+  discountLabel: string | null;
 }
 
 export interface StartRenewCheckoutResponse {
@@ -166,6 +195,9 @@ export interface SeatQuote {
   proratedTotalCents: number;
   currency: string;
   currentPeriodEndUtc: string;
+  /** Descuento vigente sobre este cobro y lo que se paga con él; ausentes si no aplica. */
+  discountCents?: number | null;
+  netTotalCents?: number | null;
 }
 
 /** Cuerpo de `POST /seats/checkout`. */
@@ -173,7 +205,6 @@ export interface StartSeatCheckoutRequest {
   seatType: string;
   quantity: number;
   autoRenew: boolean;
-  payerEmail: string;
   successUrl: string;
   cancelUrl: string;
   provider?: string;
@@ -203,7 +234,6 @@ export interface StartAddOnCheckoutRequest {
   addOnCode: string;
   quantity: number;
   autoRenew: boolean;
-  payerEmail: string;
   successUrl: string;
   cancelUrl: string;
   provider?: string;
@@ -232,8 +262,7 @@ export interface StartAddOnCheckoutResponse {
 export interface ChangePlanRequest {
   planCode: string;
   billingCycle?: string | null;
-  /** Con email y URLs de retorno el upgrade se cobra por checkout; sin ellas, off-session. */
-  payerEmail?: string | null;
+  /** Con URLs de retorno el upgrade se cobra por checkout; sin ellas, off-session. */
   successUrl?: string | null;
   cancelUrl?: string | null;
   provider?: string;
@@ -275,6 +304,9 @@ export interface PlanChangePreview {
   savingsCents?: number;
   /** Por qué no se puede confirmar, en palabras del backend (p. ej. un add-on con un pago pendiente). */
   blockedMessage?: string | null;
+  /** Descuento vigente que lleva el cobro (ya restado en amountCents) y cómo se lee. */
+  discountCents?: number;
+  discountLabel?: string | null;
 }
 
 export interface PlanChangePreviewLine {
@@ -301,6 +333,11 @@ export interface SaaSPaymentRow {
   /** El backend lo apaga cuando ya hay un pago posterior Succeeded sobre el mismo target
    * (misma suscripción/seat/add-on): la fila Failed quedó saldada y "Pay now" sería un cobro doble. */
   canRetry: boolean;
+  /** Descuento del cobro (ya restado de amountCents) y su código enmascarado. Null sin descuento. */
+  discountAmountCents?: number | null;
+  discountLabel?: string | null;
+  /** Lo que cobró (asiento, add-on, suscripción). "Pay now" de un asiento o add-on solo si sigue vencido. */
+  targetId?: string | null;
 }
 
 /** `GET /payments-app/saas-payments/{id}/receipt`: URL firmada, de vida corta. */
@@ -317,7 +354,6 @@ export interface SaaSPaymentsPage {
 /** `POST /seats/{seatId}/reactivate-checkout` — pago manual del admin para recuperar un seat Suspended/PastDue
  * y devolverlo a Active con un período nuevo. */
 export interface StartSeatReactivationCheckoutRequest {
-  payerEmail: string;
   successUrl: string;
   cancelUrl: string;
   /** Elegido en el picker. Opcional por compat; el backend cae a Stripe/Card si no viene. */
@@ -339,4 +375,19 @@ export interface TenantLimits {
   activeUsers: number;
   pendingInvitations: number;
   availableSeats: number | null;
+}
+
+/** El descuento vigente de la suscripción (`GET subscriptions/me/discount`). */
+export interface SubscriptionDiscount {
+  source: 'Code' | 'Admin';
+  percentBasisPoints: number | null;
+  amountCents: number | null;
+  currency: string | null;
+  duration: 'Once' | 'Months' | 'Forever';
+  months: number | null;
+  appliesTo: 'Base' | 'BaseSeatsAddOns';
+  planCode: string | null;
+  startsAtUtc: string;
+  endsAtUtc: string | null;
+  reason: string | null;
 }

@@ -121,6 +121,27 @@ describe('RegisterPaymentReceivedComponent', () => {
     expect(component.step()).toBe('expired');
   });
 
+  it('explains an expired discount code and offers only to start again', () => {
+    const { startCheckout } = configure(failedResponse('buyer@example.com'));
+    startCheckout.mockReturnValueOnce(
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            status: 400,
+            error: { code: 'Onboarding.CodeNoLongerAvailable', message: 'backend text' },
+          }),
+      ),
+    );
+    const component = start();
+
+    component.retryPayment();
+
+    expect(component.retryError()).toBe(
+      'Your discount code is no longer available. Start your registration again to continue.',
+    );
+    expect(component.canRetry()).toBe(false);
+  });
+
   it('blocks the payment retry with a countdown when it is rate limited', () => {
     vi.useFakeTimers();
     try {

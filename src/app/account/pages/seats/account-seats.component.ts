@@ -1,5 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { CUSTOM_ELEMENTS_SCHEMA, Component, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { catchError, forkJoin, of } from 'rxjs';
@@ -19,7 +20,8 @@ import { formatClock } from '@core/http/throttling';
 import { throttleNotice } from '@account/shared/account-throttle';
 import { ConfirmDialogComponent } from '@account/shared/confirm-dialog.component';
 import { PaymentProviderPickerComponent } from '@account/shared/payment-provider-picker.component';
-import { AccountPaymentOption } from '@core/account/account-payment-options.service';
+import { AccountPaymentOption, AccountPaymentOptionsService } from '@core/account/account-payment-options.service';
+import { checkoutProviderName, otherCheckoutOption } from '@core/account/checkout-provider';
 import {
   AccountSeatSlot,
   AccountSeatSlotReport,
@@ -104,6 +106,36 @@ export class AccountSeatsComponent {
   readonly pendingCheckout = computed(() =>
     this.outcome() === 'paid' || this.outcome() === 'slow' ? null : this.openCheckout(),
   );
+
+  /** Métodos habilitados, para ofrecer el otro sobre una compra abierta. */
+  private readonly paymentOptions = toSignal(
+    inject(AccountPaymentOptionsService)
+      .getEnabled()
+      .pipe(catchError(() => of([] as AccountPaymentOption[]))),
+    { initialValue: [] as AccountPaymentOption[] },
+  );
+
+  /** Con qué se empezó la compra abierta; vacío si no se sabe. */
+  readonly pendingProviderName = computed(() =>
+    checkoutProviderName(this.pendingCheckout()?.checkoutProvider, this.t().accCheckoutProviderCard),
+  );
+
+  /** El otro método: paga los mismos asientos y el backend cierra la compra abierta. */
+  readonly otherProviderOption = computed(() =>
+    otherCheckoutOption(this.pendingCheckout()?.checkoutProvider, this.paymentOptions()),
+  );
+
+  readonly otherProviderName = computed(() =>
+    checkoutProviderName(this.otherProviderOption()?.provider, this.t().accCheckoutProviderCard),
+  );
+
+  payWithOtherProvider(): void {
+    const pending = this.pendingCheckout();
+    const option = this.otherProviderOption();
+    if (!pending || !option || this.buying() || this.cancelling()) return;
+    this.quantity.set(pending.quantity);
+    this.onProviderPicked(option);
+  }
 
   readonly usageLabel = computed(() => {
     const total = this.subscription()?.seats.total;
@@ -331,6 +363,7 @@ export class AccountSeatsComponent {
       next: (quote) => {
         this.quote.set(quote);
         this.quoting.set(false);
+        this.loadDiscountLabel(quote.discountCents);
       },
       error: (err: unknown) => {
         this.quoting.set(false);
@@ -340,6 +373,36 @@ export class AccountSeatsComponent {
       },
     });
   }
+
+  /** El beneficio del descuento vigente ("20%" o "$5.00"); se pide solo si la cotización trae descuento. */
+  readonly discountBenefit = signal<string | null>(null);
+
+  private loadDiscountLabel(discountCents: number | null | undefined): void {
+    if (!discountCents || this.discountBenefit() !== null) {
+      return;
+    }
+    this.api.discount().subscribe({
+      next: (current) => {
+        if (current?.percentBasisPoints != null) {
+          this.discountBenefit.set(`${current.percentBasisPoints / 100}%`);
+        } else if (current?.amountCents != null) {
+          this.discountBenefit.set(this.money(current.amountCents, current.currency ?? 'USD'));
+        }
+      },
+      error: () => undefined,
+    });
+  }
+
+  /** "Discount (20%) −$3.00": la línea de descuento del resumen; vacía si la cotización no trae descuento. */
+  readonly quoteDiscountLabel = computed(() => {
+    const priced = this.quote();
+    if (!priced?.discountCents) {
+      return '';
+    }
+    const benefit = this.discountBenefit();
+    const name = benefit ? this.t().accDiscountLine.replace('{label}', benefit) : this.t().accDiscountTitle;
+    return `${name} −${this.money(priced.discountCents, priced.currency)}`;
+  });
 
   /** Picker: true cuando el user ya cotizó y pidió comprar, pendiente de elegir provider. */
   readonly pickerOpen = signal(false);
@@ -368,7 +431,6 @@ export class AccountSeatsComponent {
         seatType: SEAT_TYPE,
         quantity: this.quantity(),
         autoRenew: true,
-        payerEmail: email,
         successUrl: `${back}?checkout=success`,
         cancelUrl: `${back}?checkout=cancelled`,
         provider: option.provider,
@@ -476,7 +538,7 @@ export class AccountSeatsComponent {
     return priced
       ? this.t().accSeatsQuoteTotal.replace(
           '{total}',
-          this.money(priced.proratedTotalCents, priced.currency),
+          this.money(priced.netTotalCents ?? priced.proratedTotalCents, priced.currency),
         )
       : '';
   });
@@ -537,7 +599,6 @@ export class AccountSeatsComponent {
     const back = `${window.location.origin}/account/seats`;
     this.api
       .startSeatReactivationCheckout(seat.id, {
-        payerEmail: email,
         successUrl: `${back}?checkout=success`,
         cancelUrl: `${back}?checkout=cancelled`,
         provider: option.provider,

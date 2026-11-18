@@ -58,16 +58,11 @@ export class BillingPreferenceService {
     );
   }
 
-  /** Abre un Checkout en modo setup — captura/actualiza la tarjeta SIN cobrar.
-   *  Mandamos el email desde el store porque el token de step-up puede llegar sin claim "email". */
-  startSetupSession(
-    successUrl: string,
-    cancelUrl: string,
-    payerEmail: string | null,
-  ): Observable<PaymentMethodSetupSession> {
+  /** Abre un Checkout en modo setup — captura/actualiza la tarjeta SIN cobrar. El pagador sale del token. */
+  startSetupSession(successUrl: string, cancelUrl: string): Observable<PaymentMethodSetupSession> {
     return this.http.post<PaymentMethodSetupSession>(
       `${this.base}/subscriptions/me/payment-method/setup-session`,
-      { payerEmail, successUrl, cancelUrl },
+      { successUrl, cancelUrl },
     );
   }
 }

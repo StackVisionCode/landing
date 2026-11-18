@@ -6,7 +6,13 @@ import { of, throwError } from 'rxjs';
 import { AccountAddOn, AccountSubscription } from '@core/account/account-subscription.models';
 import { AccountSubscriptionService } from '@core/account/account-subscription.service';
 import { AccountSessionStore } from '@core/auth/account-session.store';
+import { AccountPaymentOptionsService } from '@core/account/account-payment-options.service';
 import { AccountAddOnsComponent } from './account-addons.component';
+
+const PAYMENT_OPTIONS = [
+  { provider: 'Stripe', method: 'Card', displayName: 'Card', enabled: true, priority: 0, disabledReason: null },
+  { provider: 'PayPal', method: 'Wallet', displayName: 'PayPal', enabled: true, priority: 1, disabledReason: null },
+];
 
 /**
  * Provider seleccionado en el picker. `buy()` solo abre el picker: la compra real sale en
@@ -140,6 +146,7 @@ describe('AccountAddOnsComponent', () => {
       imports: [AccountAddOnsComponent],
       providers: [
         { provide: AccountSubscriptionService, useValue: api },
+        { provide: AccountPaymentOptionsService, useValue: { getEnabled: () => of(PAYMENT_OPTIONS) } },
         { provide: AccountSessionStore, useValue: { me: signal(me) } },
         {
           provide: ActivatedRoute,
@@ -200,9 +207,9 @@ describe('AccountAddOnsComponent', () => {
         addOnCode: 'sms.addon',
         quantity: 1,
         autoRenew: true,
-        payerEmail: 'ada@example.com',
       }),
     );
+    expect(api.startAddOnCheckout).not.toHaveBeenCalledWith(expect.objectContaining({ payerEmail: expect.anything() }));
   });
 
   it('no intenta comprar lo que el backend no marca como disponible', () => {
@@ -404,6 +411,8 @@ describe('AccountAddOnsComponent', () => {
         imports: [AccountAddOnsComponent],
         providers: [
           { provide: AccountSubscriptionService, useValue: api },
+          { provide: AccountPaymentOptionsService, useValue: { getEnabled: () => of(PAYMENT_OPTIONS) } },
+        { provide: AccountPaymentOptionsService, useValue: { getEnabled: () => of(PAYMENT_OPTIONS) } },
           { provide: AccountSessionStore, useValue: { me: signal(me) } },
           {
             provide: ActivatedRoute,
@@ -442,6 +451,8 @@ describe('AccountAddOnsComponent', () => {
         imports: [AccountAddOnsComponent],
         providers: [
           { provide: AccountSubscriptionService, useValue: api },
+          { provide: AccountPaymentOptionsService, useValue: { getEnabled: () => of(PAYMENT_OPTIONS) } },
+        { provide: AccountPaymentOptionsService, useValue: { getEnabled: () => of(PAYMENT_OPTIONS) } },
           { provide: AccountSessionStore, useValue: { me: signal(me) } },
           {
             provide: ActivatedRoute,
@@ -457,6 +468,35 @@ describe('AccountAddOnsComponent', () => {
       expect(component.openCheckouts()[0].intentId).toBe('i-legacy');
       expect(page.textContent).not.toContain('Resume payment');
       expect(page.textContent).toContain('Cancel pending purchase');
+    });
+
+    it('dice con qué proveedor empezó y ofrece pagar con el otro', () => {
+      const { component, page, api } = createWithSnapshot([
+        openCheckout('i-sms', { addOnCode: 'sms.addon', addOnDisplayName: 'SMS', checkoutProvider: 'PayPal' }),
+      ]);
+
+      expect(page.textContent).toContain('Resume with PayPal');
+      expect(page.textContent).toContain('Pay with card (Stripe) instead');
+
+      component.payWithOtherProvider(component.openCheckouts()[0]);
+
+      expect(api.startAddOnCheckout).toHaveBeenCalledWith(
+        expect.objectContaining({ addOnCode: 'sms.addon', provider: 'Stripe', method: 'Card' }),
+      );
+    });
+
+    it('un cambio de tamaño abierto no ofrece cambiar de proveedor aquí', () => {
+      const { page } = createWithSnapshot([
+        openCheckout('i-up', {
+          addOnCode: 'addon.storage.large',
+          addOnDisplayName: 'Storage +10 GB',
+          checkoutProvider: 'PayPal',
+          upgradesTenantAddOnId: 'ta-1',
+        }),
+      ]);
+
+      expect(page.textContent).toContain('Resume with PayPal');
+      expect(page.textContent).not.toContain('instead');
     });
 
     it('con dos intentos abiertos pinta las dos tarjetas', () => {

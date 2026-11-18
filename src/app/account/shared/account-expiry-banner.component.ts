@@ -192,7 +192,6 @@ export class AccountExpiryBannerComponent {
     const back = `${window.location.origin}/account/plan`;
     this.api
       .startRenewCheckout({
-        payerEmail: email,
         successUrl: `${back}?checkout=success`,
         cancelUrl: `${back}?checkout=cancelled`,
         provider: option.provider,

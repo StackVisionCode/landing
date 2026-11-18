@@ -45,6 +45,30 @@
             </div>
           }
 
+          @case ('choose-plan') {
+            <div>
+              <h1 class="font-display text-2xl font-semibold tracking-tight text-twilight">{{ t().regChoosePlanTitle }}</h1>
+              <p class="mt-2 text-sm text-muted">{{ t().regChoosePlanBody }}</p>
+              <div class="mt-6 space-y-3">
+                @for (choice of planChoices(); track choice.id) {
+                  <button
+                    type="button"
+                    data-plan-choice
+                    (click)="choosePlan(choice)"
+                    class="flex w-full items-center justify-between rounded-xl border border-line bg-white px-4 py-3 text-left transition hover:border-twilight"
+                  >
+                    <span class="font-semibold text-twilight">{{ choice.name }}</span>
+                    <span class="text-sm text-muted">
+                      ${{ choice.pricesUsdByCycle[cycle()] ?? choice.monthlyPriceUsd }}/{{
+                        cycle() === 'Yearly' ? t().annualLabel.toLowerCase() : t().monthlyLabel.toLowerCase()
+                      }}
+                    </span>
+                  </button>
+                }
+              </div>
+            </div>
+          }
+
           @case ('invalid-plan') {
             <div class="text-center">
               <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-50">
@@ -370,8 +394,11 @@
                                 {{ line.kind === 'Gift' ? t().regGiftCodeLabelShort : t().regPromoCodeLabelShort }}
                                 <span class="font-mono text-xs text-muted">{{ line.codeHint }}</span>
                               </span>
-                              <span>{{ line.valid ? '−' + money(line.discountAmountCents, pv.currency) : t().regCodeInvalid }}</span>
+                              <span>{{ line.valid ? '−' + money(line.discountAmountCents, pv.currency) : codeLineMessage(line) }}</span>
                             </p>
+                            @if (codeLineBenefit(line, pv.currency); as benefit) {
+                              <p class="text-xs text-muted">{{ benefit }}</p>
+                            }
                           }
                           <p class="mt-2 flex items-center justify-between border-t border-line pt-2 text-muted">
                             <span>{{ t().regPricePlan }}</span>
