@@ -89,9 +89,40 @@
           @case ('email') {
             <div>
               @if (plan(); as p) {
-                <div class="flex max-w-fit items-center gap-2 rounded-full border border-line bg-sand px-3 py-1">
-                  <span class="text-xs font-semibold text-star">{{ t().regPlanBadge }}:</span>
-                  <span class="text-xs font-semibold text-twilight">{{ p.name }} — ${{ planPrice }}</span>
+                <div class="flex flex-wrap items-center gap-3">
+                  <div class="flex max-w-fit items-center gap-2 rounded-full border border-line bg-sand px-3 py-1">
+                    <span class="text-xs font-semibold text-star">{{ t().regPlanBadge }}:</span>
+                    <span class="text-xs font-semibold text-twilight">{{ p.name }} — ${{ planPrice }}</span>
+                  </div>
+                  @if (cycleChoices().length > 1) {
+                    <div data-cycle-switch class="inline-flex rounded-full border border-line bg-white p-0.5 text-xs font-semibold" role="group" [attr.aria-label]="t().regCycleLabel">
+                      <button
+                        type="button"
+                        (click)="selectCycle('Monthly')"
+                        [attr.aria-pressed]="cycle() === 'Monthly'"
+                        class="rounded-full px-3 py-1 transition-colors"
+                        [class.bg-twilight]="cycle() === 'Monthly'"
+                        [class.text-white]="cycle() === 'Monthly'"
+                        [class.text-twilight]="cycle() !== 'Monthly'"
+                      >
+                        {{ t().monthlyLabel }}
+                      </button>
+                      <button
+                        type="button"
+                        (click)="selectCycle('Yearly')"
+                        [attr.aria-pressed]="cycle() === 'Yearly'"
+                        class="flex items-center gap-1.5 rounded-full px-3 py-1 transition-colors"
+                        [class.bg-twilight]="cycle() === 'Yearly'"
+                        [class.text-white]="cycle() === 'Yearly'"
+                        [class.text-twilight]="cycle() !== 'Yearly'"
+                      >
+                        {{ t().annualLabel }}
+                        @if (annualSavingsLabel()) {
+                          <span class="rounded-full bg-lime px-1.5 py-0.5 text-[10px] font-semibold text-twilight">{{ annualSavingsLabel() }}</span>
+                        }
+                      </button>
+                    </div>
+                  }
                 </div>
               }
 

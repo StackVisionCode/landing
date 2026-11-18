@@ -149,6 +149,8 @@ export const es: TranslationKeys = {
   regInvalidPlanBody: 'Vuelve a la página de precios y elige un plan para continuar.',
   regBackToPricing: 'Ver planes',
   regPlanBadge: 'Plan seleccionado',
+  regCycleLabel: 'Ciclo de cobro',
+  regSaveAnnual: 'Ahorra {percent} %',
   regEmailStepTitle: '¿Cuál es tu correo?',
   regEmailStepSubtitle: 'Te enviaremos un código para verificarlo antes de continuar.',
   regStep1Title: 'Cuéntanos sobre ti',

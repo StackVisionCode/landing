@@ -148,6 +148,8 @@ export const en: TranslationKeys = {
   regInvalidPlanBody: 'Go back to pricing and pick a plan to continue.',
   regBackToPricing: 'View plans',
   regPlanBadge: 'Selected plan',
+  regCycleLabel: 'Billing cycle',
+  regSaveAnnual: 'Save {percent}%',
   regEmailStepTitle: "What's your email?",
   regEmailStepSubtitle: "We'll send you a code to verify it before continuing.",
   regStep1Title: 'Tell us about yourself',
