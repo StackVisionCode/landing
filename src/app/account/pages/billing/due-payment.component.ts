@@ -44,6 +44,8 @@ export class DuePaymentComponent implements OnInit {
   );
   readonly uncheckedSeats = computed(() => this.items().filter(item => item.kind === 'Seat' && !this.isChecked(item)));
   readonly payLabel = computed(() => this.t().accDuePay.replace('{amount}', this.money(this.totalCents())));
+  /** El total adeudado, para el botón final del picker ("Pay $X"). */
+  readonly totalLabel = computed(() => this.money(this.totalCents()));
   readonly removeLabel = computed(() =>
     (this.confirmingRemove() ? this.t().accDueRemoveConfirm : this.t().accDueRemove).replace(
       '{count}',

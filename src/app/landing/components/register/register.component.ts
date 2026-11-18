@@ -6,6 +6,7 @@ import { RegisterShellComponent } from '../register-shell/register-shell.compone
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { SITE_CONFIG, PLATFORM_BRAND, PLATFORM_LEGAL_NAME } from '@core/config/site-config';
 import { TranslationStore } from '@core/i18n/translation.store';
+import { payButtonLabel, paymentMethodName, type PayableOption } from '@core/account/payment-labels';
 import { OnboardingService } from '@core/onboarding/onboarding.service';
 import {
   visibleOnboardingPaymentOptions,
@@ -135,6 +136,8 @@ export class RegisterComponent implements OnInit, OnDestroy {
   protected readonly detailsError = signal('');
   protected readonly paymentOptions = signal<OnboardingPaymentOption[]>([]);
   protected readonly selectedPaymentOption = signal<OnboardingPaymentOption | null>(null);
+  /** Botón final: "Pay" con tarjeta, "Pay with PayPal" con una billetera. Sin monto: un código puede cambiarlo. */
+  protected readonly payLabel = computed(() => payButtonLabel(this.selectedPaymentOption(), null, this.t()));
   // Elección obligatoria entre Automatic (card-on-file) y Manual (aviso por email, pago manual).
   // Null hasta que el usuario tilde una de las dos opciones; sin eso el botón de pagar sigue deshabilitado.
   protected readonly billingPreferenceMode = signal<BillingPreferenceMode | null>(null);
@@ -944,9 +947,15 @@ export class RegisterComponent implements OnInit, OnDestroy {
       this.step.set('email');
     }
   }
+
+  /** Nombre de la forma de pago para quien paga ("Credit or debit card", "PayPal"); nunca el procesador. */
+  protected methodName(option: PayableOption): string {
+    return paymentMethodName(option, this.t());
+  }
 }
 
 /** Ciclos que el alta vende y que el plan tiene con precio. */
 function sellableCycles(plan: PlanResponse): BillingCycle[] {
   return (['Monthly', 'Yearly'] as const).filter((cycle) => plan.pricesUsdByCycle?.[cycle] != null);
+
 }

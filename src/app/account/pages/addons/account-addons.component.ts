@@ -233,7 +233,7 @@ export class AccountAddOnsComponent {
 
   /** Con qué se empezó la compra; vacío si no se sabe. */
   providerNameOf(checkout: AccountOpenAddOnCheckout): string {
-    return checkoutProviderName(checkout.checkoutProvider, this.t().accCheckoutProviderCard);
+    return checkoutProviderName(checkout.checkoutProvider, this.t().accCheckoutProviderCard, this.paymentOptions());
   }
 
   /** El otro método; un cambio de tamaño se reabre desde el CRM, aquí solo se cancela o se retoma. */
@@ -243,7 +243,7 @@ export class AccountAddOnsComponent {
   }
 
   otherProviderNameFor(checkout: AccountOpenAddOnCheckout): string {
-    return checkoutProviderName(this.otherOptionFor(checkout)?.provider, this.t().accCheckoutProviderCard);
+    return checkoutProviderName(this.otherOptionFor(checkout)?.provider, this.t().accCheckoutProviderCard, this.paymentOptions());
   }
 
   /** La misma compra con el otro método: el backend cierra la abierta y abre la nueva. */

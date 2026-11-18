@@ -339,7 +339,7 @@ describe('AccountSeatsComponent', () => {
       const { page, component, api } = create(paypal, null, { startSeatCheckout: vi.fn(() => new Subject()) });
 
       expect(page.textContent).toContain('Resume with PayPal');
-      expect(page.textContent).toContain('Pay with card (Stripe) instead');
+      expect(page.textContent).toContain('Pay with card instead');
 
       component.payWithOtherProvider();
 

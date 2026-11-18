@@ -1,17 +1,26 @@
 import { AccountPaymentOption } from './account-payment-options.service';
 
-/** Nombre del proveedor para el usuario; vacío si no se sabe (compras de antes). */
-export function checkoutProviderName(provider: string | null | undefined, cardLabel: string): string {
-  if (provider === 'PayPal') return 'PayPal';
+/**
+ * Nombre para quien paga del proveedor con el que empezó una compra: "card" si es una tarjeta (el procesador
+ * no se nombra), si no su marca. Sale del catálogo; las compras de antes sin catálogo caen a lo conocido.
+ */
+export function checkoutProviderName(
+  provider: string | null | undefined,
+  cardLabel: string,
+  options: readonly AccountPaymentOption[] = [],
+): string {
+  if (!provider) return '';
+  const option = options.find(item => item.provider === provider);
+  if (option) return option.method.toLowerCase() === 'card' ? cardLabel : option.displayName?.trim() || provider;
   if (provider === 'Stripe') return cardLabel;
-  return '';
+  return provider === 'PayPal' ? 'PayPal' : '';
 }
 
-/** El otro método habilitado para pagar la compra abierta; null si no hay o no se sabe con cuál empezó. */
+/** Otro método habilitado para pagar la compra abierta; null si no hay o no se sabe con cuál empezó. */
 export function otherCheckoutOption(
   provider: string | null | undefined,
   options: readonly AccountPaymentOption[],
 ): AccountPaymentOption | null {
-  if (provider !== 'PayPal' && provider !== 'Stripe') return null;
-  return options.find(option => option.provider !== provider && (option.provider === 'PayPal' || option.provider === 'Stripe')) ?? null;
+  if (!provider) return null;
+  return options.find(option => option.provider !== provider) ?? null;
 }

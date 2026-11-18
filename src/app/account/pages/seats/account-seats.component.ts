@@ -117,7 +117,7 @@ export class AccountSeatsComponent {
 
   /** Con qué se empezó la compra abierta; vacío si no se sabe. */
   readonly pendingProviderName = computed(() =>
-    checkoutProviderName(this.pendingCheckout()?.checkoutProvider, this.t().accCheckoutProviderCard),
+    checkoutProviderName(this.pendingCheckout()?.checkoutProvider, this.t().accCheckoutProviderCard, this.paymentOptions()),
   );
 
   /** El otro método: paga los mismos asientos y el backend cierra la compra abierta. */
@@ -126,7 +126,7 @@ export class AccountSeatsComponent {
   );
 
   readonly otherProviderName = computed(() =>
-    checkoutProviderName(this.otherProviderOption()?.provider, this.t().accCheckoutProviderCard),
+    checkoutProviderName(this.otherProviderOption()?.provider, this.t().accCheckoutProviderCard, this.paymentOptions()),
   );
 
   payWithOtherProvider(): void {

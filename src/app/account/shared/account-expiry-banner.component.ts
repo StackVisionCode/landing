@@ -4,6 +4,7 @@ import { AccountSessionStore } from '@core/auth/account-session.store';
 import { AccountSubscriptionStore } from '@core/account/account-subscription.store';
 import { AccountSubscriptionService } from '@core/account/account-subscription.service';
 import { AccountPaymentOption } from '@core/account/account-payment-options.service';
+import { TranslationStore } from '@core/i18n/translation.store';
 import { PaymentProviderPickerComponent } from './payment-provider-picker.component';
 
 type BannerTone = 'info' | 'warning' | 'critical';
@@ -53,7 +54,7 @@ type BannerTone = 'info' | 'warning' | 'critical';
             [disabled]="working()"
             (click)="payNow()"
           >
-            {{ working() ? 'Opening…' : buttonLabel() }}
+            {{ working() ? t().payOpening : buttonLabel() }}
           </button>
         }
       </div>
@@ -70,6 +71,7 @@ export class AccountExpiryBannerComponent {
   private readonly api = inject(AccountSubscriptionService);
   private readonly session = inject(AccountSessionStore);
   private readonly router = inject(Router);
+  readonly t = inject(TranslationStore).t;
 
   readonly working = signal(false);
 

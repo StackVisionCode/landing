@@ -18,6 +18,7 @@ import {
 } from '@core/account/account-payment-options.service';
 import { AccountSubscriptionStore } from '@core/account/account-subscription.store';
 import { TranslationStore } from '@core/i18n/translation.store';
+import { payButtonLabel, paymentMethodHint, paymentMethodIcon, paymentMethodName } from '@core/account/payment-labels';
 
 /**
  * Modal "Choose how to pay" compartido entre add-ons, seats, renewal y plan-change del Account.
@@ -125,7 +126,7 @@ import { TranslationStore } from '@core/i18n/translation.store';
               [disabled]="!canConfirm()"
               class="rounded-lg bg-twilight px-4 py-2.5 text-[13px] font-semibold text-white hover:bg-star disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-star focus-visible:ring-offset-2"
             >
-              {{ t().accPaymentPickerConfirm }}
+              {{ confirmLabel() }}
             </button>
           </div>
         </div>
@@ -143,6 +144,9 @@ export class PaymentProviderPickerComponent {
    * `ngOnChanges` nunca disparaba porque la referencia del signal no cambia aunque sí su valor. */
   @Input({ required: true }) open: () => boolean = () => false;
 
+  /** Monto ya formateado; el botón final dice "Pay $X" con tarjeta. null = no se muestra cifra. */
+  @Input() amount: string | null = null;
+
   @Output() confirmed = new EventEmitter<AccountPaymentOption>();
   @Output() dismissed = new EventEmitter<void>();
 
@@ -152,6 +156,9 @@ export class PaymentProviderPickerComponent {
   readonly selected = signal<AccountPaymentOption | null>(null);
 
   readonly canConfirm = computed(() => this.selected() !== null && !this.loading());
+
+  /** "Pay $X" con tarjeta, "Pay with PayPal" con una billetera: sale del tipo de método, no del proveedor. */
+  readonly confirmLabel = computed(() => payButtonLabel(this.selected(), this.amount, this.t()));
 
   /** Id estable para el aria-labelledby — el DOM id debe ser único entre instancias. */
   readonly headingId = `payment-picker-heading-${Math.random().toString(36).slice(2, 9)}`;
@@ -224,21 +231,17 @@ export class PaymentProviderPickerComponent {
     this.cancel();
   }
 
-  /** Convención ionicons: logo específico por provider; fallback al genérico de tarjeta. */
+  /** Icono por tipo de método y marca (no por proveedor). */
   iconFor(option: AccountPaymentOption): string {
-    const p = option.provider.toLowerCase();
-    if (p === 'stripe') return 'card-outline';
-    if (p === 'paypal') return 'logo-paypal';
-    return 'wallet-outline';
+    return paymentMethodIcon(option);
   }
 
-  /** Label user-facing; prioriza `displayName` del backend, cae al provider. */
+  /** Nombre para quien paga: "Credit or debit card" o la marca de la billetera; el procesador no se nombra. */
   labelFor(option: AccountPaymentOption): string {
-    return option.displayName?.trim() || option.provider;
+    return paymentMethodName(option, this.t());
   }
 
-  /** Hint secundario — el método (Card, PayPal, etc.) ayuda a distinguir Stripe/Card vs Stripe/BankTransfer. */
   hintFor(option: AccountPaymentOption): string {
-    return `${option.provider} · ${option.method}`;
+    return paymentMethodHint(option, this.t());
   }
 }

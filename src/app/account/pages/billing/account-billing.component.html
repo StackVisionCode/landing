@@ -192,6 +192,7 @@
 
 <app-payment-provider-picker
   [open]="pickerOpen"
+  [amount]="pickerAmount()"
   (confirmed)="onProviderPicked($event)"
   (dismissed)="onProviderPickerDismissed()"
 />
