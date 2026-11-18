@@ -159,6 +159,42 @@ describe('RegisterComponent', () => {
     expect(page.querySelector('[data-cycle-switch]')).toBeNull();
   });
 
+  it('lets the buyer change the cycle on the details step and re-quotes codes and payment methods', () => {
+    const PAYPAL = { ...CARD, provider: 'PayPal', method: 'Wallet', displayName: 'PayPal', priority: 2 };
+    const onboarding: any = onboardingMock({
+      getPaymentOptions: vi.fn(() => of({ options: [CARD, PAYPAL] })),
+      previewPricing: vi.fn(() => of(null)),
+    });
+    const component = create({ referral: 'TVR-EHNF0XF59R' }, onboarding, [BOTH_CYCLES]);
+    reachDetails(component);
+    component.selectPaymentOption(PAYPAL);
+    component.giftCode.set('TVG-ABCD-EFGH');
+    component.__render();
+
+    expect(component.step()).toBe('details');
+    expect(page.querySelector('[data-cycle-switch]')).not.toBeNull();
+
+    component.selectCycle('Yearly');
+    component.__render();
+
+    expect(page.textContent).toContain('Pro — $999');
+    expect(onboarding.previewPricing).toHaveBeenLastCalledWith('plan-1', 'Yearly', undefined, 'TVG-ABCD-EFGH');
+    expect(onboarding.getPaymentOptions).toHaveBeenLastCalledWith('plan-1', 'Yearly');
+    // El método elegido se conserva si el ciclo nuevo también lo ofrece.
+    expect(component.selectedPaymentOption()?.provider).toBe('PayPal');
+  });
+
+  it('choosing the same cycle again does not re-quote', () => {
+    const onboarding: any = onboardingMock({ previewPricing: vi.fn(() => of(null)) });
+    const component = create({ referral: 'TVR-EHNF0XF59R' }, onboarding, [BOTH_CYCLES]);
+    reachDetails(component);
+    const calls = onboarding.getPaymentOptions.mock.calls.length;
+
+    component.selectCycle('Monthly');
+
+    expect(onboarding.getPaymentOptions.mock.calls.length).toBe(calls);
+  });
+
   it('ignores a referral code edited into an impossible shape', () => {
     const component = create({ plan: 'plan-1', referral: '<script>alert(1)</script>' });
 
