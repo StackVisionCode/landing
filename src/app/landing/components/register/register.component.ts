@@ -1,6 +1,7 @@
 import { InfinityLoaderComponent } from '@shared/infinity-loader/infinity-loader.component';
 import { Component, CUSTOM_ELEMENTS_SCHEMA, OnDestroy, OnInit, WritableSignal, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { NgTemplateOutlet } from '@angular/common';
 import { RegisterShellComponent } from '../register-shell/register-shell.component';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { SITE_CONFIG, PLATFORM_BRAND, PLATFORM_LEGAL_NAME } from '@core/config/site-config';
@@ -86,7 +87,7 @@ const RESEND_COOLDOWN_SECONDS = 60; // cooldown real del reenvío en Auth
  */
 @Component({
   selector: 'app-register',
-  imports: [FormsModule, RouterLink, RegisterShellComponent, InfinityLoaderComponent],
+  imports: [FormsModule, NgTemplateOutlet, RouterLink, RegisterShellComponent, InfinityLoaderComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: './register.component.html',
 })
@@ -216,9 +217,32 @@ export class RegisterComponent implements OnInit, OnDestroy {
     return savings ? this.t().regSaveAnnual.replace('{percent}', String(savings.percent)) : '';
   });
 
-  /** Mensual o anual antes de verificar el correo (un link de referido no trae ciclo). */
+  /** Mensual o anual en el paso del correo o en el de datos (un link de referido no trae ciclo). */
   selectCycle(cycle: BillingCycle): void {
-    if (this.cycleChoices().includes(cycle)) this.cycle.set(cycle);
+    if (!this.cycleChoices().includes(cycle) || cycle === this.cycle() || this.isSubmittingDetails()) return;
+    this.cycle.set(cycle);
+    // En el paso de datos la cotización de los códigos y los métodos de pago dependen del ciclo.
+    if (this.step() === 'details') {
+      this.previewCodes();
+      this.reloadPaymentOptions();
+    }
+  }
+
+  /** Métodos del ciclo actual; conserva el elegido si sigue disponible. */
+  private reloadPaymentOptions(): void {
+    const plan = this.plan();
+    if (!plan) return;
+    const chosen = this.selectedPaymentOption();
+    this.onboarding.getPaymentOptions(plan.id, this.cycle()).subscribe({
+      next: (response) => {
+        const options = visibleOnboardingPaymentOptions(response.options);
+        this.paymentOptions.set(options);
+        this.selectedPaymentOption.set(
+          options.find((o) => o.provider === chosen?.provider && o.method === chosen?.method) ?? options[0] ?? null,
+        );
+      },
+      error: () => {},
+    });
   }
 
   get planPrice(): number {
