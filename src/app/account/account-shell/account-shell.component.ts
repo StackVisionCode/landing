@@ -1,6 +1,6 @@
 import { CUSTOM_ELEMENTS_SCHEMA, Component, computed, effect, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { SITE_CONFIG } from '@core/config/site-config';
+import { SITE_CONFIG, officeWorkspaceUrl } from '@core/config/site-config';
 import { AccountSessionStore } from '@core/auth/account-session.store';
 import { AccountSubscriptionStore } from '@core/account/account-subscription.store';
 import { OfficeBrandingStore } from '@core/account/office-branding.store';
@@ -28,7 +28,11 @@ export class AccountShellComponent {
   private readonly watch = inject(SessionWatch);
 
   readonly t = this.i18n.t;
-  readonly workspaceUrl = SITE_CONFIG.appUrl;
+  /** Espacio de trabajo de la oficina de la sesión (su subdominio); sin subdominio, la app genérica. */
+  readonly workspaceUrl = computed(() => {
+    const slug = this.session.me()?.tenant.subDomain?.trim();
+    return slug ? officeWorkspaceUrl(slug) : SITE_CONFIG.appUrl;
+  });
   readonly isMenuOpen = signal(false);
   readonly signingOut = signal(false);
 

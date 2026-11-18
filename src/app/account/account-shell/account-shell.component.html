@@ -1,7 +1,7 @@
 <div class="min-h-screen bg-cream font-sans text-twilight">
   <header class="sticky top-0 z-30 border-b border-line bg-white">
     <div class="flex h-[60px] items-center gap-4 px-4 sm:px-6">
-      <a [href]="workspaceUrl" class="flex min-w-0 items-center gap-3">
+      <a [href]="workspaceUrl()" class="flex min-w-0 items-center gap-3">
         @if (officeLogo(); as logo) {
           <img [src]="logo" [alt]="officeName()" class="h-8 w-8 shrink-0 rounded-lg object-contain" />
         } @else {
@@ -19,7 +19,7 @@
 
       <div class="ml-auto flex items-center gap-2">
         <a
-          [href]="workspaceUrl"
+          [href]="workspaceUrl()"
           class="hidden items-center gap-1.5 rounded-lg border border-line bg-white px-3.5 py-2 text-[13px] font-semibold text-twilight transition-colors hover:bg-cream sm:inline-flex"
         >
           <ion-icon name="arrow-back-outline" class="text-sm"></ion-icon>
