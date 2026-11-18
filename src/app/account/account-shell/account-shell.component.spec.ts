@@ -4,6 +4,7 @@ import { Router, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { AccountSessionStore } from '@core/auth/account-session.store';
 import { OfficeBrandingStore } from '@core/account/office-branding.store';
+import { SITE_CONFIG, officeWorkspaceUrl } from '@core/config/site-config';
 import { AccountShellComponent } from './account-shell.component';
 
 const admin = {
@@ -18,7 +19,7 @@ const admin = {
 };
 
 describe('AccountShellComponent', () => {
-  function create(logoUrl: string | null = null) {
+  function create(logoUrl: string | null = null, me: unknown = admin) {
     const status = signal<string>('active');
     const logout = vi.fn(() => of(void 0));
     const branding = { load: vi.fn(), logoUrl: signal(logoUrl), initials: signal('CO') };
@@ -26,7 +27,7 @@ describe('AccountShellComponent', () => {
       imports: [AccountShellComponent],
       providers: [
         provideRouter([]),
-        { provide: AccountSessionStore, useValue: { me: signal(admin), status, logout } },
+        { provide: AccountSessionStore, useValue: { me: signal(me), status, logout } },
         { provide: OfficeBrandingStore, useValue: branding },
       ],
     });
@@ -59,6 +60,23 @@ describe('AccountShellComponent', () => {
 
     expect(page.querySelector('img[alt="CoreTaxPro"]')).toBeNull();
     expect(page.textContent).toContain('CO');
+  });
+
+  // Volver al espacio de trabajo lleva a la oficina de la sesión (su subdominio), no a la app genérica.
+  it('vuelve al espacio de trabajo de la oficina de la sesión', () => {
+    const { page, component } = create();
+    const back = Array.from(page.querySelectorAll('a')).find(a =>
+      a.textContent?.includes(component.t().accBackToWorkspace),
+    );
+
+    expect(back?.getAttribute('href')).toBe(officeWorkspaceUrl('coretaxpro'));
+    expect(page.querySelector('header a')?.getAttribute('href')).toBe(officeWorkspaceUrl('coretaxpro'));
+  });
+
+  it('sin subdominio en la sesión cae a la app genérica', () => {
+    const { page } = create(null, { ...admin, tenant: { ...admin.tenant, subDomain: '' } });
+
+    expect(page.querySelector('header a')?.getAttribute('href')).toBe(SITE_CONFIG.appUrl);
   });
 
   it('el menú de móvil se abre y se cierra al navegar', () => {
