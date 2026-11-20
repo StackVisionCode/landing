@@ -6,6 +6,9 @@ import { PublicBookingApi } from '@core/public-booking/public-booking.api';
 import type { PublicBookingManageView } from '@core/public-booking/public-booking.models';
 import { ManageBookingComponent, readToken } from './manage-booking.component';
 
+/** "Hoy" de la prueba: anterior a los horarios de abajo. */
+const NOW = new Date('2026-11-17T12:00:00Z');
+
 const VIEW: PublicBookingManageView = {
   status: 'Confirmed',
   startUtc: '2026-11-18T15:00:00Z',
@@ -72,8 +75,13 @@ describe('ManageBookingComponent', () => {
     fixture.detectChanges();
   }
 
-  beforeEach(() => (api = new FakeApi()));
+  // Reloj fijo: los horarios de prueba siempre quedan en el futuro (solo Date; los timers siguen reales).
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'], now: NOW });
+    api = new FakeApi();
+  });
   afterEach(() => {
+    vi.useRealTimers();
     TestBed.resetTestingModule();
     history.replaceState(null, '', '/');
   });
