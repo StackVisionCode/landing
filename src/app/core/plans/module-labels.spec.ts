@@ -14,4 +14,12 @@ describe('moduleLabel', () => {
     expect(moduleIcon('financial_insights')).not.toBe('apps-outline');
     expect(OFFERED_MODULES).toContain('financial_insights');
   });
+
+  // Módulo comercial de Enterprise (o add-on): la tarjeta de precios mostraba "mileage".
+  it('mileage tiene nombre legible en los dos idiomas, ícono propio y se ofrece', () => {
+    expect(moduleLabel('mileage', 'en')).toBe('Mileage tracking');
+    expect(moduleLabel('mileage', 'es')).toBe('Registro de millaje');
+    expect(moduleIcon('mileage')).toBe('car-outline');
+    expect(OFFERED_MODULES).toContain('mileage');
+  });
 });

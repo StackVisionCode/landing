@@ -290,6 +290,13 @@ describe('AccountAddOnsComponent', () => {
     expect(page.textContent).not.toContain('financial_insights');
   });
 
+  it('el add-on de mileage se nombra bien, nunca con el código', () => {
+    const { page } = create([addOn('addon-mileage', 'Available', { name: 'mileage', modules: ['mileage'] })]);
+
+    expect(page.textContent).toMatch(/Mileage tracking|Registro de millaje/);
+    expect(page.textContent).not.toContain('mileage');
+  });
+
   it('si el complemento no aporta módulos, cae al nombre del catálogo', () => {
     // Un add-on de solo cupos (sin `module.*`) no tiene etiqueta que buscar.
     const { page } = create([

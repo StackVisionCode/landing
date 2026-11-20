@@ -20,6 +20,7 @@ export const MODULE_LABELS: Record<string, { es: string; en: string }> = {
   irs: { es: 'Herramientas para el IRS', en: 'IRS tools' },
   // Nombre comercial: igual en los dos idiomas.
   financial_insights: { es: 'Financial Insights', en: 'Financial Insights' },
+  mileage: { es: 'Registro de millaje', en: 'Mileage tracking' },
 };
 
 /**
@@ -31,6 +32,7 @@ export const MODULE_LABELS: Record<string, { es: string; en: string }> = {
  *
  * `marketing`, `builder`, `irs` y `miles` están fuera porque **no existen**: no tienen ni
  * un endpoint detrás ni pantalla en el producto. La página pública los anunciaba igual.
+ * El millaje real es `mileage` (servicio Mobile), no `miles`.
  */
 export const OFFERED_MODULES: readonly string[] = [
   'customers',
@@ -42,6 +44,7 @@ export const OFFERED_MODULES: readonly string[] = [
   'email',
   'campaigns',
   'financial_insights',
+  'mileage',
 ];
 
 export function moduleLabel(key: string, lang: Lang): string {
@@ -66,6 +69,7 @@ export const MODULE_ICONS: Record<string, string> = {
   builder: 'construct-outline',
   irs: 'shield-checkmark-outline',
   financial_insights: 'analytics-outline',
+  mileage: 'car-outline',
 };
 
 export function moduleIcon(key: string): string {

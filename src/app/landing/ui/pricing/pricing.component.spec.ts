@@ -90,4 +90,12 @@ describe('PricingComponent', () => {
     expect(page.textContent).toContain('Financial Insights');
     expect(page.textContent).not.toContain('financial_insights');
   });
+
+  // La tarjeta de Enterprise mostraba "mileage" (el código) porque el diccionario no lo conocía.
+  it('un plan con mileage lo nombra, sin el código interno', () => {
+    const { page } = create([plan('enterprise', 99, 3, true, ['customers', 'mileage'])]);
+
+    expect(page.textContent).toMatch(/Mileage tracking|Registro de millaje/);
+    expect(page.textContent).not.toContain('mileage');
+  });
 });
