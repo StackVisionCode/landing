@@ -9,7 +9,8 @@ import { PlanResponse } from './plans.models';
 export class PlansService {
   private readonly http = inject(HttpClient);
 
-  getPlans(): Observable<PlanResponse[]> {
-    return this.http.get<PlanResponse[]>(`${SITE_CONFIG.apiUrl}/plans`);
+  /** `live`: va al servidor aunque el HTML prerenderizado traiga la respuesta guardada en el build. */
+  getPlans(live = false): Observable<PlanResponse[]> {
+    return this.http.get<PlanResponse[]>(`${SITE_CONFIG.apiUrl}/plans`, live ? { transferCache: false } : {});
   }
 }
