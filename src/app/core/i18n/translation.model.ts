@@ -303,6 +303,11 @@ export interface TranslationKeys {
   // Account (Manage subscription)
   accEyebrow: string;
   accNavOverview: string;
+  /** Aviso de inactividad del Account (minutos y segundos de la política de la plataforma). */
+  accIdleTitle: string;
+  accIdleBody: string;
+  accIdleStay: string;
+  accIdleSignOut: string;
   accNavOffice: string;
   accNavGroupSubscription: string;
   accNavGroupBilling: string;
