@@ -316,6 +316,10 @@ export const es: TranslationKeys = {
   // Account (Manage subscription)
   accEyebrow: 'Cuenta',
   accNavOverview: 'Resumen',
+  accIdleTitle: '¿Sigues ahí?',
+  accIdleBody: 'Por tu seguridad, cerraremos la sesión en breve porque no hubo actividad.',
+  accIdleStay: 'Seguir conectado',
+  accIdleSignOut: 'Cerrar sesión',
   accNavOffice: 'Oficina y cuenta',
   accNavGroupSubscription: 'Suscripción',
   accNavGroupBilling: 'Facturación',

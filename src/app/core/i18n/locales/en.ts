@@ -312,6 +312,10 @@ export const en: TranslationKeys = {
   // Account (Manage subscription)
   accEyebrow: 'Account',
   accNavOverview: 'Overview',
+  accIdleTitle: 'Are you still there?',
+  accIdleBody: 'For your security, we will sign you out soon because there has been no activity.',
+  accIdleStay: 'Stay signed in',
+  accIdleSignOut: 'Sign out',
   accNavOffice: 'Office & account',
   accNavGroupSubscription: 'Subscription',
   accNavGroupBilling: 'Billing',

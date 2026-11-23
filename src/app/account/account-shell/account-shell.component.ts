@@ -1,4 +1,5 @@
-import { CUSTOM_ELEMENTS_SCHEMA, Component, computed, effect, inject, signal } from '@angular/core';
+import { CUSTOM_ELEMENTS_SCHEMA, Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { SITE_CONFIG, officeWorkspaceUrl } from '@core/config/site-config';
 import { AccountSessionStore } from '@core/auth/account-session.store';
@@ -7,6 +8,9 @@ import { OfficeBrandingStore } from '@core/account/office-branding.store';
 import { SessionWatch } from '@core/auth/session-watch';
 import { TranslationStore } from '@core/i18n/translation.store';
 import { AccountExpiryBannerComponent } from '../shared/account-expiry-banner.component';
+import { AccountIdleModalComponent } from '../shared/account-idle-modal.component';
+import { AccountSessionExpiryService } from '@core/auth/account-session-expiry.service';
+import { SessionActivityService } from '@core/auth/session-activity.service';
 
 /**
  * Marco del Account: cabecera con la oficina, navegación lateral (barra inferior en móvil) y el outlet.
@@ -14,7 +18,7 @@ import { AccountExpiryBannerComponent } from '../shared/account-expiry-banner.co
  */
 @Component({
   selector: 'app-account-shell',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, AccountExpiryBannerComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, AccountExpiryBannerComponent, AccountIdleModalComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   providers: [SessionWatch],
   templateUrl: './account-shell.component.html',
@@ -26,6 +30,8 @@ export class AccountShellComponent {
   private readonly branding = inject(OfficeBrandingStore);
   private readonly subscription = inject(AccountSubscriptionStore);
   private readonly watch = inject(SessionWatch);
+  private readonly idle = inject(AccountSessionExpiryService);
+  private readonly activity = inject(SessionActivityService);
 
   readonly t = this.i18n.t;
   /** Espacio de trabajo de la oficina de la sesión (su subdominio); sin subdominio, la app genérica. */
@@ -62,6 +68,12 @@ export class AccountShellComponent {
     this.subscription.load();
     // Si la sesión muere en otro lado, que se note sin tener que recargar.
     this.watch.start();
+    // Aviso de inactividad con la política de la plataforma; otra pestaña que sale cierra esta también.
+    this.idle.start();
+    inject(DestroyRef).onDestroy(() => this.idle.stop());
+    this.activity.otherTabLogout$.pipe(takeUntilDestroyed()).subscribe(() => {
+      if (this.session.status() === 'active') this.session.markRevoked();
+    });
 
     // La sesión puede morir mientras el usuario está adentro (takeover, logout global, baja del usuario).
     effect(() => {

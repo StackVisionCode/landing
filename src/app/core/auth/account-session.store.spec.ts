@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { AccountSessionService } from './account-session.service';
 import { AccountSessionStore } from './account-session.store';
+import { SessionActivityService } from './session-activity.service';
 
 const admin = {
   id: 'u1',
@@ -135,6 +136,34 @@ describe('AccountSessionStore', () => {
 
     store.restore().subscribe();
 
+    expect(store.status()).toBe('revoked');
+  });
+
+  // Inactividad: el latido de /auth/me no puede mantener viva una sesión que nadie usa.
+  it('pasado el límite de inactividad no rota el token: cierra la sesión en el servidor y la marca terminada', () => {
+    const { store, api } = create();
+    store.restore().subscribe();
+    api.refresh.mockClear();
+    vi.spyOn(TestBed.inject(SessionActivityService), 'isPastIdleLimit').mockReturnValue(true);
+    let failed = false;
+
+    store.refreshAccess().subscribe({ error: () => (failed = true) });
+
+    expect(api.refresh).not.toHaveBeenCalled();
+    expect(api.logout).toHaveBeenCalledOnce();
+    expect(store.status()).toBe('revoked');
+    expect(failed).toBe(true);
+  });
+
+  it('endForInactivity cierra en el servidor, avisa a las otras pestañas y deja la sesión terminada', () => {
+    const { store, api } = create();
+    store.restore().subscribe();
+    const broadcast = vi.spyOn(TestBed.inject(SessionActivityService), 'broadcastLogout');
+
+    store.endForInactivity().subscribe();
+
+    expect(api.logout).toHaveBeenCalledOnce();
+    expect(broadcast).toHaveBeenCalledOnce();
     expect(store.status()).toBe('revoked');
   });
 });

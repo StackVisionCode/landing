@@ -5,6 +5,7 @@ import { apiErrorCode } from '@core/http/api-error';
 import { ACCOUNT_ACTOR_TYPE, AccountSessionResponse, MeResponse, ReauthenticateRequest } from './account-session.models';
 import { AccountSessionService } from './account-session.service';
 import { TrustedDeviceStore } from './trusted-device.store';
+import { SessionActivityService } from './session-activity.service';
 
 /**
  * - `unknown`: todavía no se intentó recuperar la sesión de la cookie.
@@ -29,6 +30,7 @@ export type AccountSignInOutcome =
 export class AccountSessionStore {
   private readonly api = inject(AccountSessionService);
   private readonly device = inject(TrustedDeviceStore);
+  private readonly activity = inject(SessionActivityService);
 
   private readonly _accessToken = signal<string | null>(null);
   private readonly _me = signal<MeResponse | null>(null);
@@ -109,6 +111,10 @@ export class AccountSessionStore {
 
   /** Rota el access token. Lo llama el interceptor ante un 401 que no sea sesión revocada. */
   refreshAccess(): Observable<string> {
+    // Pasada la inactividad + el aviso no se rota: el latido de /auth/me mantenía viva una sesión que nadie usaba.
+    if (this.activity.isPastIdleLimit()) {
+      return this.endForInactivity().pipe(switchMap(() => throwError(() => new Error('Session ended for inactivity.'))));
+    }
     this.refreshInFlight ??= this.api.refresh().pipe(
       switchMap(tokens => this.applyTokens(tokens)),
       map(token => token),
@@ -129,6 +135,21 @@ export class AccountSessionStore {
     );
   }
 
+  /**
+   * Salida por inactividad: cierra la sesión en Auth (la cookie del refresh alcanza, sin access token vigente),
+   * avisa a las otras pestañas y deja la sesión terminada: el shell muestra la pantalla de sesión cerrada.
+   */
+  endForInactivity(): Observable<void> {
+    return this.api.logout().pipe(
+      catchError(() => of(void 0)),
+      map(() => void 0),
+      tap(() => {
+        this.activity.broadcastLogout();
+        this.clear('revoked');
+      })
+    );
+  }
+
   /** La sesión murió en el backend: no hay nada que reintentar. */
   markRevoked(): void {
     this.clear('revoked');
@@ -137,7 +158,10 @@ export class AccountSessionStore {
   logout(): Observable<void> {
     return this.api.logout().pipe(
       catchError(() => of(void 0)),
-      tap(() => this.clear('anonymous'))
+      tap(() => {
+        this.activity.broadcastLogout();
+        this.clear('anonymous');
+      })
     );
   }
 
