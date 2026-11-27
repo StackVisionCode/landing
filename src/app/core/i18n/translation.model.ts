@@ -275,6 +275,20 @@ export interface TranslationKeys {
   compSubdomainInvalid: string;
   compSubdomainReserved: string;
   compPasswordHint: string;
+  /** Guía en vivo de la contraseña (app-password-guide). `{count}`/`{min}` y `{met}`/`{total}` se reemplazan. */
+  pgListLabel: string;
+  pgLength: string;
+  pgMaxLength: string;
+  pgCommon: string;
+  pgEmail: string;
+  pgContextProduct: string;
+  pgContextOffice: string;
+  pgCurrent: string;
+  pgMatch: string;
+  pgMet: string;
+  pgNotMet: string;
+  pgSummary: string;
+  pgAllMet: string;
   compTermsPrefix: string;
   compTermsLinkLabel: string;
   compTermsModalTitle: string;

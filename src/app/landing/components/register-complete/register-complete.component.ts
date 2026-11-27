@@ -13,6 +13,8 @@ import { ActionCooldown } from '@core/http/action-cooldown';
 import { nextPollDelayMs } from '@core/http/polling';
 import { formatClock, readThrottle, type ThrottleKind } from '@core/http/throttling';
 import type { OnboardingStatusValue } from '@core/onboarding/onboarding.models';
+import { passwordGuideMet, passwordGuideRules } from '@core/auth/password-guide';
+import { PasswordGuideComponent } from '@shared/ui/password-guide/password-guide.component';
 
 type CompleteStep = 'loading' | 'invalid' | 'form' | 'provisioning' | 'slow' | 'completed' | 'failed' | 'manual-review';
 type SubdomainStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid' | 'reserved' | 'throttled';
@@ -50,7 +52,7 @@ const TERMINAL_FAILURE_STATUSES: OnboardingStatusValue[] = [
  */
 @Component({
   selector: 'app-register-complete',
-  imports: [FormsModule, RouterLink, RegisterShellComponent, InfinityLoaderComponent],
+  imports: [FormsModule, RouterLink, RegisterShellComponent, InfinityLoaderComponent, PasswordGuideComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: './register-complete.component.html',
 })
@@ -91,6 +93,13 @@ export class RegisterCompleteComponent implements OnInit, OnDestroy {
   protected readonly showPassword = signal(false);
   protected readonly showConfirmPassword = signal(false);
   protected readonly termsAccepted = signal(false);
+  /** Rechazo de política del backend (`User.Password`), junto al campo. */
+  protected readonly passwordError = signal('');
+  /** Cuenta nueva sin MFA: 15 (D-13). El onboarding solo valida correo y marca; el correo llega enmascarado. */
+  protected readonly passwordGuide = computed(() =>
+    passwordGuideRules({ password: this.password(), minLength: 15, confirm: this.confirmPassword() }),
+  );
+  protected readonly passwordGuideOk = computed(() => passwordGuideMet(this.passwordGuide()));
 
   protected readonly showTermsModal = signal(false);
   protected readonly isLoadingTerms = signal(false);
@@ -219,7 +228,8 @@ export class RegisterCompleteComponent implements OnInit, OnDestroy {
       this.formError.set(this.t().compErrorSubdomainNotAvailable);
       return;
     }
-    if (this.password().length < 12) {
+    // Cuenta nueva sin MFA: el backend pide 15 (PasswordPolicy.MinLengthWithoutMfa, D-13).
+    if (this.password().length < 15) {
       this.formError.set(this.t().compErrorPasswordLength);
       return;
     }
@@ -231,6 +241,11 @@ export class RegisterCompleteComponent implements OnInit, OnDestroy {
       this.formError.set(this.t().compErrorTermsRequired);
       return;
     }
+    if (!this.passwordGuideOk()) {
+      this.formError.set(this.t().compErrorPasswordPolicy);
+      return;
+    }
+    this.passwordError.set('');
 
     this.isSubmitting.set(true);
     this.onboarding
@@ -344,7 +359,7 @@ export class RegisterCompleteComponent implements OnInit, OnDestroy {
       return;
     }
     if (code === 'User.Password') {
-      this.formError.set(this.t().compErrorPasswordPolicy);
+      this.passwordError.set(this.t().compErrorPasswordPolicy);
       return;
     }
     this.formError.set(this.t().compFailedBody);
