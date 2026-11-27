@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { OnboardingService } from '@core/onboarding/onboarding.service';
@@ -10,6 +10,7 @@ function rateLimited(retryAfterSeconds: number) {
 }
 
 describe('RegisterCompleteComponent', () => {
+  let lastFixture: ComponentFixture<RegisterCompleteComponent>;
   // Con el token de la URL, el init precarga preview y términos y deja el formulario listo.
   function create(overrides: object = {}) {
     const onboarding = {
@@ -26,6 +27,7 @@ describe('RegisterCompleteComponent', () => {
     });
     const fixture = TestBed.createComponent(RegisterCompleteComponent);
     fixture.detectChanges();
+    lastFixture = fixture;
     return fixture.componentInstance as any;
   }
 
@@ -66,6 +68,76 @@ describe('RegisterCompleteComponent', () => {
 
     expect(completeRegistration).toHaveBeenCalledWith(expect.objectContaining({ timeZoneId: 'America/Chicago' }));
     vi.restoreAllMocks();
+  });
+
+  it('asks for at least 15 characters, like the backend for an account without two-step verification', () => {
+    const completeRegistration = vi.fn(() => of({ status: 'Provisioning', statusUrl: '/onboarding/status?token=tok' }));
+    const component = create({ completeRegistration });
+
+    component.officeName.set('Acme Tax');
+    component.subdomain.set('acme-tax');
+    component.subdomainStatus.set('available');
+    component.password.set('a-long-phrase!');
+    component.confirmPassword.set('a-long-phrase!');
+    component.termsAccepted.set(true);
+    component.submit();
+
+    expect(completeRegistration).not.toHaveBeenCalled();
+    expect(component.formError()).toBe('Password must be at least 15 characters long');
+    expect(component.t().compPasswordHint).toBe('At least 15 characters');
+  });
+
+  describe('live password guide', () => {
+    function fillForm(component: any, password: string, confirm = password) {
+      component.officeName.set('Acme Tax');
+      component.subdomain.set('acme-tax');
+      component.subdomainStatus.set('available');
+      component.termsAccepted.set(true);
+      component.password.set(password);
+      component.confirmPassword.set(confirm);
+      lastFixture.detectChanges();
+    }
+    const page = () => lastFixture.nativeElement as HTMLElement;
+    const met = (id: string) => page().querySelector(`[data-rule="${id}"]`)?.getAttribute('data-met');
+    const submitButton = () => page().querySelector('button[type="submit"]') as HTMLButtonElement;
+
+    it('counts against 15 and checks common words, the product name and the confirmation', () => {
+      const component = create();
+      fillForm(component, '', '');
+      expect(page().querySelector('#password-guide')?.textContent).toContain('0 / 15 characters');
+      expect(page().textContent).toContain("Doesn't contain the product name");
+      expect(submitButton().disabled).toBe(true);
+
+      fillForm(component, 'Password2024!!!!');
+      expect(met('common')).toBe('false');
+      expect(submitButton().disabled).toBe(true);
+
+      fillForm(component, 'i love taxoffix so much');
+      expect(met('context')).toBe('false');
+      expect(submitButton().disabled).toBe(true);
+
+      fillForm(component, 'a calm river at dawn', 'a calm river at dusk');
+      expect(met('match')).toBe('false');
+      expect(submitButton().disabled).toBe(true);
+
+      fillForm(component, 'a calm river at dawn');
+      expect(submitButton().disabled).toBe(false);
+    });
+
+    it('shows the backend policy rejection next to the field', () => {
+      const completeRegistration = vi.fn(() =>
+        throwError(() => new HttpErrorResponse({ status: 400, error: { code: 'User.Password', message: 'raw' } })),
+      );
+      const component = create({ completeRegistration });
+      fillForm(component, 'a calm river at dawn');
+      component.submit();
+      lastFixture.detectChanges();
+
+      expect(page().querySelector('#password-guide [role="alert"]')?.textContent).toContain(
+        component.t().compErrorPasswordPolicy,
+      );
+      expect(component.formError()).toBe('');
+    });
   });
 
   describe('when the backend asks to wait', () => {

@@ -133,8 +133,9 @@
                       [type]="showPassword() ? 'text' : 'password'"
                       autocomplete="new-password"
                       [ngModel]="password()"
-                      (ngModelChange)="password.set($event)"
+                      (ngModelChange)="password.set($event); passwordError.set('')"
                       name="password"
+                      aria-describedby="password-hint password-guide"
                       [disabled]="isSubmitting()"
                       class="w-full rounded-xl border border-line bg-white py-2.5 pl-9 pr-10 text-sm focus:border-star focus:outline-none focus:ring-2 focus:ring-star/25 disabled:opacity-50"
                     />
@@ -147,7 +148,8 @@
                       <ion-icon [name]="showPassword() ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
                     </button>
                   </div>
-                  <p class="mt-1.5 text-xs text-muted">{{ t().compPasswordHint }}</p>
+                  <p id="password-hint" class="mt-1.5 text-xs text-muted">{{ t().compPasswordHint }}</p>
+                  <app-password-guide guideId="password-guide" [rules]="passwordGuide()" [serverError]="passwordError()" />
                 </div>
 
                 <div>
@@ -194,7 +196,7 @@
 
                 <button
                   type="submit"
-                  [disabled]="isSubmitting() || !termsAccepted() || submitCooldown.active()"
+                  [disabled]="isSubmitting() || !termsAccepted() || !passwordGuideOk() || submitCooldown.active()"
                   class="w-full rounded-xl bg-lime py-3 text-sm font-bold text-twilight transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   @if (submitCooldown.active()) {
